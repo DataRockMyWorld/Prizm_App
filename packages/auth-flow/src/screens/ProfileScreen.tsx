@@ -44,7 +44,8 @@ export function ProfileScreen() {
         photoUri,
       });
       setProfile(profile);
-    } catch {
+    } catch (err) {
+      console.error("updateProfile failed", err);
       setError("Couldn't save your profile. Please try again.");
     } finally {
       setIsSubmitting(false);

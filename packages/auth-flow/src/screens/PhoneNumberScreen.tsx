@@ -1,5 +1,5 @@
 import { requestOtp } from "@prizm/api";
-import { Button, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
+import { Button, GradientBackground, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -34,11 +34,11 @@ export function PhoneNumberScreen({ navigation }: Props) {
   return (
     <Screen>
       <View style={styles.content}>
-        <View style={styles.logo}>
+        <GradientBackground style={styles.logo}>
           <ThemedText variant="title" style={styles.logoLetter}>
             P
           </ThemedText>
-        </View>
+        </GradientBackground>
         <ThemedText variant="title" style={styles.centered}>
           What's your number?
         </ThemedText>
@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: colors.primary,
     alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
