@@ -135,3 +135,23 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.worker} — {self.category} ({self.status})"
+
+
+class PhoneOTP(models.Model):
+    """A one-time code sent to `phone_number` to verify ownership during onboarding.
+
+    Local dev has no SMS gateway — codes are logged to the console instead
+    (see accounts.views).
+    """
+
+    phone_number = models.CharField(max_length=20, validators=[phone_number_validator])
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [models.Index(fields=["phone_number", "is_used"])]
+
+    def __str__(self):
+        return f"OTP for {self.phone_number} ({'used' if self.is_used else 'active'})"

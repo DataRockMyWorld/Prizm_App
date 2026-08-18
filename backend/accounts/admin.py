@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import Certification, CustomerProfile, User, WorkerProfile
+from .models import Certification, CustomerProfile, PhoneOTP, User, WorkerProfile
 
 
 @admin.register(User)
@@ -65,3 +65,11 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 class CertificationAdmin(admin.ModelAdmin):
     list_display = ("worker", "category", "status", "created_at")
     list_filter = ("status", "category")
+
+
+@admin.register(PhoneOTP)
+class PhoneOTPAdmin(admin.ModelAdmin):
+    list_display = ("phone_number", "code", "created_at", "expires_at", "is_used")
+    list_filter = ("is_used",)
+    search_fields = ("phone_number",)
+    readonly_fields = ("phone_number", "code", "created_at", "expires_at", "is_used")
