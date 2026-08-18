@@ -1,0 +1,25 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+db.sqlite3
+staticfiles/
+media/
+
+# Virtualenvs
+.venv/
+venv/
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
