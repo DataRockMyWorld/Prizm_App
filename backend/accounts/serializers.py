@@ -2,7 +2,9 @@ from django.core import signing
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import CustomerProfile, User, WorkerProfile, phone_number_validator
+from services.models import ServiceCategory
+
+from .models import Certification, CustomerProfile, User, WorkerProfile, phone_number_validator
 
 OTP_TOKEN_SALT = "accounts.phone-otp"
 OTP_TOKEN_MAX_AGE = 60 * 10  # 10 minutes — must stay consistent with views.py
@@ -82,3 +84,48 @@ class ProfileSerializer(serializers.ModelSerializer):
         if acknowledged and not instance.liability_acknowledged_at:
             instance.liability_acknowledged_at = timezone.now()
         return super().update(instance, validated_data)
+
+
+class WorkerProfileSerializer(serializers.ModelSerializer):
+    categories = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ServiceCategory.objects.filter(is_active=True),
+        required=False,
+    )
+
+    class Meta:
+        model = WorkerProfile
+        fields = [
+            "categories",
+            "id_document",
+            "id_status",
+            "id_rejection_reason",
+            "is_online",
+            "subscription_status",
+        ]
+        read_only_fields = ["id_status", "id_rejection_reason", "is_online", "subscription_status"]
+
+    def update(self, instance, validated_data):
+        # A fresh ID submission always goes back to Pending review, clearing
+        # any earlier rejection — this is the "ID upload mandatory to go
+        # online" gate's entry point (see WorkerProfile.IDStatus).
+        submitting_new_document = "id_document" in validated_data and bool(
+            validated_data["id_document"]
+        )
+        instance = super().update(instance, validated_data)
+        if submitting_new_document:
+            instance.id_status = WorkerProfile.IDStatus.PENDING
+            instance.id_reviewed_at = None
+            instance.id_reviewed_by = None
+            instance.id_rejection_reason = ""
+            instance.save(
+                update_fields=["id_status", "id_reviewed_at", "id_reviewed_by", "id_rejection_reason"]
+            )
+        return instance
+
+
+class CertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = ["id", "category", "document", "status", "rejection_reason", "created_at"]
+        read_only_fields = ["id", "status", "rejection_reason", "created_at"]

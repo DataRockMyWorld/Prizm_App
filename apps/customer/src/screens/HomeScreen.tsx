@@ -1,30 +1,37 @@
+import { ServiceCategory, listCategories, useAuth } from "@prizm/api";
 import { Card, GradientBackground, Screen, ThemedText, colors, spacing } from "@prizm/ui";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-const PLACEHOLDER_CATEGORIES = [
-  { name: "Cleaning", estimate: "Est. N$150–300" },
-  { name: "Plumbing", estimate: "Est. N$200–500" },
-  { name: "Electrical", estimate: "Est. N$250–600" },
-];
-
 export function HomeScreen() {
+  const { accessToken, profile } = useAuth();
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    listCategories(accessToken)
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, [accessToken]);
+
   return (
     <Screen edges={["bottom"]}>
       <GradientBackground style={styles.header}>
         <ThemedText variant="title" style={styles.headerTitle}>
-          What do you need done?
+          Hello, {profile?.full_name || "there"} 👋
         </ThemedText>
         <ThemedText variant="body" style={styles.headerSubtitle}>
-          Request a service and get matched with a verified worker nearby.
+          What service do you need today?
         </ThemedText>
       </GradientBackground>
 
       <View style={styles.body}>
-        {PLACEHOLDER_CATEGORIES.map((category) => (
-          <Card key={category.name} style={styles.categoryCard}>
+        {categories.map((category) => (
+          <Card key={category.id} style={styles.categoryCard}>
             <ThemedText variant="subtitle">{category.name}</ThemedText>
-            <ThemedText variant="caption">{category.estimate}</ThemedText>
+            <ThemedText variant="caption">
+              Est. N${category.estimate_min}–{category.estimate_max}
+            </ThemedText>
           </Card>
         ))}
         <ThemedText variant="caption" style={styles.footnote}>

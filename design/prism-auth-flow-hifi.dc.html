@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f2f0ec}
+a{color:#FF6C22}
+a:hover{color:#FE3F2D}
+</style>
+</helmet>
+<div style="font-family:'Manrope',sans-serif;color:#111827;padding:56px 60px 80px;display:flex;flex-direction:column;gap:40px">
+
+<div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+    <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#FE3F2D,#FFB255);color:#fff;font-weight:800;font-size:19px;display:flex;align-items:center;justify-content:center">P</div>
+    <h1 style="font-size:26px;margin:0;font-weight:800">Prism — Auth &amp; Onboarding, High Fidelity</h1>
+  </div>
+  <p style="font-size:14px;color:#6b7280;margin:0;max-width:680px">Same flow and copy as the approved wireframes — full brand color, Manrope type, native keyboards for numeric entry, an explicit PIN-confirmation step, and the verified worker home state.</p>
+</div>
+
+<div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">1 — Phone number</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 0;display:flex;flex-direction:column;gap:16px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,#FE3F2D,#FFB255);color:#fff;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;margin:10px auto 0">P</div>
+        <div style="text-align:center">
+          <div style="font-weight:800;font-size:21px">What's your number?</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px">We'll text you a code to verify it's you</div>
+        </div>
+        <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:14px 16px;display:flex;gap:10px;align-items:center">
+          <span style="font-weight:700;font-size:15px;color:#111827">+264</span>
+          <span style="font-weight:600;font-size:15px;color:#111827;flex:1">81 234 5678</span>
+        </div>
+        <div style="font-size:11px;color:#9ca3af;text-align:center">Standard messaging rates may apply</div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Continue</div>
+      </div>
+      <div style="background:#eef0f3;border-radius:20px 20px 0 0;padding:10px 10px 4px;margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">1</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">2</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">3</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">4</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">5</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">6</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">7</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">8</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">9</div>
+        <div></div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">0</div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:16px;color:#374151">⌫</div>
+      </div>
+      <div style="width:110px;height:4px;background:#111827;border-radius:2px;margin:8px auto 10px;opacity:.4"></div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">2 — OTP verification</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 0;display:flex;flex-direction:column;gap:16px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="font-size:20px;color:#374151;margin-top:4px">‹</div>
+        <div style="text-align:center">
+          <div style="font-weight:800;font-size:21px">Enter the code</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px">Sent to +264 81 234 5678 · <span style="color:#FF6C22;font-weight:700">Change</span></div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:7px">
+          <div style="width:38px;height:48px;border-radius:12px;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">4</div>
+          <div style="width:38px;height:48px;border-radius:12px;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">8</div>
+          <div style="width:38px;height:48px;border-radius:12px;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">1</div>
+          <div style="width:38px;height:48px;border-radius:12px;background:#f7f7f8;border:1.5px solid #eef0f2"></div>
+          <div style="width:38px;height:48px;border-radius:12px;background:#f7f7f8;border:1.5px solid #eef0f2"></div>
+          <div style="width:38px;height:48px;border-radius:12px;background:#f7f7f8;border:1.5px solid #eef0f2"></div>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#9ca3af">Resend code in 0:28</div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Verify</div>
+      </div>
+      <div style="background:#eef0f3;border-radius:20px 20px 0 0;padding:10px 10px 4px;margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">1</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">2</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">3</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">4</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">5</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">6</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">7</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">8</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">9</div>
+        <div></div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">0</div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:16px;color:#374151">⌫</div>
+      </div>
+      <div style="width:110px;height:4px;background:#111827;border-radius:2px;margin:8px auto 10px;opacity:.4"></div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">3 — Create PIN</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 0;display:flex;flex-direction:column;gap:18px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="font-size:11px;font-weight:800;color:#FF6C22;letter-spacing:.04em;margin-top:10px">STEP 1 OF 2</div>
+        <div>
+          <div style="font-weight:800;font-size:21px">Create a PIN</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px">You'll use this to log in quickly next time</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:14px;margin-top:8px">
+          <div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+          <div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+          <div style="width:16px;height:16px;border-radius:50%;border:2px solid #e5e7eb"></div>
+          <div style="width:16px;height:16px;border-radius:50%;border:2px solid #e5e7eb"></div>
+        </div>
+      </div>
+      <div style="background:#eef0f3;border-radius:20px 20px 0 0;padding:10px 10px 4px;margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">1</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">2</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">3</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">4</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">5</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">6</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">7</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">8</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">9</div>
+        <div></div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">0</div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:16px;color:#374151">⌫</div>
+      </div>
+      <div style="width:110px;height:4px;background:#111827;border-radius:2px;margin:8px auto 10px;opacity:.4"></div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">4 — Confirm PIN</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 0;display:flex;flex-direction:column;gap:18px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="font-size:11px;font-weight:800;color:#FF6C22;letter-spacing:.04em;margin-top:10px">STEP 2 OF 2</div>
+        <div>
+          <div style="font-weight:800;font-size:21px">Confirm your PIN</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px">Re-enter your PIN to confirm</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:14px;margin-top:8px">
+          <div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+          <div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+          <div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+          <div style="width:16px;height:16px;border-radius:50%;border:2px solid #e5e7eb"></div>
+        </div>
+      </div>
+      <div style="background:#eef0f3;border-radius:20px 20px 0 0;padding:10px 10px 4px;margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">1</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">2</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">3</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">4</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">5</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">6</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">7</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">8</div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">9</div>
+        <div></div>
+        <div style="background:#fff;border-radius:10px;padding:13px 0;text-align:center;font-weight:700;font-size:16px;box-shadow:0 1px 2px rgba(0,0,0,.06)">0</div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:16px;color:#374151">⌫</div>
+      </div>
+      <div style="width:110px;height:4px;background:#111827;border-radius:2px;margin:8px auto 10px;opacity:.4"></div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">5 — Enable biometric login</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;position:relative;padding:0 26px">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px"></div>
+      <div style="width:96px;height:96px;border-radius:26px;border:2.5px solid #FF6C22;display:flex;align-items:center;justify-content:center;position:relative">
+        <div style="width:34px;height:34px;border-radius:50%;border:2.5px solid #FF6C22"></div>
+        <div style="position:absolute;bottom:24px;width:26px;height:13px;border:2.5px solid #FF6C22;border-top:none;border-radius:0 0 13px 13px"></div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-weight:800;font-size:21px">Enable Face ID?</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:6px">Log in faster next time using Face ID or your fingerprint instead of your PIN</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;width:100%;box-shadow:0 8px 20px rgba(255,108,34,.3)">Enable Face ID</div>
+      <div style="text-align:center;font-size:14px;color:#6b7280;font-weight:600">Not now</div>
+      <div style="width:110px;height:4px;background:#111827;border-radius:2px;position:absolute;bottom:12px;opacity:.4"></div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">6 — Basic profile</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 24px;display:flex;flex-direction:column;gap:18px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="text-align:center;margin-top:6px">
+          <div style="font-weight:800;font-size:21px">Tell us about you</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px">Just the basics for now</div>
+        </div>
+        <div style="display:flex;justify-content:center;position:relative;margin-top:6px">
+          <div style="width:96px;height:96px;border-radius:50%;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 7px,#f7f7f8 7px,#f7f7f8 14px)"></div>
+          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22);position:absolute;bottom:0;right:calc(50% - 48px);border:3px solid #fff"></div>
+        </div>
+        <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:14px 16px;font-size:15px;color:#9ca3af;font-weight:600">Full name</div>
+        <div style="display:flex;gap:9px;align-items:flex-start;margin-top:auto;padding:2px 2px 0">
+          <div style="width:18px;height:18px;border-radius:5px;border:1.6px solid #FF6C22;flex:none;margin-top:1px"></div>
+          <div style="font-size:11.5px;line-height:1.5;color:#6b7280">I understand Prism connects independent service providers and customers, and is not an employer or party to the service agreement. <span style="color:#FF6C22;font-weight:700">Read full terms</span></div>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3)">Continue</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">7a — Customer home</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 14px;display:flex;flex-direction:column;gap:12px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#FE3F2D,#FFB255)"></div><span style="font-weight:800;font-size:15px">PRISM</span></div>
+          <div style="width:26px;height:26px;border-radius:50%;background:#f7f7f8;position:relative"><div style="position:absolute;top:-1px;right:-1px;width:8px;height:8px;background:#FE3F2D;border-radius:50%;border:1.5px solid #fff"></div></div>
+        </div>
+        <div style="font-weight:800;font-size:19px;margin-top:4px">Hello, Sarah 👋</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:-8px">What service do you need today?</div>
+        <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:12px 14px;font-size:13px;color:#9ca3af;font-weight:600">Search for a service...</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:2px">
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:14px;padding:12px 4px;text-align:center;font-size:11px;font-weight:600"><div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#fde3d5,#ffeede);margin:0 auto 6px"></div>Cleaning</div>
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:14px;padding:12px 4px;text-align:center;font-size:11px;font-weight:600"><div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#fde3d5,#ffeede);margin:0 auto 6px"></div>Plumbing</div>
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:14px;padding:12px 4px;text-align:center;font-size:11px;font-weight:600"><div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#fde3d5,#ffeede);margin:0 auto 6px"></div>Electrical</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:13px;text-align:center;font-weight:700;font-size:14px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Request a Service</div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #f1f1f1;padding-top:10px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#FF6C22"><div style="width:16px;height:16px;border-radius:5px;background:#FF6C22"></div><span style="font-size:9px;font-weight:800">Home</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:4px;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Requests</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:4px;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Bookings</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:4px;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Messages</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Profile</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">7b — Worker home (browsing, ID unverified)</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 14px;display:flex;flex-direction:column;gap:12px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#FE3F2D,#FFB255)"></div><span style="font-weight:800;font-size:15px">PRISM</span></div>
+        <div style="font-weight:800;font-size:18px;margin-top:4px">Choose your services</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:20px;padding:7px 13px;font-size:11px;font-weight:700">Cleaning</div>
+          <div style="background:#f3f4f6;color:#374151;border-radius:20px;padding:7px 13px;font-size:11px;font-weight:600">Plumbing</div>
+          <div style="background:#f3f4f6;color:#374151;border-radius:20px;padding:7px 13px;font-size:11px;font-weight:600">Electrical</div>
+          <div style="background:#f3f4f6;color:#9ca3af;border-radius:20px;padding:7px 13px;font-size:11px;font-weight:600">+ More</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fff3ea,#ffe6d3);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(17,24,39,.04)">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#FE3F2D,#FF6C22);flex:none"></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:800;color:#111827">Upload your ID to start accepting jobs</div><div style="font-size:10px;color:#9a5a2a">Takes 2 minutes</div></div>
+          <span style="color:#FF6C22;font-weight:800;font-size:16px">→</span>
+        </div>
+        <div style="font-size:12px;font-weight:800;margin-top:2px">Jobs near you</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Home cleaning · 2.1km</span><span style="font-size:11px;color:#9ca3af;font-weight:700">Est. N$150–300</span></div>
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Deep clean · 3.4km</span><span style="font-size:11px;color:#9ca3af;font-weight:700">Est. N$200–350</span></div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:auto">Jobs browsable now — accepting unlocks once verified</div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #f1f1f1;padding-top:10px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#FF6C22"><div style="width:16px;height:16px;border-radius:5px;background:#FF6C22"></div><span style="font-size:9px;font-weight:800">Home</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Jobs</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:4px;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Bookings</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:4px;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Earnings</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Profile</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">8 — Worker ID upload</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 24px;display:flex;flex-direction:column;gap:14px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="font-size:11px;font-weight:800;color:#FF6C22;letter-spacing:.04em;margin-top:6px">STEP 1 OF 2</div>
+        <div style="height:6px;border-radius:3px;background:#f1f1f1;overflow:hidden"><div style="width:50%;height:100%;background:linear-gradient(90deg,#FE3F2D,#FF6C22)"></div></div>
+        <div>
+          <div style="font-weight:800;font-size:20px">Unlock your earning potential</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px">Verify your identity to start accepting paid jobs</div>
+        </div>
+        <div style="border:1.5px dashed #d1d5db;border-radius:14px;padding:22px;text-align:center;background:#fafafa">
+          <div style="width:34px;height:24px;border:2px solid #9ca3af;border-radius:4px;margin:0 auto 8px"></div>
+          <div style="font-size:12px;color:#6b7280;font-weight:600">ID document — front</div>
+        </div>
+        <div style="border:1.5px dashed #d1d5db;border-radius:14px;padding:22px;text-align:center;background:#fafafa">
+          <div style="width:34px;height:24px;border:2px solid #9ca3af;border-radius:4px;margin:0 auto 8px"></div>
+          <div style="font-size:12px;color:#6b7280;font-weight:600">ID document — back</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Submit for Review</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">9 — Add certifications (optional)</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 24px;display:flex;flex-direction:column;gap:14px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:inline-flex;background:#f3f4f6;color:#6b7280;border-radius:20px;padding:4px 11px;font-size:10.5px;font-weight:800;letter-spacing:.03em;width:fit-content;margin-top:6px">OPTIONAL</div>
+        <div>
+          <div style="font-weight:800;font-size:20px">Add certifications</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px">Optional — upload certificates for the services you offer to earn a Verified badge on your profile</div>
+        </div>
+        <div style="border:1.5px dashed #d1d5db;border-radius:14px;padding:22px;text-align:center;background:#fafafa">
+          <div style="width:34px;height:24px;border:2px solid #9ca3af;border-radius:4px;margin:0 auto 8px"></div>
+          <div style="font-size:12px;color:#6b7280;font-weight:600">Certificate — Cleaning</div>
+        </div>
+        <div style="border:1.5px dashed #d1d5db;border-radius:14px;padding:12px;text-align:center;font-size:12px;color:#FF6C22;font-weight:700">+ Add another certificate</div>
+        <div style="background:linear-gradient(135deg,#fff3ea,#ffe6d3);border-radius:12px;padding:11px 13px;font-size:11px;color:#9a5a2a;line-height:1.5">Not required to go online — your ID verification alone lets you accept jobs. Certifications just add extra trust with customers once approved.</div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Submit for Review</div>
+        <div style="text-align:center;font-size:14px;color:#6b7280;font-weight:600">Skip for now</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">10 — Under review confirmation</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;position:relative;padding:0 26px">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px"></div>
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22);display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;font-weight:800">✓</div>
+      <div>
+        <div style="font-weight:800;font-size:20px">You're under review</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:6px">We'll notify you within 24 hours. Keep browsing jobs in the meantime.</div>
+      </div>
+      <div style="background:#fff;color:#111827;border:1.5px solid #e5e7eb;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;width:100%">Back to Jobs</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">11 — Worker home, verified (new)</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 14px;display:flex;flex-direction:column;gap:12px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#FE3F2D,#FFB255)"></div><span style="font-weight:800;font-size:15px">PRISM</span></div>
+          <div style="width:26px;height:26px;border-radius:50%;background:#f7f7f8"></div>
+        </div>
+        <div style="font-weight:800;font-size:18px;margin-top:2px">Hello, Alex 👋</div>
+        <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+          <div><div style="font-size:13px;font-weight:800;color:#16a34a">You're Online</div><div style="font-size:10px;color:#9ca3af">Visible to nearby customers</div></div>
+          <div style="width:42px;height:24px;border-radius:12px;background:linear-gradient(135deg,#FE3F2D,#FF6C22);position:relative"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;right:3px;box-shadow:0 1px 2px rgba(0,0,0,.2)"></div></div>
+        </div>
+        <div style="font-size:12px;font-weight:800;margin-top:2px">Jobs near you</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Home cleaning · 2.1km</span><span style="font-size:11px;color:#FF6C22;font-weight:800">Est. N$150–300</span></div>
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Deep clean · 3.4km</span><span style="font-size:11px;color:#FF6C22;font-weight:800">Est. N$200–350</span></div>
+          <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Pipe repair · 4.0km</span><span style="font-size:11px;color:#FF6C22;font-weight:800">Est. N$300–450</span></div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:auto">Verified — ready to accept jobs</div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid #f1f1f1;padding-top:10px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#FF6C22"><div style="width:16px;height:16px;border-radius:5px;background:#FF6C22"></div><span style="font-size:9px;font-weight:800">Home</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Jobs</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:4px;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Bookings</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:4px;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Earnings</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#9ca3af"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #9ca3af"></div><span style="font-size:9px;font-weight:600">Profile</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+  <div style="font-size:16px;font-weight:800;margin-top:6px">Customer request flow</div>
+  <div style="font-size:13px;color:#6b7280;max-width:680px">Continues from the Customer home screen. Pricing is negotiated between customer and worker after assessment — only estimated ranges are shown, never fixed prices.</div>
+</div>
+
+<div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C1 — Request submission</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 20px;display:flex;flex-direction:column;gap:12px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><span style="font-size:19px;color:#374151">‹</span><span style="font-weight:800;font-size:17px">Request a service</span></div>
+        <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#fde3d5,#ffeede);border-radius:12px;padding:9px 12px">
+          <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+          <span style="font-size:13px;font-weight:800">Cleaning</span>
+          <span style="margin-left:auto;font-size:11px;color:#9a5a2a;font-weight:700">Change</span>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:5px">What do you need done?</div>
+          <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:12px 14px;font-size:12.5px;color:#9ca3af;font-weight:600;min-height:52px">e.g. 2-bedroom flat, deep clean, kitchen and bathroom focus</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:5px">Location</div>
+          <div style="border-radius:14px;overflow:hidden;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 8px,#f7f7f8 8px,#f7f7f8 16px);height:86px;position:relative">
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%)"><div style="width:22px;height:22px;border-radius:50% 50% 50% 0;background:linear-gradient(135deg,#FE3F2D,#FF6C22);transform:rotate(-45deg)"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;background:#f7f7f8;border:1px solid #eef0f2;border-radius:12px;padding:10px 12px">
+            <span style="font-size:12px;font-weight:600;flex:1">14 Independence Ave, Windhoek</span>
+            <span style="font-size:11px;color:#FF6C22;font-weight:700">Edit</span>
+          </div>
+        </div>
+        <div style="border:1.5px dashed #d1d5db;border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;background:#fafafa">
+          <div style="width:26px;height:20px;border:2px solid #9ca3af;border-radius:4px;flex:none"></div>
+          <span style="font-size:12px;color:#6b7280;font-weight:600">Add a photo (optional)</span>
+        </div>
+        <div style="background:#f7f7f8;border-radius:12px;padding:10px 12px;font-size:11px;color:#374151">
+          <span style="font-weight:800">Typical price range</span><br>
+          <span style="color:#6b7280">Most Cleaning jobs: N$150–300 · estimate only, final price is agreed with your worker</span>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Submit Request</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C2 — Searching / matching</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;position:relative;padding:0 30px">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px"></div>
+      <div style="width:88px;height:88px;border-radius:50%;border:4px solid #ffe6d3;border-top-color:#FF6C22"></div>
+      <div>
+        <div style="font-weight:800;font-size:19px">Looking for a trusted professional near you...</div>
+        <div style="font-size:12.5px;color:#6b7280;margin-top:8px">Matching you with the nearest available worker — Verified &amp; Certified pros get priority</div>
+      </div>
+      <div style="background:#fff;color:#6b7280;border:1.5px solid #e5e7eb;border-radius:14px;padding:13px;text-align:center;font-weight:700;font-size:14px;width:100%">Cancel Request</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C3 — Matched confirmation</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:14px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="text-align:center;margin-top:2px"><div style="font-weight:800;font-size:19px">You've been matched!</div></div>
+        <div style="background:#fff;border:1px solid #eef0f2;box-shadow:0 2px 8px rgba(17,24,39,.06);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div style="width:52px;height:52px;border-radius:50%;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 6px,#f7f7f8 6px,#f7f7f8 12px);flex:none"></div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:15px">Maria N.</div>
+              <div style="font-size:11.5px;color:#6b7280;margin-top:1px">⭐ 4.9 · 1.8km away</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:20px;padding:5px 11px;font-size:10.5px;font-weight:800">✓ Verified</div>
+            <div style="background:#fff3ea;color:#9a5a2a;border-radius:20px;padding:5px 11px;font-size:10.5px;font-weight:800">★ Certified — Cleaning</div>
+          </div>
+        </div>
+        <div style="background:#f7f7f8;border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:5px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280">Your request</div>
+          <div style="font-size:12.5px;font-weight:600">Cleaning · 2-bedroom flat, deep clean</div>
+          <div style="font-size:11.5px;color:#9ca3af">14 Independence Ave, Windhoek</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Confirm &amp; Continue</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C4 — Job status tracking</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 20px;display:flex;flex-direction:column;gap:16px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+          <span style="font-weight:800;font-size:17px">Job status</span>
+          <div style="width:32px;height:32px;border-radius:10px;background:#f7f7f8;display:flex;align-items:center;justify-content:center;font-size:15px">💬</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:14px;padding:11px 12px">
+          <div style="width:38px;height:38px;border-radius:50%;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 6px,#f7f7f8 6px,#f7f7f8 12px);flex:none"></div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:800">Maria N.</div><div style="font-size:10.5px;color:#6b7280">Cleaning · Deep clean</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="display:flex;flex-direction:column;align-items:center"><div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800">✓</div><div style="width:2px;height:28px;background:linear-gradient(180deg,#FF6C22,#FF6C22)"></div></div>
+            <div style="padding-top:1px"><div style="font-size:12.5px;font-weight:800">Requested</div><div style="font-size:10.5px;color:#9ca3af">9:12 AM</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="display:flex;flex-direction:column;align-items:center"><div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800">✓</div><div style="width:2px;height:28px;background:linear-gradient(180deg,#FF6C22,#e5e7eb)"></div></div>
+            <div style="padding-top:1px"><div style="font-size:12.5px;font-weight:800">Accepted</div><div style="font-size:10.5px;color:#9ca3af">9:14 AM</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="display:flex;flex-direction:column;align-items:center"><div style="width:20px;height:20px;border-radius:50%;border:2px solid #FF6C22;background:#fff;flex:none"></div><div style="width:2px;height:28px;background:#e5e7eb"></div></div>
+            <div style="padding-top:1px"><div style="font-size:12.5px;font-weight:800;color:#FF6C22">In progress</div><div style="font-size:10.5px;color:#9ca3af">Worker on site</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:20px;height:20px;border-radius:50%;border:2px solid #e5e7eb;flex:none"></div>
+            <div style="padding-top:1px"><div style="font-size:12.5px;font-weight:700;color:#9ca3af">Complete</div></div>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:12.5px;color:#FF6C22;font-weight:700;margin-top:auto">Report a problem</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C4b — Chat thread</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 16px;display:flex;flex-direction:column;gap:12px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:4px">
+          <span style="font-size:19px;color:#374151">‹</span>
+          <div style="width:30px;height:30px;border-radius:50%;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 6px,#f7f7f8 6px,#f7f7f8 12px)"></div>
+          <span style="font-weight:800;font-size:14px">Maria N.</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;flex:1;padding-top:6px">
+          <div style="background:#f7f7f8;border-radius:14px 14px 14px 4px;padding:9px 12px;font-size:12px;max-width:78%;font-weight:600">On my way, should be there in 15 mins</div>
+          <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px 14px 4px 14px;padding:9px 12px;font-size:12px;max-width:78%;align-self:flex-end;font-weight:600">Great, see you soon!</div>
+        </div>
+        <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:20px;padding:11px 14px;font-size:12px;color:#9ca3af;font-weight:600">Message Maria...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C4c — Report a problem</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:12px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><span style="font-size:19px;color:#374151">‹</span><span style="font-weight:800;font-size:16px">Report a problem</span></div>
+        <div style="font-size:12px;color:#6b7280">What went wrong with this job?</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Worker didn't show up</div>
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Safety concern</div>
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Quality of work</div>
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Pricing disagreement</div>
+        </div>
+        <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:12px 14px;font-size:12px;color:#9ca3af;font-weight:600;min-height:70px;margin-top:2px">Add details (optional)</div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Submit Report</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C5 — Price agreement</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:16px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="text-align:center;margin-top:8px">
+          <div style="font-weight:800;font-size:19px">Job complete</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:6px">Confirm the price you agreed with Maria</div>
+        </div>
+        <div style="background:#f7f7f8;border-radius:16px;padding:22px;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#6b7280">Agreed price</div>
+          <div style="font-weight:800;font-size:32px;margin-top:6px">N$220</div>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#9ca3af">This is the amount you and Maria settled on after the job — not a fixed platform price</div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Confirm N$220</div>
+        <div style="text-align:center;font-size:12.5px;color:#FF6C22;font-weight:700">This isn't right</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C6 — Payment</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:16px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="text-align:center;margin-top:8px"><div style="font-weight:800;font-size:19px">Pay Maria</div></div>
+        <div style="background:#f7f7f8;border-radius:16px;padding:20px;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#6b7280">Amount due</div>
+          <div style="font-weight:800;font-size:30px;margin-top:4px">N$220</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #FF6C22;border-radius:14px;padding:12px 14px">
+          <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#FE3F2D,#FFB255)"></div>
+          <span style="font-size:13px;font-weight:700;flex:1">Mobile Money · 081•••678</span>
+          <div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Pay N$220 with Mobile Money</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C6b — Payment confirmed</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;position:relative;padding:0 30px">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px"></div>
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FE3F2D,#FF6C22);display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;font-weight:800">✓</div>
+      <div>
+        <div style="font-weight:800;font-size:20px">Payment sent</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:6px">N$220 paid to Maria N. via Mobile Money</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">C7 — Rating</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:16px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:10px">
+          <div style="width:64px;height:64px;border-radius:50%;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 6px,#f7f7f8 6px,#f7f7f8 12px)"></div>
+          <div style="text-align:center"><div style="font-weight:800;font-size:18px">Rate Maria N.</div><div style="font-size:12.5px;color:#6b7280;margin-top:3px">How was your cleaning job?</div></div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:10px;font-size:30px;color:#e5e7eb">
+          <span style="background:linear-gradient(135deg,#FE3F2D,#FFB255);-webkit-background-clip:text;background-clip:text;color:transparent">★</span>
+          <span style="background:linear-gradient(135deg,#FE3F2D,#FFB255);-webkit-background-clip:text;background-clip:text;color:transparent">★</span>
+          <span style="background:linear-gradient(135deg,#FE3F2D,#FFB255);-webkit-background-clip:text;background-clip:text;color:transparent">★</span>
+          <span style="background:linear-gradient(135deg,#FE3F2D,#FFB255);-webkit-background-clip:text;background-clip:text;color:transparent">★</span>
+          <span>★</span>
+        </div>
+        <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:12px 14px;font-size:12px;color:#9ca3af;font-weight:600;min-height:70px">Add a comment (optional)</div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Submit Rating</div>
+        <div style="text-align:center;font-size:13px;color:#6b7280;font-weight:600">Skip</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+  <div style="font-size:16px;font-weight:800;margin-top:6px">Worker active-job flow</div>
+  <div style="font-size:13px;color:#6b7280;max-width:680px">Continues from Worker home, verified. Prices stay ranges/estimates until the worker proposes a final price at job completion.</div>
+</div>
+
+<div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">W1 — Incoming job request</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:14px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="text-align:center;margin-top:2px">
+          <div style="font-weight:800;font-size:19px">New job request</div>
+          <div style="font-size:12px;color:#FF6C22;font-weight:800;margin-top:6px">Respond within 1:00</div>
+        </div>
+        <div style="background:#f7f7f8;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#FE3F2D,#FF6C22)"></div>
+            <span style="font-size:13px;font-weight:800">Cleaning</span>
+            <span style="margin-left:auto;font-size:11px;color:#9ca3af;font-weight:700">2.1km away</span>
+          </div>
+          <div style="font-size:12.5px;color:#374151;font-weight:600;margin-top:2px">2-bedroom flat, deep clean, kitchen and bathroom focus</div>
+          <div style="font-size:11.5px;color:#9ca3af">14 Independence Ave, Windhoek</div>
+        </div>
+        <div style="background:#fff3ea;border-radius:12px;padding:10px 12px;font-size:11px;color:#9a5a2a">Est. N$150–300 · final price is agreed with the customer</div>
+        <div style="display:flex;gap:10px;margin-top:auto">
+          <div style="flex:1;background:#fff;color:#374151;border:1.5px solid #e5e7eb;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:14px">Decline</div>
+          <div style="flex:1;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:14px;box-shadow:0 8px 20px rgba(255,108,34,.3)">Accept</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">W2 — Active job</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 20px;display:flex;flex-direction:column;gap:14px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+          <span style="font-weight:800;font-size:17px">Active job</span>
+          <div style="width:32px;height:32px;border-radius:10px;background:#f7f7f8;display:flex;align-items:center;justify-content:center;font-size:15px">💬</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:14px;padding:11px 12px">
+          <div style="width:38px;height:38px;border-radius:50%;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 6px,#f7f7f8 6px,#f7f7f8 12px);flex:none"></div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:800">Sarah K.</div><div style="font-size:10.5px;color:#6b7280">14 Independence Ave, Windhoek</div></div>
+        </div>
+        <div style="background:#fff;color:#374151;border:1.5px solid #e5e7eb;border-radius:14px;padding:12px;text-align:center;font-weight:700;font-size:13.5px">Get Directions</div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">Update status</div>
+          <div style="display:flex;background:#f3f4f6;border-radius:12px;padding:4px;gap:4px">
+            <div style="flex:1;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:9px;padding:9px 0;text-align:center;font-size:11px;font-weight:800">On my way</div>
+            <div style="flex:1;color:#9ca3af;border-radius:9px;padding:9px 0;text-align:center;font-size:11px;font-weight:700">Arrived</div>
+            <div style="flex:1;color:#9ca3af;border-radius:9px;padding:9px 0;text-align:center;font-size:11px;font-weight:700">In progress</div>
+          </div>
+        </div>
+        <div style="background:#f7f7f8;border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:5px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280">Job details</div>
+          <div style="font-size:12.5px;font-weight:600">Cleaning · 2-bedroom flat, deep clean</div>
+        </div>
+        <div style="text-align:center;font-size:12.5px;color:#FF6C22;font-weight:700;margin-top:auto">Cancel job</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">W2b — Active job, in progress</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 20px;display:flex;flex-direction:column;gap:14px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+          <span style="font-weight:800;font-size:17px">Active job</span>
+          <div style="width:32px;height:32px;border-radius:10px;background:#f7f7f8;display:flex;align-items:center;justify-content:center;font-size:15px">💬</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #eef0f2;box-shadow:0 1px 2px rgba(17,24,39,.04);border-radius:14px;padding:11px 12px">
+          <div style="width:38px;height:38px;border-radius:50%;background:repeating-linear-gradient(45deg,#eef0f2,#eef0f2 6px,#f7f7f8 6px,#f7f7f8 12px);flex:none"></div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:800">Sarah K.</div><div style="font-size:10.5px;color:#6b7280">14 Independence Ave, Windhoek</div></div>
+        </div>
+        <div style="background:#fff;color:#374151;border:1.5px solid #e5e7eb;border-radius:14px;padding:12px;text-align:center;font-weight:700;font-size:13.5px">Get Directions</div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:6px">Update status</div>
+          <div style="display:flex;background:#f3f4f6;border-radius:12px;padding:4px;gap:4px">
+            <div style="flex:1;color:#9ca3af;border-radius:9px;padding:9px 0;text-align:center;font-size:11px;font-weight:700">On my way</div>
+            <div style="flex:1;color:#9ca3af;border-radius:9px;padding:9px 0;text-align:center;font-size:11px;font-weight:700">Arrived</div>
+            <div style="flex:1;background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:9px;padding:9px 0;text-align:center;font-size:11px;font-weight:800">In progress</div>
+          </div>
+        </div>
+        <div style="background:#f7f7f8;border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:5px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280">Job details</div>
+          <div style="font-size:12.5px;font-weight:600">Cleaning · 2-bedroom flat, deep clean</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Mark Job Complete</div>
+        <div style="text-align:center;font-size:12.5px;color:#FF6C22;font-weight:700">Cancel job</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">W3 — Cancel job</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:12px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><span style="font-size:19px;color:#374151">‹</span><span style="font-weight:800;font-size:16px">Cancel job</span></div>
+        <div style="background:#fff3ea;border-radius:12px;padding:10px 12px;font-size:11px;color:#9a5a2a">You can cancel free of charge within 10 minutes of accepting. This option disappears after that — cancelling later goes through Report a Problem.</div>
+        <div style="font-size:12px;color:#6b7280;font-weight:700;margin-top:2px">Why are you cancelling?</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Personal emergency</div>
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Vehicle or transport issue</div>
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Job details unclear</div>
+          <div style="background:#f7f7f8;border:1.5px solid #eef0f2;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:700">Other</div>
+        </div>
+        <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:12px 14px;font-size:12px;color:#9ca3af;font-weight:600;min-height:60px;margin-top:2px">Add a note (optional)</div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Confirm Cancellation</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">W4 — Mark complete, propose price</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px;z-index:2"></div>
+      <div style="padding:34px 20px 22px;display:flex;flex-direction:column;gap:14px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700"><span>9:41</span><div style="width:20px;height:10px;border:1.3px solid #111827;border-radius:3px"></div></div>
+        <div style="text-align:center;margin-top:6px">
+          <div style="font-weight:800;font-size:19px">Job done — propose a price</div>
+          <div style="font-size:12.5px;color:#6b7280;margin-top:6px">The customer will be asked to confirm this amount</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:5px">Amount requested</div>
+          <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:16px;display:flex;align-items:center;gap:6px">
+            <span style="font-weight:800;font-size:20px;color:#9ca3af">N$</span>
+            <span style="font-weight:800;font-size:20px;color:#111827">220</span>
+          </div>
+          <div style="font-size:10.5px;color:#9ca3af;margin-top:5px">Typical range for this job: N$150–300</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:5px">What was done (optional)</div>
+          <div style="background:#f7f7f8;border:1px solid #eef0f2;border-radius:14px;padding:12px 14px;font-size:12px;color:#9ca3af;font-weight:600;min-height:64px">e.g. Deep cleaned kitchen, bathroom, and living room</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#FE3F2D,#FF6C22);color:#fff;border-radius:14px;padding:14px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,108,34,.3);margin-top:auto">Send to Customer</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;flex:none">
+  <div style="font-size:12px;font-weight:700;color:#374151">W5 — Waiting for confirmation</div>
+  <div style="width:300px;border-radius:48px;border:10px solid #111827;background:#111827;position:relative">
+    <div style="background:#fff;border-radius:38px;overflow:hidden;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;position:relative;padding:0 30px">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#111827;border-radius:12px"></div>
+      <div style="width:80px;height:80px;border-radius:50%;border:4px solid #ffe6d3;border-top-color:#FF6C22"></div>
+      <div>
+        <div style="font-weight:800;font-size:19px">Waiting for Sarah to confirm</div>
+        <div style="font-size:12.5px;color:#6b7280;margin-top:8px">You proposed N$220 for this job. We'll notify you once she confirms or disputes it.</div>
+      </div>
+      <div style="background:#f7f7f8;border-radius:14px;padding:13px 14px;width:100%;text-align:center;font-size:12px;color:#374151;font-weight:600">N$220 · Cleaning · Deep clean</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

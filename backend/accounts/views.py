@@ -9,13 +9,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import PhoneOTP, User
+from .models import Certification, PhoneOTP, User
+from .permissions import IsWorkerRole
 from .serializers import (
     OTP_TOKEN_SALT,
+    CertificationSerializer,
     OTPRequestSerializer,
     OTPVerifySerializer,
     ProfileSerializer,
     RegisterSerializer,
+    WorkerProfileSerializer,
 )
 from .throttles import OTPRequestThrottle, OTPVerifyThrottle
 
@@ -115,3 +118,26 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class WorkerProfileView(generics.RetrieveUpdateAPIView):
+    """Worker-only: categories + ID document submission (screens 7b/8 in onboarding)."""
+
+    serializer_class = WorkerProfileSerializer
+    permission_classes = [IsAuthenticated, IsWorkerRole]
+
+    def get_object(self):
+        return self.request.user.worker_profile
+
+
+class CertificationListCreateView(generics.ListCreateAPIView):
+    """Worker-only: optional per-category certification uploads (screen 9)."""
+
+    serializer_class = CertificationSerializer
+    permission_classes = [IsAuthenticated, IsWorkerRole]
+
+    def get_queryset(self):
+        return Certification.objects.filter(worker=self.request.user.worker_profile)
+
+    def perform_create(self, serializer):
+        serializer.save(worker=self.request.user.worker_profile)

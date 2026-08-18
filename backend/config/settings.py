@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.gis",
     "rest_framework",
+    "corsheaders",
     "accounts",
     "services",
     "jobs",
@@ -56,6 +57,7 @@ AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -143,6 +145,11 @@ SIMPLE_JWT = {
 }
 
 
+# CORS — local dev only. Mobile apps don't enforce CORS, but Expo's web
+# target (used for local testing) is a browser, so it does.
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -188,6 +195,10 @@ AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", "prizm-media")
 AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL")
+# The endpoint above is Docker-internal (e.g. http://minio:9000) so the
+# backend can actually reach MinIO. URLs handed to clients (mobile apps, a
+# browser) need a host they can resolve — see storage_backends.py.
+AWS_S3_PUBLIC_ENDPOINT_URL = env("AWS_S3_PUBLIC_ENDPOINT_URL")
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", "us-east-1")
 AWS_S3_ADDRESSING_STYLE = "path"
 AWS_S3_USE_SSL = env_bool("AWS_S3_USE_SSL", False)
@@ -197,7 +208,7 @@ AWS_QUERYSTRING_EXPIRE = 3600
 
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        "BACKEND": "config.storage_backends.PubliclyAccessibleS3Storage",
     },
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
