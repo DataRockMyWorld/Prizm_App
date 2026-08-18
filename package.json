@@ -1,0 +1,12 @@
+{
+  "name": "prizm",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "worker": "npm run start --workspace=apps/worker",
+    "customer": "npm run start --workspace=apps/customer"
+  }
+}
