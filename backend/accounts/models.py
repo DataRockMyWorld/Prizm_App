@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import RegexValidator
@@ -77,6 +78,12 @@ class WorkerProfile(models.Model):
         FREE = "free", "Free"
         SUBSCRIBED = "subscribed", "Subscribed"
 
+    class IDStatus(models.TextChoices):
+        NOT_SUBMITTED = "not_submitted", "Not submitted"
+        PENDING = "pending", "Pending review"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="worker_profile"
     )
@@ -84,7 +91,18 @@ class WorkerProfile(models.Model):
         "services.ServiceCategory", related_name="workers", blank=True
     )
     id_document = models.FileField(upload_to="id_documents/", blank=True, null=True)
-    verified = models.BooleanField(default=False)
+    id_status = models.CharField(
+        max_length=20, choices=IDStatus.choices, default=IDStatus.NOT_SUBMITTED
+    )
+    id_reviewed_at = models.DateTimeField(null=True, blank=True)
+    id_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="id_reviews",
+    )
+    id_rejection_reason = models.TextField(blank=True)
     is_online = models.BooleanField(default=False)
     subscription_status = models.CharField(
         max_length=20,
@@ -93,6 +111,11 @@ class WorkerProfile(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def verified(self):
+        """ID approved — the "Verified" badge described in CLAUDE.md."""
+        return self.id_status == self.IDStatus.APPROVED
 
     def __str__(self):
         return f"WorkerProfile<{self.user.phone_number}>"
@@ -127,6 +150,15 @@ class Certification(models.Model):
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.PENDING
     )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="certification_reviews",
+    )
+    rejection_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
