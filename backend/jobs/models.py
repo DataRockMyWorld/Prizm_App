@@ -48,11 +48,44 @@ class JobRequest(models.Model):
     agreed_price = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True
     )
+    worker_note = models.TextField(blank=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"JobRequest #{self.pk} ({self.status})"
+
+
+class JobOffer(models.Model):
+    """A targeted, time-boxed offer of a job to one candidate worker.
+
+    Matching is broadcast-and-first-to-accept, but priority (Verified/
+    Certified) determines who gets offered first: see jobs.matching. Only
+    one offer is outstanding per job at a time.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        DECLINED = "declined", "Declined"
+        EXPIRED = "expired", "Expired"
+
+    job = models.ForeignKey(JobRequest, on_delete=models.CASCADE, related_name="offers")
+    worker = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="job_offers"
+    )
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    offered_at = models.DateTimeField(auto_now_add=True)
+    responds_by = models.DateTimeField()
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("job", "worker")
+        ordering = ["-offered_at"]
+
+    def __str__(self):
+        return f"Offer(job={self.job_id}, worker={self.worker_id}, {self.status})"
 
 
 class Message(models.Model):

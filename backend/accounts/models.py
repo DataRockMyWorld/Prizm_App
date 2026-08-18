@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
+from django.contrib.gis.db import models as gis_models
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
@@ -104,6 +105,8 @@ class WorkerProfile(models.Model):
     )
     id_rejection_reason = models.TextField(blank=True)
     is_online = models.BooleanField(default=False)
+    last_location = gis_models.PointField(geography=True, null=True, blank=True)
+    last_location_updated_at = models.DateTimeField(null=True, blank=True)
     subscription_status = models.CharField(
         max_length=20,
         choices=SubscriptionStatus.choices,

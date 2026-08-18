@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CancellationLog, JobRequest, Message, Rating, Report
+from .models import CancellationLog, JobOffer, JobRequest, Message, Rating, Report
 
 
 @admin.register(JobRequest)
@@ -8,6 +8,12 @@ class JobRequestAdmin(admin.ModelAdmin):
     list_display = ("id", "customer", "worker", "category", "status", "created_at")
     list_filter = ("status", "category")
     search_fields = ("customer__phone_number", "worker__phone_number")
+
+
+@admin.register(JobOffer)
+class JobOfferAdmin(admin.ModelAdmin):
+    list_display = ("job", "worker", "status", "offered_at", "responds_by")
+    list_filter = ("status",)
 
 
 @admin.register(Message)
