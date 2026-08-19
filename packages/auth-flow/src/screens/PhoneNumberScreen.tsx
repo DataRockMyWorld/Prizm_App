@@ -1,19 +1,25 @@
 import { requestOtp } from "@prizm/api";
-import { Button, GradientBackground, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
+import { Button, Screen, TextField, ThemedText, colors, prismLogo, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
 import type { AuthStackParamList } from "../types";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Phone">;
 
+/** "812345678" -> "81 234 5678", matching the design's grouping. */
+function formatLocalNumber(digits: string) {
+  return [digits.slice(0, 2), digits.slice(2, 5), digits.slice(5, 9)]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function PhoneNumberScreen({ navigation }: Props) {
-  const [localNumber, setLocalNumber] = useState("");
+  const [digits, setDigits] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const digits = localNumber.replace(/\D/g, "");
   const phoneNumber = `+264${digits}`;
   const isValid = digits.length >= 7;
 
@@ -34,11 +40,7 @@ export function PhoneNumberScreen({ navigation }: Props) {
   return (
     <Screen>
       <View style={styles.content}>
-        <GradientBackground style={styles.logo}>
-          <ThemedText variant="title" style={styles.logoLetter}>
-            P
-          </ThemedText>
-        </GradientBackground>
+        <Image source={prismLogo} style={styles.logo} resizeMode="contain" />
         <ThemedText variant="title" style={styles.centered}>
           What's your number?
         </ThemedText>
@@ -49,8 +51,8 @@ export function PhoneNumberScreen({ navigation }: Props) {
           prefix={<ThemedText variant="subtitle">+264</ThemedText>}
           keyboardType="number-pad"
           placeholder="81 234 5678"
-          value={localNumber}
-          onChangeText={setLocalNumber}
+          value={formatLocalNumber(digits)}
+          onChangeText={(text) => setDigits(text.replace(/\D/g, "").slice(0, 9))}
           autoFocus
         />
         <ThemedText variant="caption" style={styles.centered}>
@@ -83,14 +85,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 56,
     height: 56,
-    borderRadius: 16,
     alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: spacing.sm,
-  },
-  logoLetter: {
-    color: colors.textInverse,
   },
   centered: {
     textAlign: "center",

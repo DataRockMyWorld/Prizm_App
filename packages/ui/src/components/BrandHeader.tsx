@@ -1,8 +1,8 @@
-import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
-import { colors, spacing } from "../tokens";
+import { prismLogo } from "../assets";
+import { spacing } from "../tokens";
 import { ThemedText } from "./ThemedText";
 
 export interface BrandHeaderProps {
@@ -10,17 +10,12 @@ export interface BrandHeaderProps {
   rightAccessory?: React.ReactNode;
 }
 
-/** The small "PRISM" logo + wordmark row at the top of home screens. */
+/** The small Prism logo + wordmark row at the top of home screens. */
 export function BrandHeader({ rightAccessory }: BrandHeaderProps) {
   return (
     <View style={styles.row}>
       <View style={styles.left}>
-        <LinearGradient
-          colors={colors.gradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.logo}
-        />
+        <Image source={prismLogo} style={styles.logo} resizeMode="contain" />
         <ThemedText variant="subtitle">PRISM</ThemedText>
       </View>
       {rightAccessory}
@@ -42,6 +37,5 @@ const styles = StyleSheet.create({
   logo: {
     width: 28,
     height: 28,
-    borderRadius: 8,
   },
 });

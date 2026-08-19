@@ -1,10 +1,12 @@
 import { ServiceCategory, listCategories, useAuth } from "@prizm/api";
 import { BrandHeader, Button, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
+import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 export function HomeScreen() {
   const { accessToken, profile } = useAuth();
+  const navigation = useNavigation<any>();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
 
   useEffect(() => {
@@ -36,21 +38,26 @@ export function HomeScreen() {
 
       <View style={styles.grid}>
         {categories.map((category) => (
-          <View key={category.id} style={styles.gridItem}>
+          <Pressable
+            key={category.id}
+            style={styles.gridItem}
+            onPress={() => navigation.navigate("RequestSubmission", { categoryId: category.id })}
+          >
             <View style={styles.categoryIcon} />
             <ThemedText variant="caption" style={styles.gridLabel}>
               {category.name}
             </ThemedText>
-          </View>
+          </Pressable>
         ))}
       </View>
 
       <View style={styles.spacer} />
 
-      <Button label="Request a Service" style={styles.requestButton} />
-      <ThemedText variant="caption" style={styles.footnote}>
-        Requesting a service is wired up in a later step.
-      </ThemedText>
+      <Button
+        label="Request a Service"
+        onPress={() => navigation.navigate("RequestSubmission", {})}
+        style={styles.requestButton}
+      />
     </Screen>
   );
 }
@@ -115,10 +122,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   requestButton: {
-    marginBottom: spacing.sm,
-  },
-  footnote: {
-    textAlign: "center",
     marginBottom: spacing.md,
   },
 });

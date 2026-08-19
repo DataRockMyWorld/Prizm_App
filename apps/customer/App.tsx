@@ -16,7 +16,7 @@ import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { RootTabs } from "./src/navigation/RootTabs";
+import { RequestNavigator } from "./src/navigation/RequestNavigator";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,7 +39,7 @@ function AppContent() {
   if (!profile.liability_acknowledged_at) {
     return <PostAuthNavigator />;
   }
-  return <RootTabs />;
+  return <RequestNavigator />;
 }
 
 export default function App() {
