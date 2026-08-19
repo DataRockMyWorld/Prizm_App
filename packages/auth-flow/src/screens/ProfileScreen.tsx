@@ -56,7 +56,7 @@ export function ProfileScreen() {
     <Screen>
       <View style={styles.content}>
         <ThemedText variant="title" style={styles.centered}>
-          Tell us about you
+          Who do we have here? 😊
         </ThemedText>
         <ThemedText variant="body" style={[styles.centered, styles.subtitle]}>
           Just the basics for now
