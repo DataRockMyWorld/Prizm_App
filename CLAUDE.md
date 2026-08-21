@@ -91,6 +91,45 @@ cancel-job link, Mark Complete action once in progress) → cancel job
 (10-min window + reason) → propose price (amount + optional note, shows
 typical range) → waiting for customer confirmation
 
+## Development workflow (PRD → tickets → implement)
+
+For any non-trivial feature (not tiny fixes/tweaks), work goes through
+three stages before code is written:
+
+1. **PRD** (`docs/prds/<feature-slug>.md`) — written collaboratively:
+   Claude interviews the user (current codebase/backend state first,
+   then open product questions the code can't answer) before drafting.
+   Covers summary, current state, goals/non-goals, screen-by-screen or
+   step-by-step flow, technical decisions, acceptance criteria, and open
+   risks.
+2. **Tickets** (`docs/tickets/<feature-slug>.md`) — the PRD broken into
+   ordered, independently-committable tickets, each with its own
+   dependencies, touched files, acceptance criteria, and **a "Tests"
+   subsection** (see below).
+3. **Implementation** — tickets are implemented one at a time, in
+   dependency order, with a review point between each rather than one
+   large unreviewed diff.
+
+Both docs are checked into the repo as durable history, not scratch
+files — future work (and future Claude sessions) should be able to read
+back why a feature was scoped the way it was. See
+`docs/prds/worker-active-job-flow.md` +
+`docs/tickets/worker-active-job-flow.md` for the reference example.
+
+**Testing is integral, not an afterthought.** Every PRD includes a
+"Testing strategy" section (framework choices, what's in/out of scope),
+and every ticket that adds logic (not pure UI wiring) includes a "Tests"
+subsection — the ticket isn't done until those tests exist and pass.
+Current stack choices (set up as of the worker-active-job-flow PRD, keep
+using unless there's a reason to change): backend uses `pytest-django` +
+`factory_boy`; mobile apps use `jest-expo` + `@testing-library/
+react-native`, scoped to **logic** (hooks, timers, validation, transition
+guards — extracted as plain functions/hooks so they're unit-testable)
+rather than full-screen rendering, since screens change shape often
+pre-pilot and rendering tests there would mostly test churn. No CI yet —
+tests run locally; wiring GitHub Actions is a deliberate later step, not
+assumed to exist.
+
 ## Build order
 1. Django project + core models + PostGIS
 2. Auth endpoints (phone/OTP/PIN, JWT)
