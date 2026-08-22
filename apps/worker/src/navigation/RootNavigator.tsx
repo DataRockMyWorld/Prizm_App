@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
 import { OfferPollingProvider } from "../offers/OfferPollingProvider";
+import { ActiveJobScreen } from "../screens/ActiveJobScreen";
 import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
 import { CertificationsScreen } from "../screens/onboarding/CertificationsScreen";
 import { IdUploadScreen } from "../screens/onboarding/IdUploadScreen";
@@ -39,6 +40,7 @@ export function RootNavigator() {
           component={IncomingOfferScreen}
           options={{ presentation: "fullScreenModal", gestureEnabled: false }}
         />
+        <Stack.Screen name="ActiveJob" component={ActiveJobScreen} />
       </Stack.Navigator>
     </OfferPollingProvider>
   );

@@ -192,7 +192,17 @@ new screen, `RootNavigator.tsx`/`RootTabs.tsx`, `navigation/types.ts`)
 
 ---
 
-### T4 — Active job screen (W2 / W2b)
+### T4 — Active job screen (W2 / W2b) ✅ Done
+
+**Implementation notes:** `JobRequestSerializer` was missing both
+`customer` (it only ever exposed `worker`) and `accepted_at` — both
+essential to this screen (customer card, cancel-window check), not
+optional like T3's distance gap, so added directly
+(`CustomerPublicSerializer`, mirroring the existing `WorkerPublicSerializer`
+pattern) with a backend test. "Mark Job Complete" and "Cancel job" both
+show a placeholder alert for now (`TODO(T5b)`/`TODO(T5a)`) since those
+screens don't exist yet. Not visually verified live on the simulator,
+same token-budget tradeoff as T3.
 
 **Depends on:** T2, T3 (entry point from accept). **Touches:**
 `apps/worker/src/screens/` (new `ActiveJobScreen.tsx`), navigation types

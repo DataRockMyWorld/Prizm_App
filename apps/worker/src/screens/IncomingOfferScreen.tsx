@@ -63,11 +63,11 @@ export function IncomingOfferScreen() {
   const handleAccept = async () => {
     setIsResponding(true);
     try {
-      await acceptOffer(accessToken, currentOffer.id);
+      const job = await acceptOffer(accessToken, currentOffer.id);
       dismiss();
-      // TODO(T4): once the active-job screen exists, navigate there with
-      // this job instead of just returning to Home.
-      navigation.navigate("Tabs");
+      // replace, not navigate — this offer interrupt shouldn't linger in
+      // the back-stack behind the active-job screen.
+      navigation.replace("ActiveJob", { jobId: job.id });
     } catch (error) {
       Alert.alert("Couldn't accept", apiErrorMessage(error, "This offer may have expired."));
       setIsResponding(false);

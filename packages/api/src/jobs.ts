@@ -22,6 +22,12 @@ export interface JobWorker {
   rating_average: number | null;
 }
 
+export interface JobCustomer {
+  id: number;
+  full_name: string;
+  photo: string | null;
+}
+
 export interface JobRequest {
   id: number;
   category: ServiceCategory;
@@ -35,8 +41,10 @@ export interface JobRequest {
   price_range_max: string;
   agreed_price: string | null;
   worker_note: string;
+  customer: JobCustomer | null;
   worker: JobWorker | null;
   current_offer_responds_by: string | null;
+  accepted_at: string | null;
   created_at: string;
   updated_at: string;
 }

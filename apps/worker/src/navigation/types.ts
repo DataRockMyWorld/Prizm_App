@@ -7,4 +7,5 @@ export type WorkerOnboardingStackParamList = {
 export type WorkerRootStackParamList = {
   Tabs: undefined;
   IncomingOffer: undefined;
+  ActiveJob: { jobId: number };
 } & WorkerOnboardingStackParamList;

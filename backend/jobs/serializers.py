@@ -28,8 +28,15 @@ class WorkerPublicSerializer(serializers.ModelSerializer):
         return round(result["avg"], 1) if result["avg"] is not None else None
 
 
+class CustomerPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "photo"]
+
+
 class JobRequestSerializer(serializers.ModelSerializer):
     category = CategoryMiniSerializer(read_only=True)
+    customer = CustomerPublicSerializer(read_only=True)
     worker = WorkerPublicSerializer(read_only=True)
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
@@ -50,8 +57,10 @@ class JobRequestSerializer(serializers.ModelSerializer):
             "price_range_max",
             "agreed_price",
             "worker_note",
+            "customer",
             "worker",
             "current_offer_responds_by",
+            "accepted_at",
             "created_at",
             "updated_at",
         ]
