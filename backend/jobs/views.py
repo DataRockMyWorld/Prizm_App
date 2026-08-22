@@ -335,8 +335,8 @@ class WorkerIncomingOfferView(generics.ListAPIView):
 
 class NearbyJobsView(generics.ListAPIView):
     """Informational only ('nearby jobs with estimate ranges' on the worker home screen) —
-    matching is broadcast-and-first-to-accept, so accepting happens via the
-    offer endpoints, not by picking from this list.
+    matching is sequential single-offer (see jobs.matching), so accepting
+    happens via the offer endpoints, not by picking from this list.
     """
 
     permission_classes = [IsAuthenticated, IsWorkerRole]

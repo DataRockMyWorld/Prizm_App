@@ -60,9 +60,9 @@ class JobRequest(models.Model):
 class JobOffer(models.Model):
     """A targeted, time-boxed offer of a job to one candidate worker.
 
-    Matching is broadcast-and-first-to-accept, but priority (Verified/
-    Certified) determines who gets offered first: see jobs.matching. Only
-    one offer is outstanding per job at a time.
+    Matching is sequential, one candidate at a time, ranked by priority
+    (Certified/Verified) then distance: see jobs.matching. Only one offer
+    is outstanding per job at a time.
     """
 
     class Status(models.TextChoices):

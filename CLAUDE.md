@@ -25,10 +25,15 @@ typeface, rounded cards, bottom tab nav.
   (e.g. "Est. N$150–300"). The actual price is proposed by the **worker**
   after marking a job complete; the **customer** confirms or disputes it
   via "Report a problem → Pricing disagreement".
-- **Matching**: broadcast-and-first-to-accept, not browse-and-choose.
-  Priority goes to workers with a Verified badge (ID approved) and/or
-  Certified badge (per-category certification approved) over other
-  available workers.
+- **Matching**: sequential single-offer, not browse-and-choose. A job is
+  offered to exactly one candidate at a time — the best-ranked eligible
+  worker within `MATCHING_RADIUS_KM` (25km), ranked by Certified badge,
+  then Verified badge (ID approved), then distance. If they miss the
+  60-second response window or decline, the offer moves to the
+  next-best candidate, and so on. (Not a true simultaneous broadcast to
+  multiple workers at once — see "Matching: future considerations"
+  below for a proposal along those lines, deliberately not adopted for
+  the MVP pilot.)
 - **Verification tiers**: ID upload is mandatory to go online as a worker
   (manual admin review). Certification upload is optional and skippable —
   it only adds a "Certified — [category]" badge once approved; it never
@@ -146,6 +151,23 @@ assumed to exist.
 11. Push notifications
 12. Device testing on real iOS/Android hardware, then pilot rollout
     (~100–300 users)
+
+## Matching: future considerations (not adopted for MVP)
+Proposed and deliberately deferred: **tiered radius broadcast** —
+instead of one candidate at a time, open the job to all eligible
+workers within an initial narrow radius/ETA (e.g. 3km) simultaneously;
+if unclaimed after 60s, expand to a wider ring (e.g. 8km), then to the
+full match radius. Reasoning for deferring: it's a real scope expansion
+(falls under "smart/weighted matching," already out of scope below),
+needs real pilot data on how often/how far offers currently cascade
+before it's worth tuning radii against, and introduces genuine
+concurrency risk (atomic accept-with-sibling-cancellation across
+multiple simultaneous offers) that's worse to get wrong on a trades
+platform than on e.g. food delivery — a race-condition bug here means
+two tradespeople physically showing up to the same job. If revisited:
+also needs a plan for preserving the Certified/Verified priority rule
+within a tier (e.g. a short head-start) rather than letting it collapse
+to pure first-tap-wins.
 
 ## Explicitly out of scope for MVP
 Automated KYC/facial match, social security registration integration,
