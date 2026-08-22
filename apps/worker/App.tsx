@@ -8,33 +8,44 @@ import {
 } from "@expo-google-fonts/manrope";
 import { AuthProvider, useAuth } from "@prizm/api";
 import { AuthNavigator, PostAuthNavigator } from "@prizm/auth-flow";
-import { colors } from "@prizm/ui";
+import { SplashView } from "@prizm/ui";
 import { NavigationContainer } from "@react-navigation/native";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import React, { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { RootNavigator } from "./src/navigation/RootNavigator";
 
 SplashScreen.preventAutoHideAsync();
 
+/** Auth/profile checks can resolve in a few ms — hold the brand splash up for at least this long. */
+const MIN_SPLASH_MS = 1200;
+
+const splash = (
+  <>
+    <SplashView icon="🔧" />
+    <StatusBar style="light" />
+  </>
+);
+
 function AppContent() {
   const { isLoading, isAuthenticated, profile } = useAuth();
+  const [minSplashElapsed, setMinSplashElapsed] = useState(false);
 
-  if (isLoading) {
-    return null;
+  useEffect(() => {
+    const timer = setTimeout(() => setMinSplashElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading || !minSplashElapsed) {
+    return splash;
   }
   if (!isAuthenticated) {
     return <AuthNavigator role="worker" />;
   }
   if (!profile) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
+    return splash;
   }
   if (!profile.liability_acknowledged_at) {
     return <PostAuthNavigator />;
@@ -72,11 +83,3 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

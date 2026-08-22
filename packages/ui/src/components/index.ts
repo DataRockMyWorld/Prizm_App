@@ -9,6 +9,7 @@ export * from "./OtpInput";
 export * from "./PinDots";
 export * from "./ProgressBar";
 export * from "./Screen";
+export * from "./SplashView";
 export * from "./TextField";
 export * from "./ThemedText";
 export * from "./UploadTile";
