@@ -136,7 +136,19 @@ already covered:
 
 ---
 
-### T3 — Global offer polling + incoming-request interrupt (W1)
+### T3 — Global offer polling + incoming-request interrupt (W1) ✅ Done
+
+**Implementation notes:** distance ("2.1km away") is omitted — the offer
+endpoint's `JobRequestSerializer` doesn't compute it (only
+`NearbyJobSerializer` does, via a PostGIS annotation against the
+worker's `last_location`); adding it would mean extending
+`WorkerIncomingOfferView`'s queryset similarly, left as a follow-up
+rather than expanding this ticket into the backend. Accept currently
+navigates back to Home (`Tabs`) with a `TODO(T4)` marker — routes to the
+real active-job screen once T4 exists. Not visually verified live on
+the simulator this round (would need a full worker+customer+matching
+round trip to produce a real offer) — styling was built directly from
+the mockup's exact values instead.
 
 **Depends on:** T2. **Touches:** `apps/worker/src/` (new hook/context,
 new screen, `RootNavigator.tsx`/`RootTabs.tsx`, `navigation/types.ts`)
