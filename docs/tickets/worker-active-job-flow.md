@@ -9,7 +9,7 @@ done until those tests exist and pass**, per PRD §7.
 
 ---
 
-### T0a — Backend: test infrastructure
+### T0a — Backend: test infrastructure ✅ Done
 
 **Depends on:** nothing. **Touches:** `backend/requirements.txt` (or a
 new `requirements-dev.txt`), `backend/pytest.ini` (or `pyproject.toml`),
@@ -45,7 +45,7 @@ new `requirements-dev.txt`), `backend/pytest.ini` (or `pyproject.toml`),
 
 ---
 
-### T0b — Frontend: test infrastructure
+### T0b — Frontend: test infrastructure ✅ Done
 
 **Depends on:** nothing (can run in parallel with T0a). **Touches:**
 `apps/worker/package.json`, `apps/customer/package.json`,
@@ -72,7 +72,7 @@ new `requirements-dev.txt`), `backend/pytest.ini` (or `pyproject.toml`),
 
 ---
 
-### T1 — Backend: cancellation note field
+### T1 — Backend: cancellation note field ✅ Done
 
 **Depends on:** T0a. **Touches:** `backend/jobs/`
 

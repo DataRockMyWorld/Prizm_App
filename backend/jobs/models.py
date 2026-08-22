@@ -157,6 +157,7 @@ class CancellationLog(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cancellations"
     )
     reason = models.CharField(max_length=30, choices=Reason.choices)
+    note = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

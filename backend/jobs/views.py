@@ -123,7 +123,10 @@ class JobCancelView(APIView):
             serializer = WorkerCancelSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             CancellationLog.objects.create(
-                job=job, worker=user, reason=serializer.validated_data["reason"]
+                job=job,
+                worker=user,
+                reason=serializer.validated_data["reason"],
+                note=serializer.validated_data["note"],
             )
             job.worker = None
             job.status = JobRequest.Status.SEARCHING

@@ -117,6 +117,7 @@ class CompleteJobSerializer(serializers.Serializer):
 
 class WorkerCancelSerializer(serializers.Serializer):
     reason = serializers.ChoiceField(choices=CancellationLog.Reason.choices)
+    note = serializers.CharField(required=False, allow_blank=True, default="")
 
 
 class ReportCreateSerializer(serializers.Serializer):
