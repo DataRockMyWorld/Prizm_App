@@ -245,7 +245,11 @@ same token-budget tradeoff as T3.
 
 ---
 
-### T5a — Cancel job screen (W3)
+### T5a — Cancel job screen (W3) ✅ Done
+
+**Implementation notes:** verified live end-to-end (accept → cancel with
+reason + note → job correctly reverts to `searching`, worker cleared,
+`CancellationLog` stored with the exact reason/note entered).
 
 **Depends on:** T2, T4. **Touches:** new `CancelJobScreen.tsx`
 
@@ -271,7 +275,13 @@ same token-budget tradeoff as T3.
 
 ---
 
-### T5b — Propose price screen (W4)
+### T5b — Propose price screen (W4) ✅ Done
+
+**Implementation notes:** verified live end-to-end (accept → stepper
+through to in_progress → propose a price → job correctly transitions
+to `awaiting_price_confirmation`). "Send to Customer" currently shows
+a success alert and returns to Home — `TODO(T6)` once the real waiting
+screen exists.
 
 **Depends on:** T2, T4. **Touches:** new `ProposePriceScreen.tsx`
 

@@ -3,7 +3,9 @@ import React from "react";
 
 import { OfferPollingProvider } from "../offers/OfferPollingProvider";
 import { ActiveJobScreen } from "../screens/ActiveJobScreen";
+import { CancelJobScreen } from "../screens/CancelJobScreen";
 import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
+import { ProposePriceScreen } from "../screens/ProposePriceScreen";
 import { CertificationsScreen } from "../screens/onboarding/CertificationsScreen";
 import { IdUploadScreen } from "../screens/onboarding/IdUploadScreen";
 import { UnderReviewScreen } from "../screens/onboarding/UnderReviewScreen";
@@ -41,6 +43,16 @@ export function RootNavigator() {
           options={{ presentation: "fullScreenModal", gestureEnabled: false }}
         />
         <Stack.Screen name="ActiveJob" component={ActiveJobScreen} />
+        <Stack.Screen
+          name="CancelJob"
+          component={CancelJobScreen}
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="ProposePrice"
+          component={ProposePriceScreen}
+          options={{ presentation: "modal" }}
+        />
       </Stack.Navigator>
     </OfferPollingProvider>
   );

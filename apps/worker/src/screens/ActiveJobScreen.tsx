@@ -41,8 +41,8 @@ function apiErrorMessage(error: unknown, fallback: string): string {
 }
 
 /** W2 / W2b — active job: customer card, directions, the on-site status
- * stepper, and entry points to mark-complete / cancel (both still
- * placeholders — T5a and T5b build the real screens). */
+ * stepper, and entry points to mark-complete (ProposePrice, T5b) and
+ * cancel (CancelJob, T5a). */
 export function ActiveJobScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
@@ -99,13 +99,11 @@ export function ActiveJobScreen() {
   };
 
   const handleMarkComplete = () => {
-    // TODO(T5b): navigate to the real propose-price screen once it exists.
-    Alert.alert("Coming soon", "Proposing a price will be built in a follow-up ticket.");
+    navigation.navigate("ProposePrice", { jobId });
   };
 
   const handleCancel = () => {
-    // TODO(T5a): navigate to the real cancel-job screen once it exists.
-    Alert.alert("Coming soon", "Cancelling will be built in a follow-up ticket.");
+    navigation.navigate("CancelJob", { jobId });
   };
 
   const showMarkComplete = job.status === "in_progress";
