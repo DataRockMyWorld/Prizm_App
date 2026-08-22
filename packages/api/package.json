@@ -8,6 +8,7 @@
     "test": "jest"
   },
   "peerDependencies": {
+    "expo-constants": "*",
     "expo-secure-store": "*",
     "react": "*",
     "react-native": "*"

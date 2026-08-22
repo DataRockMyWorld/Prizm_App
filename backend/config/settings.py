@@ -33,7 +33,12 @@ SECRET_KEY = env("SECRET_KEY", "django-insecure-dev-only-change-me")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env_bool("DEBUG", False)
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+# In local dev (DEBUG=True), the phone/emulator calls whatever LAN IP DHCP
+# handed the Mac this session — chasing that by hand in DJANGO_ALLOWED_HOSTS
+# every time it drifts isn't worth it for a pilot that never runs DEBUG=True
+# in production. DJANGO_ALLOWED_HOSTS still applies whenever it's actually
+# set (e.g. real deployments).
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1") if not DEBUG else ["*"]
 
 
 # Application definition

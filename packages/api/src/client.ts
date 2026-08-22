@@ -1,9 +1,21 @@
-const DEFAULT_API_URL = "http://localhost:8000";
+import Constants from "expo-constants";
 
-/** Override with EXPO_PUBLIC_API_URL in each app's .env (e.g. for an Android
- * emulator use http://10.0.2.2:8000, for a physical device use your Mac's
- * LAN IP). */
+const DEFAULT_API_URL = "http://localhost:8000";
+const BACKEND_PORT = "8000";
+
+/** Same Mac serves both Metro and the Django backend in local dev, so the
+ * backend host is derived from Metro's own dev-server host (the LAN IP the
+ * phone already used to fetch the JS bundle) rather than a hardcoded IP in
+ * .env — this self-corrects whenever DHCP reassigns that IP mid-session,
+ * instead of silently hanging on a stale address. Falls back to
+ * EXPO_PUBLIC_API_URL (then localhost) when there's no dev-server host,
+ * e.g. a production/standalone build. */
 export function getApiUrl(): string {
+  const hostUri = Constants.expoConfig?.hostUri;
+  const host = hostUri?.split(":")[0];
+  if (host) {
+    return `http://${host}:${BACKEND_PORT}`;
+  }
   return process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
 }
 
