@@ -50,7 +50,7 @@ export function ActiveJobScreen() {
   const jobId: number = route.params.jobId;
 
   const [job, setJob] = useState<JobRequest | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitioningTo, setTransitioningTo] = useState<JobStatus | null>(null);
   const [now, setNow] = useState(() => new Date());
 
   const loadJob = useCallback(async () => {
@@ -86,15 +86,15 @@ export function ActiveJobScreen() {
   const highlightedStatus = job.status === "accepted" ? "on_my_way" : job.status;
 
   const handleTransition = async (status: JobStatus) => {
-    if (status !== nextStatus || isTransitioning) return;
-    setIsTransitioning(true);
+    if (status !== nextStatus || transitioningTo) return;
+    setTransitioningTo(status);
     try {
       const transition = status === "on_my_way" ? markOnMyWay : status === "arrived" ? markArrived : markInProgress;
       setJob(await transition(accessToken, jobId));
     } catch (error) {
       Alert.alert("Couldn't update status", apiErrorMessage(error, "Something went wrong."));
     } finally {
-      setIsTransitioning(false);
+      setTransitioningTo(null);
     }
   };
 
@@ -144,9 +144,15 @@ export function ActiveJobScreen() {
         </ThemedText>
         <View style={styles.segmentRow}>
           {SEGMENTS.map((segment) => {
-            const isActive = segment.status === highlightedStatus;
-            const isTappable = segment.status === nextStatus && !isTransitioning;
-            const content = (
+            const isPending = segment.status === transitioningTo;
+            // While a transition is in flight, only the pending segment is
+            // "active" — otherwise the old current segment and the new
+            // pending one would both show the gradient at once.
+            const isActive = isPending || (!transitioningTo && segment.status === highlightedStatus);
+            const isTappable = segment.status === nextStatus && !transitioningTo;
+            const content = isPending ? (
+              <ActivityIndicator size="small" color={colors.textInverse} />
+            ) : (
               <ThemedText
                 variant="caption"
                 style={isActive ? styles.segmentTextActive : styles.segmentText}
