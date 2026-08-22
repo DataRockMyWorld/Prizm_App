@@ -99,7 +99,7 @@ new `requirements-dev.txt`), `backend/pytest.ini` (or `pyproject.toml`),
 
 ---
 
-### T2 — `packages/api`: missing job-lifecycle client functions
+### T2 — `packages/api`: missing job-lifecycle client functions ✅ Done
 
 **Depends on:** T0b, T1 (for the cancel-with-note signature). **Touches:**
 `packages/api/src/jobs.ts`

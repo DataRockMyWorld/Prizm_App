@@ -41,6 +41,13 @@ export interface JobRequest {
   updated_at: string;
 }
 
+export interface JobOffer {
+  id: number;
+  job: JobRequest;
+  offered_at: string;
+  responds_by: string;
+}
+
 export interface CreateJobRequestInput {
   category: number;
   description?: string;
@@ -71,6 +78,64 @@ export function getJob(token: string, jobId: number) {
 
 export function cancelJob(token: string, jobId: number) {
   return apiRequest<JobRequest>(`/api/jobs/${jobId}/cancel/`, { method: "POST", token });
+}
+
+export type CancellationReason =
+  | "personal_emergency"
+  | "transport_issue"
+  | "job_details_unclear"
+  | "other";
+
+/** Worker-side cancel, distinct from the customer's reason-less `cancelJob`. */
+export function cancelJobAsWorker(
+  token: string,
+  jobId: number,
+  reason: CancellationReason,
+  note?: string
+) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/cancel/`, {
+    method: "POST",
+    token,
+    body: { reason, note: note || "" },
+  });
+}
+
+export function getIncomingOffers(token: string) {
+  return apiRequest<JobOffer[]>("/api/jobs/worker/incoming/", { token });
+}
+
+export function acceptOffer(token: string, offerId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/offers/${offerId}/accept/`, {
+    method: "POST",
+    token,
+  });
+}
+
+export function declineOffer(token: string, offerId: number) {
+  return apiRequest<{ detail: string }>(`/api/jobs/offers/${offerId}/decline/`, {
+    method: "POST",
+    token,
+  });
+}
+
+export function markOnMyWay(token: string, jobId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/on-my-way/`, { method: "POST", token });
+}
+
+export function markArrived(token: string, jobId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/arrived/`, { method: "POST", token });
+}
+
+export function markInProgress(token: string, jobId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/start/`, { method: "POST", token });
+}
+
+export function completeJob(token: string, jobId: number, agreedPrice: number, note?: string) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/complete/`, {
+    method: "POST",
+    token,
+    body: { agreed_price: agreedPrice, note: note || "" },
+  });
 }
 
 export function confirmPrice(token: string, jobId: number) {
