@@ -9,11 +9,16 @@ const BACKEND_PORT = "8000";
  * .env — this self-corrects whenever DHCP reassigns that IP mid-session,
  * instead of silently hanging on a stale address. Falls back to
  * EXPO_PUBLIC_API_URL (then localhost) when there's no dev-server host,
- * e.g. a production/standalone build. */
+ * e.g. a production/standalone build — or when the dev-server host is
+ * "localhost"/"127.0.0.1", which happens on a physical device launched via
+ * `expo run:ios --device` over USB: Metro gets tunneled through usbmuxd and
+ * reports itself as localhost to the JS runtime, but that tunnel only
+ * forwards Metro's own port, not the Django backend's — "localhost" on the
+ * phone is the phone itself, not this Mac. */
 export function getApiUrl(): string {
   const hostUri = Constants.expoConfig?.hostUri;
   const host = hostUri?.split(":")[0];
-  if (host) {
+  if (host && host !== "localhost" && host !== "127.0.0.1") {
     return `http://${host}:${BACKEND_PORT}`;
   }
   return process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
