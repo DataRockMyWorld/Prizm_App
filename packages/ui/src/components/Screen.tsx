@@ -29,7 +29,7 @@ export function Screen({ children, style, edges = ["top", "bottom"] }: ScreenPro
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.pageBackground,
   },
   flex: {
     flex: 1,

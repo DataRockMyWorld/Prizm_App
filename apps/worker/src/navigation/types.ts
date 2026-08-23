@@ -12,4 +12,5 @@ export type WorkerRootStackParamList = {
   ProposePrice: { jobId: number };
   WaitingForConfirmation: { jobId: number };
   JobComplete: { jobId: number };
+  JobDetail: { jobId: number };
 } & WorkerOnboardingStackParamList;

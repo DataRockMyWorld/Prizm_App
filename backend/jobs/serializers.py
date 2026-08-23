@@ -34,6 +34,12 @@ class CustomerPublicSerializer(serializers.ModelSerializer):
         fields = ["id", "full_name", "photo"]
 
 
+class RatingMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ["stars", "comment"]
+
+
 class JobRequestSerializer(serializers.ModelSerializer):
     category = CategoryMiniSerializer(read_only=True)
     customer = CustomerPublicSerializer(read_only=True)
@@ -41,6 +47,7 @@ class JobRequestSerializer(serializers.ModelSerializer):
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
     current_offer_responds_by = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = JobRequest
@@ -61,6 +68,7 @@ class JobRequestSerializer(serializers.ModelSerializer):
             "worker",
             "current_offer_responds_by",
             "accepted_at",
+            "rating",
             "created_at",
             "updated_at",
         ]
@@ -75,6 +83,12 @@ class JobRequestSerializer(serializers.ModelSerializer):
     def get_current_offer_responds_by(self, obj):
         offer = obj.offers.filter(status=JobOffer.Status.PENDING).first()
         return offer.responds_by if offer else None
+
+    def get_rating(self, obj):
+        try:
+            return RatingMiniSerializer(obj.rating).data
+        except Rating.DoesNotExist:
+            return None
 
 
 class JobRequestCreateSerializer(serializers.Serializer):

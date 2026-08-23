@@ -356,7 +356,40 @@ new `JobCompleteScreen.tsx`
 
 ---
 
-### T7 — Jobs tab: basic history list + detail view
+### T7 — Jobs tab: basic history list + detail view ✅ Done
+
+**Implementation notes:** went beyond the basic placeholder-replacement
+scope after two rounds of hi-fi mockup review with the user. Final list
+screen: Active/Completed segmented tabs, colored left-rail + status pill
+per card (tone derived from job status via `getStatusTone`), customer
+avatar/name, THIS WEEK/EARLIER date grouping for Completed (`groupByRecency`),
+and a header stat that's "N active" on the Active tab or "N$X agreed this
+month" on Completed (`computeAgreedTotalThisMonth` — deliberately not
+labeled "earnings", since there's no payment integration yet). Cards use
+`numberOfLines`/`ellipsizeMode` + a fixed `minHeight` so varying
+description lengths don't break equal card sizing. Detail screen
+(`JobDetailScreen.tsx`) redesigned to match a separate "W7" mockup:
+centered avatar/name/status, Completed/Duration rows
+(`formatFullDateTime`/`computeJobDuration` — duration is `accepted_at` →
+`updated_at` as the best available proxy, no separate "work started"
+timestamp exists), description, price card, and a rating card sourced
+from a new `job.rating` field added to the backend serializer. Both the
+list and detail screens deliberately relabel the mockup's "PAID"/"Mobile
+money" language to "FINAL PRICE"/"Confirmed {date}" — the app has no
+payment integration yet (CLAUDE.md build order step 10 is still stubbed),
+so showing payment-status language would be dishonest UI. Backend: added
+`RatingMiniSerializer` + `get_rating` to `JobRequestSerializer`, 2 new
+tests (8/8 backend tests pass). Also fixed a latent global contrast bug
+surfaced by the redesign: `Card` and `Screen` both resolved to pure white
+(`colors.surface` == `colors.background`), so cards had no visible
+separation from the page anywhere in either app. Added a new
+`colors.pageBackground` token and made it `Screen`'s default background
+(and `ActiveJobScreen`'s, which bypasses `Screen`) — fixes card contrast
+app-wide, not just on this screen. Cancelled-job history display was
+explicitly deferred to a future ticket per user agreement (not built
+here). SCHEDULED status/appointment concept from the mockup was dropped
+entirely, also per user agreement — no such concept exists in the data
+model.
 
 **Depends on:** T0b, T2 (uses existing `listMyJobs`, no new API needed).
 **Touches:** `apps/worker/src/screens/JobsScreen.tsx` (replace

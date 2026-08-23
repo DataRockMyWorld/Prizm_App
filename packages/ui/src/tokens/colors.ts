@@ -9,6 +9,11 @@ export const colors = {
   primaryDark: "#D8331F",
 
   background: "#FFFFFF",
+  /** Screen/page background — a shade darker than surfaceMuted so white
+   * Cards (colors.surface) have visible contrast against the page, while
+   * surfaceMuted elements (inputs, pill tracks) still read lighter than
+   * the page around them. */
+  pageBackground: "#F1ECE7",
   surface: "#FFFFFF",
   surfaceMuted: "#F7F5F3",
   border: "#ECE7E2",

@@ -6,6 +6,7 @@ import { ActiveJobScreen } from "../screens/ActiveJobScreen";
 import { CancelJobScreen } from "../screens/CancelJobScreen";
 import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
 import { JobCompleteScreen } from "../screens/JobCompleteScreen";
+import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { ProposePriceScreen } from "../screens/ProposePriceScreen";
 import { WaitingForConfirmationScreen } from "../screens/WaitingForConfirmationScreen";
 import { CertificationsScreen } from "../screens/onboarding/CertificationsScreen";
@@ -44,14 +45,16 @@ export function RootNavigator() {
           component={IncomingOfferScreen}
           options={{ presentation: "fullScreenModal", gestureEnabled: false }}
         />
-        {/* gestureEnabled: false on ActiveJob/WaitingForConfirmation/JobComplete —
-            the Jobs tab is still a read-only placeholder (T7), so swiping
-            back out of an active job would be a dead end with no way back
-            in; and swiping back from the later stages would land on a
-            stale ActiveJob screen that doesn't render
-            awaiting_price_confirmation/completed. Leaving via Cancel/
-            Mark Complete/Done (explicit actions) is always still
-            available — this only closes the accidental escape hatch. */}
+        {/* gestureEnabled: false on ActiveJob/WaitingForConfirmation/JobComplete.
+            Since T7, the Jobs tab can route back into an active job, so this
+            is no longer a hard dead end — but deliberately still disabled:
+            (1) an active job shouldn't be trivially swiped away from
+            mid-task, matching how e.g. Uber's driver app behaves, and
+            (2) swiping back from WaitingForConfirmation/JobComplete would
+            still land on a stale ActiveJob screen with no rendering logic
+            for awaiting_price_confirmation/completed — T7's fix doesn't
+            touch that. Leaving via Cancel/Mark Complete/Done (explicit
+            actions), or the Jobs tab, is always still available. */}
         <Stack.Screen name="ActiveJob" component={ActiveJobScreen} options={{ gestureEnabled: false }} />
         <Stack.Screen
           name="CancelJob"
@@ -72,6 +75,7 @@ export function RootNavigator() {
           component={JobCompleteScreen}
           options={{ gestureEnabled: false }}
         />
+        <Stack.Screen name="JobDetail" component={JobDetailScreen} />
       </Stack.Navigator>
     </OfferPollingProvider>
   );

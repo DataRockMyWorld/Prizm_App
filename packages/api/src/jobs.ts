@@ -28,6 +28,11 @@ export interface JobCustomer {
   photo: string | null;
 }
 
+export interface JobRating {
+  stars: number;
+  comment: string;
+}
+
 export interface JobRequest {
   id: number;
   category: ServiceCategory;
@@ -45,6 +50,7 @@ export interface JobRequest {
   worker: JobWorker | null;
   current_offer_responds_by: string | null;
   accepted_at: string | null;
+  rating: JobRating | null;
   created_at: string;
   updated_at: string;
 }

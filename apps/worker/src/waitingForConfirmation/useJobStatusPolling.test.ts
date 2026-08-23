@@ -30,6 +30,7 @@ function makeJob(status: JobRequest["status"]): JobRequest {
     worker: null,
     current_offer_responds_by: null,
     accepted_at: null,
+    rating: null,
     created_at: "",
     updated_at: "",
   };
