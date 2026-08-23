@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
+import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { JobStatusScreen } from "../screens/request/JobStatusScreen";
 import { MatchedScreen } from "../screens/request/MatchedScreen";
 import { PriceAgreementScreen } from "../screens/request/PriceAgreementScreen";
@@ -34,6 +35,7 @@ export function RequestNavigator() {
       />
       <Stack.Screen name="PriceAgreement" component={PriceAgreementScreen} />
       <Stack.Screen name="Rating" component={RatingScreen} />
+      <Stack.Screen name="JobDetail" component={JobDetailScreen} />
     </Stack.Navigator>
   );
 }

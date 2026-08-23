@@ -7,4 +7,5 @@ export type RequestStackParamList = {
   ReportProblem: { jobId: number };
   PriceAgreement: { jobId: number };
   Rating: { jobId: number };
+  JobDetail: { jobId: number };
 };

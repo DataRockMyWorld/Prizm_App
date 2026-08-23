@@ -80,7 +80,32 @@ across 6 suites pass; typecheck clean.
 
 ---
 
-### T2 — Customer Jobs tab: replace Requests/Bookings with list + detail
+### T2 — Customer Jobs tab: replace Requests/Bookings with list + detail ✅ Done
+
+**Implementation notes:** built as planned. `RootTabs.tsx` now has 4 tabs
+(Home, Jobs, Messages, Profile); `RequestsScreen.tsx`/`BookingsScreen.tsx`
+deleted outright rather than left as dead files. `JobsScreen.tsx` mirrors
+the worker Jobs tab's structure (segmented control, colored-rail cards,
+THIS WEEK/EARLIER grouping) with the PRD's adaptations: cards show
+`job.worker`'s avatar/name once assigned, or a neutral "🔍 Finding a
+worker…" placeholder row before that (`requested`/`searching` have no
+worker yet); no monthly-total stat on the Completed tab (worker-earnings
+concept, doesn't apply). `JobDetailScreen.tsx` mirrors the worker
+version's honest price labeling ("FINAL PRICE" / "Confirmed {date}", no
+"PAID" language) and adds a `Badge` "✓ Verified" row (matching
+`MatchedScreen`'s existing pattern) plus a rating section framed as
+"Your rating" — if `job.status === "completed"` and `job.rating` is
+still null, shows a "Rate this job" button routing to `RatingScreen`
+rather than a blank state (the edge case the PRD flagged: reaching
+Completed via the Jobs tab bypasses the normal
+`PriceAgreement`→`Rating` auto-chain). Checked the cross-entry-point
+concern from the PRD (screens working when reached directly from the
+Jobs tab, not only mid-flow) — `Searching`/`JobStatus`/`PriceAgreement`/
+`Rating` were all already purely `route.params.jobId`-driven (fetch via
+`getJob` in a `useEffect`, no reliance on prior-screen state), so no fix
+was needed here, unlike the worker app's T7 which did need one for
+`ActiveJobScreen`. Typecheck clean; no new tests (screen-wiring only, per
+the ticket's Tests note); bundle verified live.
 
 **Depends on:** T1.
 **Touches:** `apps/customer/src/navigation/RootTabs.tsx`,
