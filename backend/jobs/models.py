@@ -3,6 +3,8 @@ from django.contrib.gis.db import models as gis_models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from config.storage_backends import unique_upload_path
+
 
 class JobRequest(models.Model):
     class Status(models.TextChoices):
@@ -39,7 +41,9 @@ class JobRequest(models.Model):
     description = models.TextField(blank=True)
     location = gis_models.PointField(geography=True)
     address = models.CharField(max_length=255, blank=True)
-    photo = models.ImageField(upload_to="job_photos/", blank=True, null=True)
+    photo = models.ImageField(
+        upload_to=unique_upload_path("job_photos"), blank=True, null=True
+    )
     status = models.CharField(
         max_length=30, choices=Status.choices, default=Status.REQUESTED
     )

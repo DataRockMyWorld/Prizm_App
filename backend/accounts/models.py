@@ -6,6 +6,8 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 
+from config.storage_backends import unique_upload_path
+
 phone_number_validator = RegexValidator(
     regex=r"^\+?[1-9]\d{7,14}$",
     message="Enter a valid phone number in international format, e.g. +264811234567.",
@@ -57,7 +59,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     role = models.CharField(max_length=10, choices=Role.choices)
     full_name = models.CharField(max_length=150, blank=True)
-    photo = models.ImageField(upload_to="user_photos/", blank=True, null=True)
+    photo = models.ImageField(
+        upload_to=unique_upload_path("user_photos"), blank=True, null=True
+    )
     liability_acknowledged_at = models.DateTimeField(null=True, blank=True)
     biometric_enabled = models.BooleanField(default=False)
 
@@ -91,7 +95,9 @@ class WorkerProfile(models.Model):
     categories = models.ManyToManyField(
         "services.ServiceCategory", related_name="workers", blank=True
     )
-    id_document = models.FileField(upload_to="id_documents/", blank=True, null=True)
+    id_document = models.FileField(
+        upload_to=unique_upload_path("id_documents"), blank=True, null=True
+    )
     id_status = models.CharField(
         max_length=20, choices=IDStatus.choices, default=IDStatus.NOT_SUBMITTED
     )
@@ -149,7 +155,7 @@ class Certification(models.Model):
         on_delete=models.CASCADE,
         related_name="certifications",
     )
-    document = models.FileField(upload_to="certifications/")
+    document = models.FileField(upload_to=unique_upload_path("certifications"))
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.PENDING
     )
