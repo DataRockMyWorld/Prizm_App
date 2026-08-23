@@ -178,7 +178,31 @@ reach it).
 
 ---
 
-### T3 — Profile editing (both apps)
+### T3 — Profile editing (both apps) ✅ Done
+
+**Implementation notes:** `updateProfile` already existed in
+`packages/api/src/auth.ts` with exactly the branching needed (name-only
+`PATCH` vs multipart with `photoUri`) — no new API work at all, as the
+PRD anticipated. Extracted a shared `ProfileHeader` component into
+`packages/ui` (avatar + inline name editing: tap "Edit" → `TextField` +
+Save/Cancel) rather than duplicating it across both apps — this wasn't
+the same "don't share across two call sites" call as T1's jobsTab logic,
+since here the two usages are pixel-identical (no role-specific
+behavior in the header itself; worker's extra ID-verification `Badge`
+row lives below it, untouched, in the app's own screen). The component
+takes `onPickPhoto`/`onSaveName` callbacks rather than owning
+`expo-image-picker` or the API call itself, so `packages/ui` stays
+free of a device-API dependency — each app's `ProfileScreen.tsx` still
+owns its own ~10-line `pickPhoto` (matching the existing onboarding
+pattern in `packages/auth-flow`) and calls `updateProfile` +
+`setProfile` (the existing `useAuth()` local-state setter, so edits
+show immediately rather than only after a relaunch). Photo upload
+happens immediately on picking (per the PRD), name editing has its own
+explicit Save step. Typecheck clean, both apps' existing test suites
+still pass unchanged (42 worker / 20 customer) — no new tests, since
+`updateProfile` is pre-existing pass-through logic and `ProfileHeader`
+is interactive UI, consistent with this project's "test logic, not
+screens" philosophy. Bundles verified live on both apps.
 
 **Depends on:** none (independent of T1/T2; can be done in parallel).
 **Touches:** `apps/customer/src/screens/ProfileScreen.tsx`,

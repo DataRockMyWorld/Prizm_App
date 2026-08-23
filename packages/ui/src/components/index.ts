@@ -7,6 +7,7 @@ export * from "./Checkbox";
 export * from "./GradientBackground";
 export * from "./OtpInput";
 export * from "./PinDots";
+export * from "./ProfileHeader";
 export * from "./ProgressBar";
 export * from "./Screen";
 export * from "./SplashView";
