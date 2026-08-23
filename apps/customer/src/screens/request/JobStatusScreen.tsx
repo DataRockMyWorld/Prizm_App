@@ -80,6 +80,9 @@ export function JobStatusScreen({ navigation, route }: Props) {
   return (
     <Screen>
       <View style={styles.headerRow}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+          <ThemedText variant="title">‹</ThemedText>
+        </Pressable>
         <ThemedText variant="subtitle">Job status</ThemedText>
         <View style={styles.chatIcon}>
           <ThemedText>💬</ThemedText>
