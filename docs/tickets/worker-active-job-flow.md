@@ -306,7 +306,19 @@ screen exists.
 
 ---
 
-### T6 — Waiting for confirmation (W5) + completion/dispute branch
+### T6 — Waiting for confirmation (W5) + completion/dispute branch ✅ Done
+
+**Implementation notes:** alongside T6, did a navigation-UX pass across
+both apps (see PROGRESS.md / commit for details) — fixed `ProposePrice`'s
+presentation type (was inconsistently "modal"; core-flow screens should
+match `ActiveJob`'s default push, per the customer app's own
+Searching→...→Rating convention) and disabled the swipe-back gesture on
+`ActiveJob`/`WaitingForConfirmation`/`JobComplete` (the Jobs tab is still
+a read-only placeholder, so swiping back out of an active job was a dead
+end, and swiping back from the later stages landed on a stale
+`ActiveJob` screen that doesn't render `awaiting_price_confirmation`/
+`completed`). Explicit actions (Cancel, Mark Complete, Done) remain the
+only way through — this only closes the accidental gesture.
 
 **Depends on:** T2, T5b. **Touches:** new `WaitingForConfirmationScreen.tsx`,
 new `JobCompleteScreen.tsx`

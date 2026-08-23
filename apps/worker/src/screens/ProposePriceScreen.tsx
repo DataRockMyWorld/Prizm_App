@@ -2,7 +2,7 @@ import { ApiError, completeJob, getJob, JobRequest, useAuth } from "@prizm/api";
 import { Button, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { validatePriceAmount } from "../activeJob/priceValidation";
 
@@ -43,11 +43,7 @@ export function ProposePriceScreen() {
     setError(null);
     try {
       await completeJob(accessToken, jobId, parsedAmount, note.trim());
-      // TODO(T6): navigate to the real "waiting for confirmation" screen
-      // once it exists, instead of an alert + back to Home.
-      Alert.alert("Sent to customer", "We'll notify you once they confirm or dispute it.", [
-        { text: "OK", onPress: () => navigation.navigate("Tabs") },
-      ]);
+      navigation.replace("WaitingForConfirmation", { jobId });
     } catch (err) {
       setError(apiErrorMessage(err, "Couldn't send this to the customer. Please try again."));
     } finally {

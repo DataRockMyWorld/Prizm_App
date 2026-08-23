@@ -10,4 +10,6 @@ export type WorkerRootStackParamList = {
   ActiveJob: { jobId: number };
   CancelJob: { jobId: number };
   ProposePrice: { jobId: number };
+  WaitingForConfirmation: { jobId: number };
+  JobComplete: { jobId: number };
 } & WorkerOnboardingStackParamList;
