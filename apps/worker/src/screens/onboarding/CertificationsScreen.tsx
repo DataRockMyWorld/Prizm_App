@@ -1,5 +1,6 @@
 import {
   ServiceCategory,
+  getWorkerProfile,
   listCategories,
   submitCertification,
   updateWorkerCategories,
@@ -15,8 +16,9 @@ import type { WorkerOnboardingStackParamList } from "../../navigation/types";
 
 type Props = NativeStackScreenProps<WorkerOnboardingStackParamList, "Certifications">;
 
-export function CertificationsScreen({ navigation }: Props) {
+export function CertificationsScreen({ navigation, route }: Props) {
   const { accessToken } = useAuth();
+  const returnTo = route.params?.returnTo;
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [documentUri, setDocumentUri] = useState<string | undefined>();
@@ -45,8 +47,24 @@ export function CertificationsScreen({ navigation }: Props) {
     setError(null);
     try {
       await submitCertification(accessToken, selectedCategoryId, documentUri);
-      await updateWorkerCategories(accessToken, [selectedCategoryId]);
-      navigation.navigate("UnderReview");
+      // Add to, don't replace, the worker's existing categories — this
+      // screen is the only place categories get set during onboarding
+      // (fine there, since it starts from empty), but reused from the
+      // Profile tab's "+ Add another certificate" it must not silently
+      // drop categories the worker already added via the Services-offered
+      // editor.
+      const currentProfile = await getWorkerProfile(accessToken);
+      if (!currentProfile.categories.includes(selectedCategoryId)) {
+        await updateWorkerCategories(accessToken, [
+          ...currentProfile.categories,
+          selectedCategoryId,
+        ]);
+      }
+      if (returnTo === "profile") {
+        navigation.goBack();
+      } else {
+        navigation.navigate("UnderReview");
+      }
     } catch {
       setError("Couldn't submit your certificate. Please try again.");
     } finally {
@@ -105,15 +123,17 @@ export function CertificationsScreen({ navigation }: Props) {
           disabled={!documentUri || !selectedCategoryId}
           loading={isSubmitting}
         />
-        <Pressable
-          onPress={() => navigation.navigate("UnderReview")}
-          style={styles.skip}
-          hitSlop={8}
-        >
-          <ThemedText variant="body" style={styles.centered}>
-            Skip for now
-          </ThemedText>
-        </Pressable>
+        {returnTo !== "profile" && (
+          <Pressable
+            onPress={() => navigation.navigate("UnderReview")}
+            style={styles.skip}
+            hitSlop={8}
+          >
+            <ThemedText variant="body" style={styles.centered}>
+              Skip for now
+            </ThemedText>
+          </Pressable>
+        )}
       </View>
     </Screen>
   );

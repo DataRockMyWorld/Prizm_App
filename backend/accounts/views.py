@@ -9,11 +9,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Certification, PhoneOTP, User
-from .permissions import IsWorkerRole
+from .models import Address, Certification, PhoneOTP, User
+from .permissions import IsCustomerRole, IsWorkerRole
 from .serializers import (
     OTP_TOKEN_SALT,
+    AddressSerializer,
     CertificationSerializer,
+    CustomerProfileSerializer,
     OTPRequestSerializer,
     OTPVerifySerializer,
     ProfileSerializer,
@@ -130,6 +132,16 @@ class WorkerProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user.worker_profile
 
 
+class CustomerProfileView(generics.RetrieveAPIView):
+    """Customer-only, read-only: stats for the Profile tab (requests_completed)."""
+
+    serializer_class = CustomerProfileSerializer
+    permission_classes = [IsAuthenticated, IsCustomerRole]
+
+    def get_object(self):
+        return self.request.user.customer_profile
+
+
 class CertificationListCreateView(generics.ListCreateAPIView):
     """Worker-only: optional per-category certification uploads (screen 9)."""
 
@@ -141,3 +153,24 @@ class CertificationListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(worker=self.request.user.worker_profile)
+
+
+class AddressListCreateView(generics.ListCreateAPIView):
+    """Saved addresses (Profile tab): freeform, full CRUD, scoped to the owner."""
+
+    serializer_class = AddressSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.addresses.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class AddressDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AddressSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.addresses.all()

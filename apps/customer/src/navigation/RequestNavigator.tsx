@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
+import { AddressFormScreen } from "../screens/AddressFormScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { JobStatusScreen } from "../screens/request/JobStatusScreen";
 import { MatchedScreen } from "../screens/request/MatchedScreen";
@@ -36,6 +37,11 @@ export function RequestNavigator() {
       <Stack.Screen name="PriceAgreement" component={PriceAgreementScreen} />
       <Stack.Screen name="Rating" component={RatingScreen} />
       <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+      <Stack.Screen
+        name="AddressForm"
+        component={AddressFormScreen}
+        options={{ presentation: "modal" }}
+      />
     </Stack.Navigator>
   );
 }

@@ -9,6 +9,8 @@ export interface WorkerProfile {
   id_rejection_reason: string;
   is_online: boolean;
   subscription_status: "free" | "subscribed";
+  jobs_completed: number;
+  rating_average: number | null;
 }
 
 export function getWorkerProfile(token: string) {

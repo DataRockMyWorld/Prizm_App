@@ -49,6 +49,7 @@ export interface Profile {
   photo: string | null;
   liability_acknowledged_at: string | null;
   biometric_enabled: boolean;
+  date_joined: string;
 }
 
 export function getProfile(token: string) {

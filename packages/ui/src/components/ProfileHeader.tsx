@@ -17,6 +17,11 @@ export interface ProfileHeaderProps {
    * Throwing surfaces an inline error instead of leaving edit mode. */
   onSaveName: (name: string) => Promise<void>;
   isUploadingPhoto?: boolean;
+  /** Flips the name/Edit/Cancel text to light colors for use atop a dark
+   * or gradient background (e.g. inside ProfileHero's worker variant).
+   * The inline TextField keeps its own light input box either way, so it
+   * stays legible without any change. */
+  inverse?: boolean;
 }
 
 /** Avatar + editable name, shared by both apps' Profile screens — the
@@ -29,6 +34,7 @@ export function ProfileHeader({
   onPickPhoto,
   onSaveName,
   isUploadingPhoto,
+  inverse,
 }: ProfileHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(fullName);
@@ -81,7 +87,10 @@ export function ProfileHeader({
           />
           <View style={styles.editActions}>
             <Pressable onPress={() => setIsEditing(false)} hitSlop={8}>
-              <ThemedText variant="body" style={styles.cancelLink}>
+              <ThemedText
+                variant="body"
+                style={[styles.cancelLink, inverse && styles.cancelLinkInverse]}
+              >
                 Cancel
               </ThemedText>
             </Pressable>
@@ -91,8 +100,10 @@ export function ProfileHeader({
         </View>
       ) : (
         <Pressable onPress={startEditing} style={styles.nameRow} hitSlop={8}>
-          <ThemedText variant="subtitle">{fullName || "—"}</ThemedText>
-          <ThemedText variant="caption" style={styles.editLink}>
+          <ThemedText variant="subtitle" style={inverse && styles.nameInverse}>
+            {fullName || "—"}
+          </ThemedText>
+          <ThemedText variant="caption" style={[styles.editLink, inverse && styles.editLinkInverse]}>
             Edit
           </ThemedText>
         </Pressable>
@@ -129,6 +140,16 @@ const styles = StyleSheet.create({
   editLink: {
     color: colors.primary,
     fontWeight: "700",
+  },
+  nameInverse: {
+    color: colors.textInverse,
+  },
+  editLinkInverse: {
+    color: colors.textInverse,
+    textDecorationLine: "underline",
+  },
+  cancelLinkInverse: {
+    color: "rgba(255, 255, 255, 0.8)",
   },
   editRow: {
     width: "100%",

@@ -178,6 +178,25 @@ class Certification(models.Model):
         return f"{self.worker} — {self.category} ({self.status})"
 
 
+class Address(models.Model):
+    """A customer's saved address (e.g. "Home", "Work"), freeform and reusable.
+
+    FK'd to `User` rather than `CustomerProfile` — nothing here is
+    role-specific, even though only the customer app exposes CRUD UI for
+    it today.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="addresses")
+    label = models.CharField(max_length=100)
+    address_text = models.CharField(max_length=255)
+    location = gis_models.PointField(geography=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.label} — {self.user.phone_number}"
+
+
 class PhoneOTP(models.Model):
     """A one-time code sent to `phone_number` to verify ownership during onboarding.
 

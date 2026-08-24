@@ -1,6 +1,10 @@
 export type WorkerOnboardingStackParamList = {
   IdUpload: undefined;
-  Certifications: undefined;
+  /** `returnTo: "profile"` — reached from the Profile tab's "+ Add another
+   * certificate" (not the onboarding sequence): returns to the Profile
+   * screen on submit instead of continuing to UnderReview, and hides the
+   * onboarding-only "Skip for now" link. */
+  Certifications: { returnTo?: "profile" } | undefined;
   UnderReview: undefined;
 };
 

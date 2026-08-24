@@ -1,7 +1,8 @@
 import factory
 from django.contrib.auth import get_user_model
+from django.contrib.gis.geos import Point
 
-from accounts.models import CustomerProfile, WorkerProfile
+from accounts.models import Address, CustomerProfile, WorkerProfile
 
 User = get_user_model()
 
@@ -35,3 +36,13 @@ class CustomerProfileFactory(factory.django.DjangoModelFactory):
         model = CustomerProfile
 
     user = factory.SubFactory(UserFactory, role=User.Role.CUSTOMER)
+
+
+class AddressFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Address
+
+    user = factory.SubFactory(UserFactory, role=User.Role.CUSTOMER)
+    label = factory.Sequence(lambda n: f"Address {n}")
+    address_text = "14 Independence Ave, Windhoek"
+    location = Point(17.0836, -22.5609, srid=4326)

@@ -1,10 +1,20 @@
+from django.contrib.gis.geos import Point
 from django.core import signing
+from django.db.models import Avg
 from django.utils import timezone
 from rest_framework import serializers
 
+from jobs.models import JobRequest, Rating
 from services.models import ServiceCategory
 
-from .models import Certification, CustomerProfile, User, WorkerProfile, phone_number_validator
+from .models import (
+    Address,
+    Certification,
+    CustomerProfile,
+    User,
+    WorkerProfile,
+    phone_number_validator,
+)
 
 OTP_TOKEN_SALT = "accounts.phone-otp"
 OTP_TOKEN_MAX_AGE = 60 * 10  # 10 minutes — must stay consistent with views.py
@@ -76,8 +86,9 @@ class ProfileSerializer(serializers.ModelSerializer):
             "liability_acknowledged_at",
             "biometric_enabled",
             "liability_acknowledged",
+            "date_joined",
         ]
-        read_only_fields = ["phone_number", "role", "liability_acknowledged_at"]
+        read_only_fields = ["phone_number", "role", "liability_acknowledged_at", "date_joined"]
 
     def update(self, instance, validated_data):
         acknowledged = validated_data.pop("liability_acknowledged", False)
@@ -92,6 +103,8 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         queryset=ServiceCategory.objects.filter(is_active=True),
         required=False,
     )
+    jobs_completed = serializers.SerializerMethodField()
+    rating_average = serializers.SerializerMethodField()
 
     class Meta:
         model = WorkerProfile
@@ -102,8 +115,28 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
             "id_rejection_reason",
             "is_online",
             "subscription_status",
+            "jobs_completed",
+            "rating_average",
         ]
-        read_only_fields = ["id_status", "id_rejection_reason", "is_online", "subscription_status"]
+        read_only_fields = [
+            "id_status",
+            "id_rejection_reason",
+            "is_online",
+            "subscription_status",
+            "jobs_completed",
+            "rating_average",
+        ]
+
+    def get_jobs_completed(self, obj):
+        return JobRequest.objects.filter(
+            worker=obj.user, status=JobRequest.Status.COMPLETED
+        ).count()
+
+    def get_rating_average(self, obj):
+        result = Rating.objects.filter(
+            job__worker=obj.user, job__status=JobRequest.Status.COMPLETED
+        ).aggregate(avg=Avg("stars"))
+        return round(result["avg"], 1) if result["avg"] is not None else None
 
     def update(self, instance, validated_data):
         # A fresh ID submission always goes back to Pending review, clearing
@@ -124,8 +157,60 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    """Read-only: stats surfaced on the customer Profile screen (no writable fields)."""
+
+    requests_completed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomerProfile
+        fields = ["requests_completed"]
+
+    def get_requests_completed(self, obj):
+        return JobRequest.objects.filter(
+            customer=obj.user, status=JobRequest.Status.COMPLETED
+        ).count()
+
+
 class CertificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
         fields = ["id", "category", "document", "status", "rejection_reason", "created_at"]
         read_only_fields = ["id", "status", "rejection_reason", "created_at"]
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    latitude = serializers.FloatField(min_value=-90, max_value=90, write_only=True)
+    longitude = serializers.FloatField(min_value=-180, max_value=180, write_only=True)
+
+    class Meta:
+        model = Address
+        fields = [
+            "id",
+            "label",
+            "address_text",
+            "latitude",
+            "longitude",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["latitude"] = instance.location.y if instance.location else None
+        data["longitude"] = instance.location.x if instance.location else None
+        return data
+
+    def create(self, validated_data):
+        lat = validated_data.pop("latitude")
+        lng = validated_data.pop("longitude")
+        validated_data["location"] = Point(lng, lat, srid=4326)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        lat = validated_data.pop("latitude", None)
+        lng = validated_data.pop("longitude", None)
+        if lat is not None and lng is not None:
+            validated_data["location"] = Point(lng, lat, srid=4326)
+        return super().update(instance, validated_data)

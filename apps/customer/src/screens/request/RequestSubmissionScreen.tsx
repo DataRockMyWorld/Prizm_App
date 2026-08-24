@@ -1,12 +1,13 @@
-import { ServiceCategory, createJobRequest, listCategories, useAuth } from "@prizm/api";
+import { Address, ServiceCategory, createJobRequest, listAddresses, listCategories, useAuth } from "@prizm/api";
 import { Button, Card, Screen, TextField, ThemedText, UploadTile, colors, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import type { RequestStackParamList } from "../../navigation/types";
+import { applySavedAddress } from "../../request/applySavedAddress";
 
 type Props = NativeStackScreenProps<RequestStackParamList, "RequestSubmission">;
 
@@ -18,6 +19,7 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [photoUri, setPhotoUri] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,20 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
       })
       .catch(() => {});
   }, [accessToken, route.params?.categoryId]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    listAddresses(accessToken)
+      .then(setSavedAddresses)
+      .catch(() => {});
+  }, [accessToken]);
+
+  const selectSavedAddress = (saved: Address) => {
+    const applied = applySavedAddress(saved);
+    setAddress(applied.address);
+    setCoords(applied.coords);
+    setIsEditingAddress(false);
+  };
 
   useEffect(() => {
     (async () => {
@@ -127,6 +143,23 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
       <ThemedText variant="caption" style={styles.label}>
         Location
       </ThemedText>
+      {savedAddresses.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.savedAddressRow}
+        >
+          {savedAddresses.map((saved) => (
+            <Pressable
+              key={saved.id}
+              onPress={() => selectSavedAddress(saved)}
+              style={styles.savedAddressChip}
+            >
+              <ThemedText variant="caption">{saved.label}</ThemedText>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
       {!coords && !locationError ? (
         <ActivityIndicator color={colors.primary} style={styles.locationLoading} />
       ) : (
@@ -218,6 +251,17 @@ const styles = StyleSheet.create({
     minHeight: 70,
     alignItems: "flex-start",
     paddingVertical: spacing.sm,
+  },
+  savedAddressRow: {
+    flexGrow: 0,
+    marginBottom: spacing.xs,
+  },
+  savedAddressChip: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    marginRight: spacing.xs,
   },
   locationLoading: {
     marginVertical: spacing.sm,
