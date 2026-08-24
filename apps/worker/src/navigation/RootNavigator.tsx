@@ -5,10 +5,14 @@ import { OfferPollingProvider } from "../offers/OfferPollingProvider";
 import { ActiveJobScreen } from "../screens/ActiveJobScreen";
 import { CancelJobScreen } from "../screens/CancelJobScreen";
 import { ChatScreen } from "../screens/ChatScreen";
+import { ComingSoonScreen } from "../screens/ComingSoonScreen";
+import { HelpSupportScreen } from "../screens/HelpSupportScreen";
 import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
 import { JobCompleteScreen } from "../screens/JobCompleteScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { ProposePriceScreen } from "../screens/ProposePriceScreen";
+import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
+import { TermsLiabilityScreen } from "../screens/TermsLiabilityScreen";
 import { WaitingForConfirmationScreen } from "../screens/WaitingForConfirmationScreen";
 import { CertificationsScreen } from "../screens/onboarding/CertificationsScreen";
 import { IdUploadScreen } from "../screens/onboarding/IdUploadScreen";
@@ -78,6 +82,10 @@ export function RootNavigator() {
         />
         <Stack.Screen name="JobDetail" component={JobDetailScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
+        <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
+        <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+        <Stack.Screen name="SafetyTips" component={SafetyTipsScreen} />
+        <Stack.Screen name="TermsLiability" component={TermsLiabilityScreen} />
       </Stack.Navigator>
     </OfferPollingProvider>
   );

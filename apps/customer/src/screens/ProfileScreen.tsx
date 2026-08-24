@@ -1,5 +1,5 @@
 import { Address, deleteAddress, getCustomerProfileStats, listAddresses, updateProfile, useAuth } from "@prizm/api";
-import { Button, Card, ProfileHero, Screen, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
+import { Card, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -96,18 +96,20 @@ export function ProfileScreen() {
             ]}
           />
 
+          <ThemedText variant="caption" style={styles.sectionLabel}>
+            SAVED ADDRESSES
+          </ThemedText>
           <Card>
-            <ThemedText variant="subtitle">Saved addresses</ThemedText>
             {addresses.length === 0 && (
               <ThemedText variant="caption" style={styles.emptyText}>
                 No saved addresses yet.
               </ThemedText>
             )}
-            {addresses.map((address) => (
+            {addresses.map((address, index) => (
               <Pressable
                 key={address.id}
                 onPress={() => navigation.navigate("AddressForm", { address })}
-                style={styles.addressRow}
+                style={[styles.addressRow, index === 0 && styles.addressRowFirst]}
               >
                 <Ionicons name="location" size={20} color={colors.primary} />
                 <View style={styles.addressInfo}>
@@ -130,7 +132,34 @@ export function ProfileScreen() {
             </Pressable>
           </Card>
 
-          <Button label="Log out" variant="secondary" onPress={clearSession} style={styles.logout} />
+          <ThemedText variant="caption" style={styles.sectionLabel}>
+            ACCOUNT
+          </ThemedText>
+          <Card>
+            <SettingsRow
+              label="Payment method"
+              onPress={() => navigation.navigate("ComingSoon", { title: "Payment method" })}
+              isFirst
+            />
+            <SettingsRow
+              label="Notification preferences"
+              onPress={() => navigation.navigate("ComingSoon", { title: "Notification preferences" })}
+            />
+            <SettingsRow label="Help & support" onPress={() => navigation.navigate("HelpSupport")} />
+            <SettingsRow label="Safety tips" onPress={() => navigation.navigate("SafetyTips")} />
+            <SettingsRow
+              label="Terms & liability"
+              detail={profile?.liability_acknowledged_at ? "Accepted" : undefined}
+              onPress={() => navigation.navigate("TermsLiability")}
+            />
+          </Card>
+          <Card style={styles.logoutCard}>
+            <Pressable onPress={clearSession} style={styles.logoutRow}>
+              <ThemedText variant="subtitle" style={styles.logoutText}>
+                Log out
+              </ThemedText>
+            </Pressable>
+          </Card>
         </View>
       </ScrollView>
     </Screen>
@@ -147,11 +176,12 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.md,
     gap: spacing.md,
-    marginTop: -spacing.lg,
-  },
-  emptyText: {
+    // The calm hero has no hard-edged background to visually justify an
+    // overlap (unlike the worker variant's gradient) — just a small gap,
+    // not a negative margin, or the StatCard covers the subtitle text.
     marginTop: spacing.sm,
   },
+  emptyText: {},
   addressRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -160,6 +190,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
+  },
+  addressRowFirst: {
+    marginTop: 0,
+    paddingTop: 0,
+    borderTopWidth: 0,
   },
   addressInfo: {
     flex: 1,
@@ -173,7 +208,19 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "700",
   },
-  logout: {
-    marginTop: spacing.sm,
+  sectionLabel: {
+    color: colors.textSecondary,
+    fontWeight: "700",
+  },
+  logoutCard: {
+    padding: 0,
+    overflow: "hidden",
+  },
+  logoutRow: {
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  logoutText: {
+    color: colors.primary,
   },
 });

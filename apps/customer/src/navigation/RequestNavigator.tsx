@@ -2,7 +2,11 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
 import { AddressFormScreen } from "../screens/AddressFormScreen";
+import { ComingSoonScreen } from "../screens/ComingSoonScreen";
+import { HelpSupportScreen } from "../screens/HelpSupportScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
+import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
+import { TermsLiabilityScreen } from "../screens/TermsLiabilityScreen";
 import { ChatScreen } from "../screens/request/ChatScreen";
 import { JobStatusScreen } from "../screens/request/JobStatusScreen";
 import { MatchedScreen } from "../screens/request/MatchedScreen";
@@ -44,6 +48,10 @@ export function RequestNavigator() {
         component={AddressFormScreen}
         options={{ presentation: "modal" }}
       />
+      <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
+      <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+      <Stack.Screen name="SafetyTips" component={SafetyTipsScreen} />
+      <Stack.Screen name="TermsLiability" component={TermsLiabilityScreen} />
     </Stack.Navigator>
   );
 }

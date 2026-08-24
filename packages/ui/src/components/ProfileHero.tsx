@@ -92,24 +92,27 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
+    // Extra room below the rating line before the rounded bottom edge, so
+    // the StatCard's overlap (see ProfileScreen) eats into this padding
+    // rather than the actual text.
+    paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.lg,
     borderBottomLeftRadius: radii.lg,
     borderBottomRightRadius: radii.lg,
-    gap: spacing.xs,
   },
   subtitleInverse: {
     color: "rgba(255, 255, 255, 0.85)",
     textAlign: "center",
+    marginTop: spacing.xs,
   },
   badgeRow: {
     flexDirection: "row",
     gap: spacing.xs,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   ratingLine: {
     color: colors.textInverse,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   calmContainer: {
     width: "100%",
@@ -119,16 +122,19 @@ const styles = StyleSheet.create({
   },
   glowWrapper: {
     position: "absolute",
-    top: 0,
+    // Centers the glow on the avatar: avatar center ≈ calmContainer's
+    // paddingTop (spacing.lg = 24) + avatar radius (88/2 = 44) = 68;
+    // glow top = 68 - glow radius (54) = 14.
+    top: 14,
     left: 0,
     right: 0,
     alignItems: "center",
   },
   glow: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    opacity: 0.16,
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    opacity: 0.1,
   },
   subtitleCustomer: {
     color: colors.textSecondary,

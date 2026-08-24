@@ -18,4 +18,8 @@ export type WorkerRootStackParamList = {
   JobComplete: { jobId: number };
   JobDetail: { jobId: number };
   Chat: { jobId: number };
+  ComingSoon: { title: string };
+  HelpSupport: undefined;
+  SafetyTips: undefined;
+  TermsLiability: undefined;
 } & WorkerOnboardingStackParamList;

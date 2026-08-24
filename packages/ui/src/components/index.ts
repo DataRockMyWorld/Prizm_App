@@ -11,6 +11,7 @@ export * from "./ProfileHeader";
 export * from "./ProfileHero";
 export * from "./ProgressBar";
 export * from "./Screen";
+export * from "./SettingsRow";
 export * from "./SplashView";
 export * from "./StatCard";
 export * from "./TextField";

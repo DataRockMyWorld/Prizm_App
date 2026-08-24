@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
-import { colors, spacing } from "../tokens";
+import { colors, fontFamily, fontSize, spacing } from "../tokens";
 import { Card } from "./Card";
 import { ThemedText } from "./ThemedText";
 
@@ -24,7 +24,7 @@ export function StatCard({ items }: StatCardProps) {
       {items.map((item, index) => (
         <React.Fragment key={item.label}>
           <View style={styles.cell}>
-            <ThemedText variant="title" style={styles.value}>
+            <ThemedText variant="body" style={styles.value}>
               {item.value}
             </ThemedText>
             <ThemedText variant="caption" style={styles.label}>
@@ -42,14 +42,17 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: spacing.lg,
   },
   cell: {
     flex: 1,
     alignItems: "center",
-    gap: 2,
+    gap: 4,
   },
   value: {
     color: colors.textPrimary,
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize.xl,
   },
   label: {
     letterSpacing: 0.4,

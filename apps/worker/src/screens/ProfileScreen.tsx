@@ -9,7 +9,7 @@ import {
   useAuth,
   WorkerProfile,
 } from "@prizm/api";
-import { Badge, Button, Card, ProfileHero, Screen, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
+import { Badge, Card, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useState } from "react";
@@ -120,8 +120,18 @@ export function ProfileScreen() {
   if (workerProfile?.id_status === "approved") {
     badges.push(<Badge key="verified" label="✓ Verified" tone="verified" />);
   }
+  // Only shown for services still being offered — a certification for a
+  // category the worker has since dropped from "Services offered" stays
+  // on file (still counts for matching if re-added) but isn't badged here.
   const approvedCertCategoryIds = Array.from(
-    new Set(certifications.filter((cert) => cert.status === "approved").map((cert) => cert.category))
+    new Set(
+      certifications
+        .filter(
+          (cert) =>
+            cert.status === "approved" && workerProfile?.categories.includes(cert.category)
+        )
+        .map((cert) => cert.category)
+    )
   );
   approvedCertCategoryIds.forEach((categoryId) => {
     badges.push(
@@ -164,8 +174,10 @@ export function ProfileScreen() {
             ]}
           />
 
+          <ThemedText variant="caption" style={styles.sectionLabel}>
+            SERVICES OFFERED
+          </ThemedText>
           <Card>
-            <ThemedText variant="subtitle">Services offered</ThemedText>
             <View style={styles.chipRow}>
               {workerProfile?.categories.map((id) => (
                 <View key={id} style={styles.chip}>
@@ -188,7 +200,7 @@ export function ProfileScreen() {
               </Pressable>
             </View>
             {isAddingCategory && (
-              <View style={styles.chipRow}>
+              <View style={[styles.chipRow, styles.chipRowSpaced]}>
                 {availableCategories.length > 0 ? (
                   availableCategories.map((category) => (
                     <Pressable
@@ -207,15 +219,17 @@ export function ProfileScreen() {
             {categoryError && <ThemedText style={styles.error}>{categoryError}</ThemedText>}
           </Card>
 
+          <ThemedText variant="caption" style={styles.sectionLabel}>
+            CERTIFICATIONS
+          </ThemedText>
           <Card>
-            <ThemedText variant="subtitle">Certifications</ThemedText>
             {certifications.length === 0 && (
               <ThemedText variant="caption" style={styles.emptyText}>
                 No certifications added yet.
               </ThemedText>
             )}
-            {certifications.map((cert) => (
-              <View key={cert.id} style={styles.certRow}>
+            {certifications.map((cert, index) => (
+              <View key={cert.id} style={[styles.certRow, index === 0 && styles.certRowFirst]}>
                 <View style={styles.certInfo}>
                   <ThemedText variant="body">{categoryName(cert.category)}</ThemedText>
                   <ThemedText variant="caption">
@@ -239,7 +253,34 @@ export function ProfileScreen() {
             </Pressable>
           </Card>
 
-          <Button label="Log out" variant="secondary" onPress={clearSession} style={styles.logout} />
+          <ThemedText variant="caption" style={styles.sectionLabel}>
+            ACCOUNT
+          </ThemedText>
+          <Card>
+            <SettingsRow
+              label="Payout method"
+              onPress={() => navigation.navigate("ComingSoon", { title: "Payout method" })}
+              isFirst
+            />
+            <SettingsRow
+              label="Notification preferences"
+              onPress={() => navigation.navigate("ComingSoon", { title: "Notification preferences" })}
+            />
+            <SettingsRow label="Help & support" onPress={() => navigation.navigate("HelpSupport")} />
+            <SettingsRow label="Safety tips" onPress={() => navigation.navigate("SafetyTips")} />
+            <SettingsRow
+              label="Terms & liability"
+              detail={profile?.liability_acknowledged_at ? "Accepted" : undefined}
+              onPress={() => navigation.navigate("TermsLiability")}
+            />
+          </Card>
+          <Card style={styles.logoutCard}>
+            <Pressable onPress={clearSession} style={styles.logoutRow}>
+              <ThemedText variant="subtitle" style={styles.logoutText}>
+                Log out
+              </ThemedText>
+            </Pressable>
+          </Card>
         </View>
       </ScrollView>
     </Screen>
@@ -264,6 +305,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.xs,
+  },
+  chipRowSpaced: {
     marginTop: spacing.sm,
   },
   chip: {
@@ -294,9 +337,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
     marginTop: spacing.sm,
   },
-  emptyText: {
-    marginTop: spacing.sm,
-  },
+  emptyText: {},
   certRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -305,6 +346,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
+  },
+  certRowFirst: {
+    marginTop: 0,
+    paddingTop: 0,
+    borderTopWidth: 0,
   },
   certInfo: {
     gap: 2,
@@ -317,7 +363,19 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "700",
   },
-  logout: {
-    marginTop: spacing.sm,
+  sectionLabel: {
+    color: colors.textSecondary,
+    fontWeight: "700",
+  },
+  logoutCard: {
+    padding: 0,
+    overflow: "hidden",
+  },
+  logoutRow: {
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  logoutText: {
+    color: colors.primary,
   },
 });

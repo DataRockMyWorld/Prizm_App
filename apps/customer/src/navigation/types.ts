@@ -13,4 +13,8 @@ export type RequestStackParamList = {
   JobDetail: { jobId: number };
   /** Omit `address` to add a new one; pass it to edit an existing one. */
   AddressForm: { address?: Address } | undefined;
+  ComingSoon: { title: string };
+  HelpSupport: undefined;
+  SafetyTips: undefined;
+  TermsLiability: undefined;
 };

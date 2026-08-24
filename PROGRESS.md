@@ -16,7 +16,7 @@ the work back up.
 | 6 | Auth screens → wire to API | ✅ Done, both apps — confirmed live on a physical iPhone |
 | 7 | Customer request flow → wire to API | ✅ Done, click-tested end-to-end on a physical iPhone (submission → matched → tracking → price agreement → rating), worker side simulated via Django shell |
 | 8 | Worker active-job flow → wire to API | ✅ Done — see `docs/prds/worker-active-job-flow.md` / `docs/tickets/worker-active-job-flow.md`, all tickets T0a–T7 complete |
-| 9 | Chat (polling) | ✅ Done — see `docs/prds/chat.md` / `docs/tickets/chat.md`, all tickets T1–T5 complete |
+| 9 | Chat (polling) | ✅ Done, core send/receive confirmed live on a physical phone (2026-08-24) — see `docs/prds/chat.md` / `docs/tickets/chat.md`, all tickets T1–T5 complete |
 | 10 | Mobile money payment | ⬜ Not started (intentionally stubbed) |
 | 11 | Push notifications | ⬜ Not started |
 | 12 | Device testing / pilot rollout | ✅ Both apps running as native dev-client builds on a physical iPhone (see below) |
@@ -93,12 +93,26 @@ colored status rails, date grouping, tap into either the live screen or
 a read-only Job Record detail screen), and a redesigned **Profile**
 (gradient hero with photo/name/categories/Verified+Certified
 badges/rating+jobs-completed, 2-stat card, editable Services-offered
-chips, Certifications list with a working add flow reachable from the
-Profile tab now too — not just onboarding). `ActiveJobScreen`'s chat
-button now opens a real per-job chat screen (poll-refreshed) instead of
-an "coming soon" alert. 5-tab bar (Home/Jobs/Bookings/Earnings/Profile;
-Bookings/Earnings are still placeholders — not real product concepts
-yet, see CLAUDE.md's dropped-scope notes).
+chips (Certified badges only show for categories still in Services
+offered — a certification for a dropped service stays on file but isn't
+badged in the hero), Certifications list with a working add flow
+reachable from the Profile tab now too — not just onboarding), and an
+**Account section** (Payout method / Notification preferences → shared
+`ComingSoonScreen`, since no payment/push infra exists yet; Help &
+support and Safety tips → real static-content screens; Terms & liability
+→ reuses the onboarding liability text + `liability_acknowledged_at`).
+`ActiveJobScreen`'s chat button now opens a real per-job chat screen
+(poll-refreshed) instead of an "coming soon" alert. 5-tab bar (Home/Jobs/
+Bookings/Earnings/Profile; Bookings/Earnings are still placeholders —
+not real product concepts yet, see CLAUDE.md's dropped-scope notes).
+**All of Profile (hero, stats, Services-offered editor, Certifications,
+Account section) has now been live-tested and iterated on a physical
+phone** through several rounds — see git log for the specific spacing/
+padding/component fixes that came out of that (hero-to-stat-card overlap
+covering text, StatCard font size, section labels moved outside their
+cards to match the hi-fi mockup, Log out redesigned from a standalone
+button to an Account list row, a `Card`-padding mixup that left the new
+Account rows with no left/right inset).
 
 **apps/customer**: full onboarding, Home (category grid, search bar —
 still decorative), the full request flow (submission → searching/
@@ -109,12 +123,17 @@ agreement → rating, with a back button on the tracking screen now, and a
 pattern as the worker app, adapted: cards show the assigned worker's
 identity, no earnings-style stat, rating framed as what the customer
 gave), and a redesigned **Profile** (calm hero with photo/name/member-
-since, 2-stat card, and full CRUD **Saved addresses**). `JobStatusScreen`'s
-chat icon (previously not even wired to a press handler) now opens the
-same real chat screen the worker side uses; the **Messages tab is a real
-inbox now** — every job with an assigned worker, most-recently-active
-first, last-message preview, tap into the thread. 4-tab bar (Home/Jobs/
-Messages/Profile).
+since, 2-stat card, full CRUD **Saved addresses**, and the same **Account
+section** pattern as the worker app — Payment method/Notification
+preferences → `ComingSoonScreen`, Help & support/Safety tips → real
+content, Terms & liability → real liability text + acceptance date).
+`JobStatusScreen`'s chat icon (previously not even wired to a press
+handler) now opens the same real chat screen the worker side uses; the
+**Messages tab is a real inbox now** — every job with an assigned
+worker, most-recently-active first, last-message preview, tap into the
+thread. 4-tab bar (Home/Jobs/Messages/Profile). **Profile has been
+live-tested and iterated on a physical phone through several rounds**,
+same as the worker app's — see git log for specifics.
 
 ## Physical iPhone builds — working
 
@@ -183,49 +202,37 @@ cd apps/worker && npx expo start --dev-client -c
 
 ## Immediate next steps, in order
 
-1. **Live-test everything built across the last two PRDs on-device — none
-   of it has been click-tested yet, this round included.** Both
-   `profile-redesign` (T1–T7) and `chat` (T1–T5) were implemented,
-   backend-verified (pytest + live curl round trips against the local
-   Docker backend for every new endpoint), and confirmed to typecheck and
-   Metro-bundle cleanly on both apps, but nothing has been tapped through
-   on a real device/simulator — no UI automation tool was available in
-   any of these sessions (no `idb`/`cliclick`, and AppleScript/
-   System-Events window control needs an Accessibility permission grant
-   that couldn't be given non-interactively). Specifically worth checking:
-   - **Worker Profile**: gradient hero contrast/legibility (name + Edit
-     link are white-on-gradient via `ProfileHeader`'s new `inverse` prop —
-     never visually confirmed), stat-card overlap with the hero's rounded
-     bottom edge, Services-offered chip add/remove, and the "+ Add another
-     certificate" flow returning cleanly to the Profile screen (this also
-     touched/fixed a pre-existing bug in the onboarding
-     `CertificationsScreen` — worth confirming onboarding itself still
-     behaves correctly too, not just the new Profile-tab entry point).
-   - **Customer Profile**: calm hero's soft gradient glow behind the
-     avatar (approximated as a flat low-opacity circle, not a true blur —
-     known rough edge), Saved-addresses add/edit/delete, delete
-     confirmation dialog.
+1. **A few small pockets of the last two PRDs still haven't been
+   click-tested; everything else now has.**
+   **✅ Confirmed live on a physical phone**: chat's core send/receive
+   loop (2026-08-24, both apps); both apps' Profile screens end to end —
+   hero, stat card, Services-offered/Certifications (worker), Saved
+   addresses (customer), and the new Account section — through several
+   rounds of real device feedback and fixes (see "What's actually built"
+   above and git log for the specific spacing/padding bugs that were
+   caught and fixed this way, e.g. section labels living inside vs.
+   outside their cards, a `Card`-padding mixup that left Account rows
+   with no side inset).
+   **Still not tapped through**:
+   - The 4 new Account-row destination screens themselves
+     (`ComingSoonScreen`, `HelpSupportScreen`, `SafetyTipsScreen`,
+     `TermsLiabilityScreen`, both apps) — built with the same components
+     already proven to work elsewhere on Profile, but never opened.
+   - Chat's minor polish items: the plain-`ScrollView` bubble list
+     anchoring to the bottom on new messages (chosen over an `inverted
+     FlatList` to avoid a transform-flip bug class), the "This job is
+     closed" state on a terminal job, a zero-message thread still
+     appearing correctly in the Messages inbox.
    - **Saved-address picker** on `RequestSubmissionScreen` — selecting a
      saved address should fill the address field and remain editable
      after.
-   - **Chat, both sides**: worker's `ActiveJobScreen` chat button and
-     customer's `JobStatusScreen` chat icon both open the same underlying
-     thread for a given job — send from one, confirm it appears on the
-     other within a few seconds (poll interval). Check the plain-
-     `ScrollView`-based bubble list actually anchors to the bottom on new
-     messages (chose this over an `inverted FlatList` specifically to
-     avoid a transform-flip bug class that's hard to verify blind — worth
-     confirming the simpler approach reads correctly). Check the "This
-     job is closed" state on a terminal job, and that a job with an
-     assigned worker but zero messages still shows up correctly in the
-     customer's Messages inbox ("No messages yet — say hello" row).
-   - This also folds in the still-outstanding item from before the
-     profile-redesign detour: **T2 (customer Jobs tab) + T3 (photo/name
-     editing)** never got a combined on-device pass either — do all of it
-     in one session rather than four separate passes.
+   - The original pre-profile-redesign item: **T2 (customer Jobs tab) +
+     T3 (photo/name editing)** never got a dedicated combined pass,
+     though T3's underlying screen has since been superseded by the full
+     Profile redesign anyway, so this is largely moot now.
 2. Steps 10–11 (mobile money payment, push notifications) after the
    live-test pass above, per CLAUDE.md's build order — chat (step 9) is
-   now done.
+   now done and confirmed working.
 
 ## Known loose ends / things to revisit
 
@@ -259,3 +266,19 @@ cd apps/worker && npx expo start --dev-client -c
   terminal status *while* someone has the chat screen open won't disable
   sending until they leave and re-enter. Accepted edge case per the chat
   PRD, not fixed.
+- **Both apps' Profile → Account section now has a fuller settings list**
+  (`SettingsRow`, `packages/ui`), matching the hi-fi mockup's structure:
+  Payout/Payment method and Notification preferences open a shared
+  `ComingSoonScreen` (no payment provider or push infra exists yet — see
+  build-order steps 10/11, both not started); Help & support and Safety
+  tips are real static-content screens (`apps/worker/src/screens/` and
+  `apps/customer/src/screens/`, both per-app, not shared); Terms &
+  liability reuses the exact onboarding liability text
+  (`packages/auth-flow/src/screens/ProfileScreen.tsx`'s `TERMS_TEXT`) and
+  reads the existing `liability_acknowledged_at` field — no new backend
+  work needed for that one. **`HelpSupportScreen`'s contact email
+  (`support@prism.app`) and hours are placeholder values, explicitly
+  marked in a code comment — swap for real contact info before any real
+  pilot launch.** Safety tips copy is Claude-drafted generic guidance
+  (verify Verified badge, keep coordination in-app, etc.), not
+  user-supplied — worth a read-through/edit pass when convenient.
