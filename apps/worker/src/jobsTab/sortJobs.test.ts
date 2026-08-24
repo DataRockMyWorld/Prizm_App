@@ -21,6 +21,7 @@ function makeJob(id: number, created_at: string): JobRequest {
     current_offer_responds_by: null,
     accepted_at: null,
     rating: null,
+    last_message: null,
     created_at,
     updated_at: created_at,
   };

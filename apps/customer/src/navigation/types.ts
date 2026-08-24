@@ -6,6 +6,7 @@ export type RequestStackParamList = {
   Searching: { jobId: number };
   Matched: { jobId: number };
   JobStatus: { jobId: number };
+  Chat: { jobId: number };
   ReportProblem: { jobId: number };
   PriceAgreement: { jobId: number };
   Rating: { jobId: number };

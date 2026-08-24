@@ -6,7 +6,7 @@ from rest_framework import serializers
 from accounts.models import User, WorkerProfile
 from services.models import ServiceCategory
 
-from .models import CancellationLog, JobOffer, JobRequest, Rating, Report
+from .models import CancellationLog, JobOffer, JobRequest, Message, Rating, Report
 
 
 class CategoryMiniSerializer(serializers.ModelSerializer):
@@ -40,6 +40,32 @@ class RatingMiniSerializer(serializers.ModelSerializer):
         fields = ["stars", "comment"]
 
 
+class MessageSenderSerializer(serializers.ModelSerializer):
+    """A message's sender can be either role — deliberately not
+    WorkerPublicSerializer/CustomerPublicSerializer, which carry
+    role-specific fields (verified, rating_average) that don't apply
+    generically to "whoever sent this message"."""
+
+    class Meta:
+        model = User
+        fields = ["id", "full_name", "photo"]
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = MessageSenderSerializer(read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ["id", "sender", "text", "created_at"]
+        read_only_fields = ["id", "sender", "created_at"]
+
+    def validate_text(self, value):
+        stripped = value.strip()
+        if not stripped:
+            raise serializers.ValidationError("Message can't be empty.")
+        return stripped
+
+
 class JobRequestSerializer(serializers.ModelSerializer):
     category = CategoryMiniSerializer(read_only=True)
     customer = CustomerPublicSerializer(read_only=True)
@@ -48,6 +74,7 @@ class JobRequestSerializer(serializers.ModelSerializer):
     longitude = serializers.SerializerMethodField()
     current_offer_responds_by = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
 
     class Meta:
         model = JobRequest
@@ -69,6 +96,7 @@ class JobRequestSerializer(serializers.ModelSerializer):
             "current_offer_responds_by",
             "accepted_at",
             "rating",
+            "last_message",
             "created_at",
             "updated_at",
         ]
@@ -89,6 +117,16 @@ class JobRequestSerializer(serializers.ModelSerializer):
             return RatingMiniSerializer(obj.rating).data
         except Rating.DoesNotExist:
             return None
+
+    def get_last_message(self, obj):
+        message = obj.messages.order_by("-created_at").first()
+        if message is None:
+            return None
+        return {
+            "text": message.text,
+            "created_at": message.created_at,
+            "sender_id": message.sender_id,
+        }
 
 
 class JobRequestCreateSerializer(serializers.Serializer):

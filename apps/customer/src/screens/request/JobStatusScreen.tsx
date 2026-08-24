@@ -84,9 +84,13 @@ export function JobStatusScreen({ navigation, route }: Props) {
           <ThemedText variant="title">‹</ThemedText>
         </Pressable>
         <ThemedText variant="subtitle">Job status</ThemedText>
-        <View style={styles.chatIcon}>
+        <Pressable
+          onPress={() => navigation.navigate("Chat", { jobId })}
+          style={styles.chatIcon}
+          accessibilityLabel="Chat"
+        >
           <ThemedText>💬</ThemedText>
-        </View>
+        </Pressable>
       </View>
 
       <Card style={styles.workerCard}>

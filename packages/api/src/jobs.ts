@@ -33,6 +33,12 @@ export interface JobRating {
   comment: string;
 }
 
+export interface JobLastMessage {
+  text: string;
+  created_at: string;
+  sender_id: number;
+}
+
 export interface JobRequest {
   id: number;
   category: ServiceCategory;
@@ -51,6 +57,7 @@ export interface JobRequest {
   current_offer_responds_by: string | null;
   accepted_at: string | null;
   rating: JobRating | null;
+  last_message: JobLastMessage | null;
   created_at: string;
   updated_at: string;
 }

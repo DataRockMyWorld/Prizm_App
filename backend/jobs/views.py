@@ -11,13 +11,14 @@ from rest_framework.views import APIView
 from accounts.models import User, WorkerProfile
 
 from .matching import MATCHING_RADIUS_KM, refresh_job_matching, rematch_nearby_jobs_for_worker, try_match
-from .models import CancellationLog, JobOffer, JobRequest, Rating, Report
+from .models import CancellationLog, JobOffer, JobRequest, Message, Rating, Report
 from .permissions import IsCustomerRole, IsWorkerRole
 from .serializers import (
     CompleteJobSerializer,
     JobOfferSerializer,
     JobRequestCreateSerializer,
     JobRequestSerializer,
+    MessageSerializer,
     NearbyJobSerializer,
     RatingCreateSerializer,
     ReportCreateSerializer,
@@ -266,6 +267,40 @@ class ReportJobView(APIView):
             job=job, reporter=request.user, **serializer.validated_data
         )
         return Response({"id": report.id, "status": report.status}, status=201)
+
+
+class MessageListCreateView(APIView):
+    """Per-job chat thread — coordination between customer and worker,
+    separate from the ReportJobView dispute flow above."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        job = get_object_or_404(JobRequest, pk=pk)
+        if request.user.id not in (job.customer_id, job.worker_id):
+            return Response({"detail": "Not your job."}, status=403)
+        messages = job.messages.select_related("sender")
+        return Response(MessageSerializer(messages, many=True).data)
+
+    def post(self, request, pk):
+        job = get_object_or_404(JobRequest, pk=pk)
+        if request.user.id not in (job.customer_id, job.worker_id):
+            return Response({"detail": "Not your job."}, status=403)
+        if job.worker_id is None:
+            return Response({"detail": "No worker assigned yet."}, status=400)
+        if job.status in (
+            JobRequest.Status.COMPLETED,
+            JobRequest.Status.CANCELLED,
+            JobRequest.Status.DISPUTED,
+        ):
+            return Response({"detail": "This job is closed."}, status=400)
+
+        serializer = MessageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        message = Message.objects.create(
+            job=job, sender=request.user, text=serializer.validated_data["text"]
+        )
+        return Response(MessageSerializer(message).data, status=201)
 
 
 class AcceptOfferView(APIView):

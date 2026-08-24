@@ -3,6 +3,7 @@ import React from "react";
 
 import { AddressFormScreen } from "../screens/AddressFormScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
+import { ChatScreen } from "../screens/request/ChatScreen";
 import { JobStatusScreen } from "../screens/request/JobStatusScreen";
 import { MatchedScreen } from "../screens/request/MatchedScreen";
 import { PriceAgreementScreen } from "../screens/request/PriceAgreementScreen";
@@ -29,6 +30,7 @@ export function RequestNavigator() {
       <Stack.Screen name="Searching" component={SearchingScreen} />
       <Stack.Screen name="Matched" component={MatchedScreen} />
       <Stack.Screen name="JobStatus" component={JobStatusScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen
         name="ReportProblem"
         component={ReportProblemScreen}

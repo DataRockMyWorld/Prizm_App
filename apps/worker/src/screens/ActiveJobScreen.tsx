@@ -114,9 +114,9 @@ export function ActiveJobScreen() {
       <View style={styles.header}>
         <ThemedText variant="title">Active job</ThemedText>
         <Pressable
-          onPress={() => Alert.alert("Chat coming soon")}
+          onPress={() => navigation.navigate("Chat", { jobId })}
           style={styles.chatButton}
-          accessibilityLabel="Chat (coming soon)"
+          accessibilityLabel="Chat"
         >
           <ThemedText>💬</ThemedText>
         </Pressable>

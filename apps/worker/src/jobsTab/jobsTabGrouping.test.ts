@@ -25,6 +25,7 @@ function makeJob(overrides: Partial<JobRequest> & { id: number; created_at: stri
     current_offer_responds_by: null,
     accepted_at: null,
     rating: null,
+    last_message: null,
     updated_at: overrides.created_at,
     ...overrides,
   };

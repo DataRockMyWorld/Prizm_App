@@ -17,4 +17,5 @@ export type WorkerRootStackParamList = {
   WaitingForConfirmation: { jobId: number };
   JobComplete: { jobId: number };
   JobDetail: { jobId: number };
+  Chat: { jobId: number };
 } & WorkerOnboardingStackParamList;

@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from accounts.tests.factories import UserFactory
-from jobs.models import JobOffer, JobRequest
+from jobs.models import JobOffer, JobRequest, Message
 from services.tests.factories import ServiceCategoryFactory
 
 # Windhoek, Namibia — a real coordinate keeps geography-field validation
@@ -35,3 +35,12 @@ class JobOfferFactory(factory.django.DjangoModelFactory):
     job = factory.SubFactory(JobRequestFactory)
     worker = factory.SubFactory(UserFactory, role=User.Role.WORKER)
     responds_by = factory.LazyFunction(lambda: timezone.now() + timedelta(seconds=60))
+
+
+class MessageFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Message
+
+    job = factory.SubFactory(JobRequestFactory)
+    sender = factory.SubFactory(UserFactory)
+    text = factory.Faker("sentence")

@@ -10,6 +10,7 @@ from .views import (
     JobCancelView,
     JobRequestDetailView,
     JobRequestListCreateView,
+    MessageListCreateView,
     NearbyJobsView,
     OnMyWayView,
     RateJobView,
@@ -36,4 +37,5 @@ urlpatterns = [
     path("<int:pk>/dispute-price/", DisputePriceView.as_view(), name="job-dispute-price"),
     path("<int:pk>/rate/", RateJobView.as_view(), name="job-rate"),
     path("<int:pk>/report/", ReportJobView.as_view(), name="job-report"),
+    path("<int:pk>/messages/", MessageListCreateView.as_view(), name="job-messages"),
 ]

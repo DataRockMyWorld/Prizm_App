@@ -1,6 +1,6 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-08-23. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-08-24. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
 
@@ -16,21 +16,31 @@ the work back up.
 | 6 | Auth screens → wire to API | ✅ Done, both apps — confirmed live on a physical iPhone |
 | 7 | Customer request flow → wire to API | ✅ Done, click-tested end-to-end on a physical iPhone (submission → matched → tracking → price agreement → rating), worker side simulated via Django shell |
 | 8 | Worker active-job flow → wire to API | ✅ Done — see `docs/prds/worker-active-job-flow.md` / `docs/tickets/worker-active-job-flow.md`, all tickets T0a–T7 complete |
-| 9 | Chat (polling) | ⬜ Not started |
+| 9 | Chat (polling) | ✅ Done — see `docs/prds/chat.md` / `docs/tickets/chat.md`, all tickets T1–T5 complete |
 | 10 | Mobile money payment | ⬜ Not started (intentionally stubbed) |
 | 11 | Push notifications | ⬜ Not started |
 | 12 | Device testing / pilot rollout | ✅ Both apps running as native dev-client builds on a physical iPhone (see below) |
 
-Beyond the original build order, a second PRD/ticket round is in progress:
-`docs/prds/customer-jobs-tab-and-profile-editing.md` /
-`docs/tickets/customer-jobs-tab-and-profile-editing.md` — T1 (customer
-jobsTab logic), T2 (customer Jobs tab list + detail, replacing the old
-Requests/Bookings placeholders), and T3 (photo + name editing on both
-apps' Profile screens) are all done and committed.
+Beyond the original build order, two follow-up PRD/ticket rounds are done:
+- `docs/prds/customer-jobs-tab-and-profile-editing.md` /
+  `docs/tickets/customer-jobs-tab-and-profile-editing.md` — T1 (customer
+  jobsTab logic), T2 (customer Jobs tab list + detail, replacing the old
+  Requests/Bookings placeholders), and T3 (photo + name editing on both
+  apps' Profile screens) are all done and committed.
+- `docs/prds/profile-redesign.md` / `docs/tickets/profile-redesign.md` —
+  the fuller hi-fi Profile redesign (gradient hero, badges, rating, stats,
+  Services-offered editor, Certifications list, Saved addresses CRUD).
+  All 7 tickets (T1–T7) done and committed.
 
-**A follow-up PRD is queued but not yet written** — see "Immediate next
-steps" below, it has specific decisions already made that need to be
-captured before drafting.
+This also completes build-order step 9 itself:
+`docs/prds/chat.md` / `docs/tickets/chat.md` — per-job chat thread, both
+apps' entry points (worker's `ActiveJobScreen` chat button, customer's
+`JobStatusScreen` chat icon) now real instead of fake/broken, plus a real
+inbox on the customer's Messages tab. All 5 tickets (T1–T5) done and
+committed — see "What's actually built" below and "Immediate next steps"
+for the still-outstanding live click-test (this round included; nothing
+built across either of these two PRDs has been tapped through on a real
+device/simulator yet).
 
 ## What's actually built
 
@@ -42,20 +52,30 @@ Verified/Certified priority → accept/decline offer → status stepper →
 price confirm/dispute → rate). MinIO (S3-compatible) for file storage,
 CORS enabled for local dev. `ProfileView`/`ProfileSerializer` already
 supports `PATCH` for `full_name`/`photo`/`biometric_enabled`.
-`WorkerProfileSerializer` already supports `PATCH` for `categories`
-(useful context for the queued profile-redesign PRD — no new endpoint
-needed for a "services offered" editor). `ServiceCategoryListView`
-(`/api/services/categories/`) already exists for category pickers.
+`WorkerProfileSerializer` supports `PATCH` for `categories` (used by the
+worker Profile tab's Services-offered editor) and now also exposes
+computed `jobs_completed`/`rating_average`; a new `CustomerProfileView`
+(`/api/auth/customer-profile/`) exposes `requests_completed`; a new
+`Address` model + CRUD API (`/api/auth/addresses/`) backs Saved
+addresses — all added in `profile-redesign` T1/T2. The `Message` model
+(job, sender, text — pre-seeded in the original data model but unwired
+until now) has a real scoped list/create API at
+`/api/jobs/<id>/messages/` (`chat` T1), gated on a worker being assigned
+and the job not yet being terminal; `JobRequestSerializer` gained
+`last_message` to power the customer inbox without a second endpoint.
+`ServiceCategoryListView` (`/api/services/categories/`) exists for
+category pickers.
 
 **Shared packages** (`packages/`):
 - `@prizm/ui` — design tokens (brand gradient, Manrope type, spacing) and
   primitives (Button, Card, TextField, OtpInput, PinDots, Avatar,
   UploadTile, BrandHeader, SplashView, Badge, **ProfileHeader** — avatar +
-  inline name editing, shared by both apps' Profile screens, added this
-  round — etc.), including the real Prism logo. `pageBackground` color
-  token (added this round) is `Screen`'s default background — a shade
-  darker than white so `Card`s (still pure white) have visible contrast;
-  fixes a bug where cards were nearly invisible against the page.
+  inline name editing, shared by both apps' Profile screens, plus an
+  `inverse` prop (added in `profile-redesign` T3) for use atop a dark/
+  gradient background — **StatCard** and **ProfileHero** (also T3, the
+  worker/customer Profile heroes) — etc.), including the real Prism logo.
+  `pageBackground` color token is `Screen`'s default background — a shade
+  darker than white so `Card`s (still pure white) have visible contrast.
 - `@prizm/api` — fetch client, `SecureStore`-backed auth session, typed
   functions for every backend endpoint. `getApiUrl()` (`client.ts`) now
   treats a `localhost`/`127.0.0.1` Metro dev-server host as untrustworthy
@@ -70,21 +90,31 @@ under-review flow, full active-job flow (incoming offer → accept/decline
 → on-my-way/arrived/in-progress → mark complete → propose price → wait
 for confirmation → done), a redesigned **Jobs tab** (Active/Completed,
 colored status rails, date grouping, tap into either the live screen or
-a read-only Job Record detail screen), and **Profile** with avatar/name
-editing + ID-verification badge. 5-tab bar (Home/Jobs/Bookings/Earnings/
-Profile; Bookings/Earnings are still placeholders — not real product
-concepts yet, see CLAUDE.md's dropped-scope notes).
+a read-only Job Record detail screen), and a redesigned **Profile**
+(gradient hero with photo/name/categories/Verified+Certified
+badges/rating+jobs-completed, 2-stat card, editable Services-offered
+chips, Certifications list with a working add flow reachable from the
+Profile tab now too — not just onboarding). `ActiveJobScreen`'s chat
+button now opens a real per-job chat screen (poll-refreshed) instead of
+an "coming soon" alert. 5-tab bar (Home/Jobs/Bookings/Earnings/Profile;
+Bookings/Earnings are still placeholders — not real product concepts
+yet, see CLAUDE.md's dropped-scope notes).
 
 **apps/customer**: full onboarding, Home (category grid, search bar —
 still decorative), the full request flow (submission → searching/
 matching → matched → job status tracking → report-a-problem → price
-agreement → rating, with a back button on the tracking screen now), a
-**Jobs tab** (replaces the old Requests/Bookings placeholders — same
-Active/Completed pattern as the worker app, adapted: cards show the
-assigned worker's identity, no earnings-style stat, rating framed as
-what the customer gave), and **Profile** with avatar/name editing.
-4-tab bar (Home/Jobs/Messages/Profile; Messages still a placeholder —
-chat is build-order step 9, not started).
+agreement → rating, with a back button on the tracking screen now, and a
+"Use a saved address" picker on the submission screen), a **Jobs tab**
+(replaces the old Requests/Bookings placeholders — same Active/Completed
+pattern as the worker app, adapted: cards show the assigned worker's
+identity, no earnings-style stat, rating framed as what the customer
+gave), and a redesigned **Profile** (calm hero with photo/name/member-
+since, 2-stat card, and full CRUD **Saved addresses**). `JobStatusScreen`'s
+chat icon (previously not even wired to a press handler) now opens the
+same real chat screen the worker side uses; the **Messages tab is a real
+inbox now** — every job with an assigned worker, most-recently-active
+first, last-message preview, tap into the thread. 4-tab bar (Home/Jobs/
+Messages/Profile).
 
 ## Physical iPhone builds — working
 
@@ -153,55 +183,79 @@ cd apps/worker && npx expo start --dev-client -c
 
 ## Immediate next steps, in order
 
-1. **Draft the queued profile-redesign PRD.** The user shared a fuller
-   hi-fi mockup (worker "W8" + customer "C8" Profile screens — file:
-   `/Users/jewelbansah/Downloads/Prism Auth Flow - HiFi.dc-3.html`,
-   screenshotted at `/Users/jewelbansah/Desktop/Screenshot 2026-08-23 at
-   6.22.56 PM.png`) that goes well beyond T3's scope (which just shipped:
-   plain avatar + name editing). The fuller design has: a gradient hero
-   header, Verified/Certified badges + star rating + jobs-completed count
-   (worker), a 3-stat card including an "on-time %" stat, a "Services
-   offered" tag editor, a Certifications list + add flow, and (customer
-   side) a 2-stat card and **Saved addresses** (Home/Work + arbitrary
-   named addresses). **Two product questions are already resolved — do
-   not re-ask, just build to these:**
-   - **"On-time %" is dropped entirely** — no honest definition exists
-     without a scheduling/appointment concept in the data model (same
-     reasoning as the earlier "PAID"/earnings-language fixes). The stat
-     card should just be Jobs / Member since (worker) — 2-up, not 3-up.
-   - **Saved addresses = full CRUD, freeform** — a real `Address` model
-     (not just two fixed Home/Work slots), addable/editable/deletable,
-     and selectable from `RequestSubmissionScreen` when submitting a
-     request (that screen already cleanly separates `address` text state
-     from `coords` — see `apps/customer/src/screens/request/
-     RequestSubmissionScreen.tsx` — wiring a picker in is a clean
-     addition, not a rework).
-   Backend grounding already done (see "What's actually built" above):
-   categories and certifications endpoints already exist and are
-   reusable as-is; still need new — a worker stats endpoint (jobs
-   completed count, rating average, member-since/`date_joined`), an
-   equivalent customer stats endpoint (requests completed,
-   member-since), and the new `Address` model + CRUD endpoints entirely
-   from scratch.
-2. Once that PRD's written, break it into tickets (same process as
-   before) and implement.
-3. **Live-test T2 (customer Jobs tab) + T3 (profile editing) together on
-   the phone** — both landed right before the profile-mockup detour and
-   haven't had a full combined pass yet (T3 specifically was only
-   typechecked/bundle-verified, not click-tested on-device).
-4. Steps 9–11 (chat, payments, push) after the profile-redesign PRD, per
-   CLAUDE.md's build order.
+1. **Live-test everything built across the last two PRDs on-device — none
+   of it has been click-tested yet, this round included.** Both
+   `profile-redesign` (T1–T7) and `chat` (T1–T5) were implemented,
+   backend-verified (pytest + live curl round trips against the local
+   Docker backend for every new endpoint), and confirmed to typecheck and
+   Metro-bundle cleanly on both apps, but nothing has been tapped through
+   on a real device/simulator — no UI automation tool was available in
+   any of these sessions (no `idb`/`cliclick`, and AppleScript/
+   System-Events window control needs an Accessibility permission grant
+   that couldn't be given non-interactively). Specifically worth checking:
+   - **Worker Profile**: gradient hero contrast/legibility (name + Edit
+     link are white-on-gradient via `ProfileHeader`'s new `inverse` prop —
+     never visually confirmed), stat-card overlap with the hero's rounded
+     bottom edge, Services-offered chip add/remove, and the "+ Add another
+     certificate" flow returning cleanly to the Profile screen (this also
+     touched/fixed a pre-existing bug in the onboarding
+     `CertificationsScreen` — worth confirming onboarding itself still
+     behaves correctly too, not just the new Profile-tab entry point).
+   - **Customer Profile**: calm hero's soft gradient glow behind the
+     avatar (approximated as a flat low-opacity circle, not a true blur —
+     known rough edge), Saved-addresses add/edit/delete, delete
+     confirmation dialog.
+   - **Saved-address picker** on `RequestSubmissionScreen` — selecting a
+     saved address should fill the address field and remain editable
+     after.
+   - **Chat, both sides**: worker's `ActiveJobScreen` chat button and
+     customer's `JobStatusScreen` chat icon both open the same underlying
+     thread for a given job — send from one, confirm it appears on the
+     other within a few seconds (poll interval). Check the plain-
+     `ScrollView`-based bubble list actually anchors to the bottom on new
+     messages (chose this over an `inverted FlatList` specifically to
+     avoid a transform-flip bug class that's hard to verify blind — worth
+     confirming the simpler approach reads correctly). Check the "This
+     job is closed" state on a terminal job, and that a job with an
+     assigned worker but zero messages still shows up correctly in the
+     customer's Messages inbox ("No messages yet — say hello" row).
+   - This also folds in the still-outstanding item from before the
+     profile-redesign detour: **T2 (customer Jobs tab) + T3 (photo/name
+     editing)** never got a combined on-device pass either — do all of it
+     in one session rather than four separate passes.
+2. Steps 10–11 (mobile money payment, push notifications) after the
+   live-test pass above, per CLAUDE.md's build order — chat (step 9) is
+   now done.
 
 ## Known loose ends / things to revisit
 
 - JWT 30-min expiry / no mid-session refresh — see Environment gotchas.
 - Customer Home's search bar is decorative (`editable={false}`) — no
   search endpoint exists yet.
-- The worker onboarding "Add certifications" screen only supports adding
-  one certificate per visit (no "+ Add another" repeat flow yet) — the
-  queued profile-redesign PRD's Certifications section may end up
-  wanting this repeat flow anyway; worth checking when that's scoped.
 - No hi-fi mockup existed for the customer Jobs tab (T2) when it was
   built — it's a reasoned adaptation of the worker app's Jobs tab, not a
   pixel spec. Worth a visual gut-check with the user if/when a customer
   Jobs-tab mockup ever surfaces, same as happened for the worker one.
+- Worker onboarding's "Add certifications" screen no longer has the
+  one-cert-per-visit limitation — resolved as a side effect of
+  `profile-redesign` T5's Certifications list (add-per-category is now
+  inherently repeatable from the Profile tab). Onboarding itself still
+  only shows the single-add UI in its own linear flow, which is fine
+  (matches CLAUDE.md: certifications are optional/skippable there either
+  way) — just noting the old caveat no longer applies.
+- Customer Profile's "soft gradient ring" behind the avatar
+  (`ProfileHero`'s customer variant, `packages/ui`) is a flat low-opacity
+  circle, not a true blur — React Native has no built-in blur without an
+  extra native dependency. Flagged in the PRD as needing a visual
+  gut-check; not yet done (see "Immediate next steps").
+- Chat is polling-only (no push notifications for new messages, no
+  unread badges/read receipts/typing indicators) — all deliberate,
+  matching CLAUDE.md's own "start with simple polling" framing for this
+  build-order step. Revisit unread/push once step 11 (push notifications)
+  is built.
+- `ChatScreen` (both apps) fetches the job once on mount to know the
+  terminal-status gate and the other party's identity — it does not
+  re-check this on every message-poll tick, so a job transitioning to a
+  terminal status *while* someone has the chat screen open won't disable
+  sending until they leave and re-enter. Accepted edge case per the chat
+  PRD, not fixed.

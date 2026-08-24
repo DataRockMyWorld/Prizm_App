@@ -4,6 +4,7 @@ import React from "react";
 import { OfferPollingProvider } from "../offers/OfferPollingProvider";
 import { ActiveJobScreen } from "../screens/ActiveJobScreen";
 import { CancelJobScreen } from "../screens/CancelJobScreen";
+import { ChatScreen } from "../screens/ChatScreen";
 import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
 import { JobCompleteScreen } from "../screens/JobCompleteScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
@@ -76,6 +77,7 @@ export function RootNavigator() {
           options={{ gestureEnabled: false }}
         />
         <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+        <Stack.Screen name="Chat" component={ChatScreen} />
       </Stack.Navigator>
     </OfferPollingProvider>
   );
