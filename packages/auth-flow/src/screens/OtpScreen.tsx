@@ -1,5 +1,5 @@
 import { verifyOtp, requestOtp } from "@prizm/api";
-import { OtpInput, Screen, ThemedText, colors, spacing } from "@prizm/ui";
+import { OtpInput, Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   },
   link: {
     color: colors.primary,
-    fontFamily: "Manrope_700Bold",
+    fontFamily: fontFamily.bold,
   },
   error: {
     color: colors.danger,

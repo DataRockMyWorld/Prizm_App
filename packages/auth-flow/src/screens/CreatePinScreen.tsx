@@ -1,4 +1,4 @@
-import { Screen, ThemedText, spacing } from "@prizm/ui";
+import { Screen, ThemedText, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   },
   step: {
     color: "#FF6C22",
-    fontFamily: "Manrope_800ExtraBold",
+    fontFamily: fontFamily.extraBold,
     letterSpacing: 0.5,
   },
   subtitle: {

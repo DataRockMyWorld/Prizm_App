@@ -1,5 +1,5 @@
 import { register, useAuth } from "@prizm/api";
-import { Screen, ThemedText, colors, spacing } from "@prizm/ui";
+import { Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   step: {
     color: "#FF6C22",
-    fontFamily: "Manrope_800ExtraBold",
+    fontFamily: fontFamily.extraBold,
     letterSpacing: 0.5,
   },
   subtitle: {

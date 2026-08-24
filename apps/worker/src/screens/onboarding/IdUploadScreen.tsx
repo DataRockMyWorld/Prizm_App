@@ -1,5 +1,5 @@
 import { submitIdDocument, useAuth } from "@prizm/api";
-import { Button, ProgressBar, Screen, ThemedText, UploadTile, colors, spacing } from "@prizm/ui";
+import { Button, fontFamily, ProgressBar, Screen, ThemedText, UploadTile, colors, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   step: {
     color: "#FF6C22",
-    fontFamily: "Manrope_800ExtraBold",
+    fontFamily: fontFamily.extraBold,
     letterSpacing: 0.5,
   },
   subtitle: {
