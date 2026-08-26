@@ -41,7 +41,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   dotEmpty: {
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.textSecondary,
   },
 });

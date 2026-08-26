@@ -8,7 +8,8 @@ import React, {
   useState,
 } from "react";
 
-import { AuthTokens, Profile, getProfile, refreshAccessToken } from "./auth";
+import { AuthTokens, Profile, getProfile } from "./auth";
+import { establishSessionFromTokens, restoreSession } from "./sessionEstablishment";
 
 const ACCESS_KEY = "prizm.accessToken";
 const REFRESH_KEY = "prizm.refreshToken";
@@ -33,13 +34,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfileState] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Swallows failure — only safe here because this path refreshes an
+  // *already-established* session (see refreshProfile below); a transient
+  // failure shouldn't log out a user who was already in. Establishing a
+  // session for the first time (mount-effect restore, setSession after
+  // login) must NOT swallow — see sessionEstablishment.ts for why.
   const loadProfile = useCallback(async (token: string) => {
     try {
       const data = await getProfile(token);
       setProfileState(data);
     } catch {
-      // A failed profile fetch shouldn't crash the app — screens that need
-      // it handle their own loading/error state.
+      // Intentionally ignored — see comment above.
     }
   }, []);
 
@@ -47,31 +52,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       const storedRefresh = await SecureStore.getItemAsync(REFRESH_KEY);
       if (storedRefresh) {
-        try {
-          const { access } = await refreshAccessToken(storedRefresh);
-          setAccessToken(access);
-          setRefreshToken(storedRefresh);
-          await SecureStore.setItemAsync(ACCESS_KEY, access);
-          await loadProfile(access);
-        } catch {
+        const session = await restoreSession(storedRefresh);
+        if (session) {
+          setAccessToken(session.access);
+          setRefreshToken(session.refresh);
+          setProfileState(session.profile);
+          await SecureStore.setItemAsync(ACCESS_KEY, session.access);
+        } else {
           await SecureStore.deleteItemAsync(ACCESS_KEY);
           await SecureStore.deleteItemAsync(REFRESH_KEY);
         }
       }
       setIsLoading(false);
     })();
-  }, [loadProfile]);
+  }, []);
 
-  const setSession = useCallback(
-    async (tokens: AuthTokens) => {
-      setAccessToken(tokens.access);
-      setRefreshToken(tokens.refresh);
-      await SecureStore.setItemAsync(ACCESS_KEY, tokens.access);
-      await SecureStore.setItemAsync(REFRESH_KEY, tokens.refresh);
-      await loadProfile(tokens.access);
-    },
-    [loadProfile]
-  );
+  const setSession = useCallback(async (tokens: AuthTokens) => {
+    const session = await establishSessionFromTokens(tokens);
+    setAccessToken(session.access);
+    setRefreshToken(session.refresh);
+    setProfileState(session.profile);
+    await SecureStore.setItemAsync(ACCESS_KEY, session.access);
+    await SecureStore.setItemAsync(REFRESH_KEY, session.refresh);
+  }, []);
 
   const clearSession = useCallback(async () => {
     setAccessToken(null);
