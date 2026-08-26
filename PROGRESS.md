@@ -1,6 +1,6 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-08-24. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-08-26. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
 
@@ -17,8 +17,8 @@ the work back up.
 | 7 | Customer request flow → wire to API | ✅ Done, click-tested end-to-end on a physical iPhone (submission → matched → tracking → price agreement → rating), worker side simulated via Django shell |
 | 8 | Worker active-job flow → wire to API | ✅ Done — see `docs/prds/worker-active-job-flow.md` / `docs/tickets/worker-active-job-flow.md`, all tickets T0a–T7 complete |
 | 9 | Chat (polling) | ✅ Done, core send/receive confirmed live on a physical phone (2026-08-24) — see `docs/prds/chat.md` / `docs/tickets/chat.md`, all tickets T1–T5 complete |
-| 10 | Mobile money payment | ⬜ Not started (intentionally stubbed) |
-| 11 | Push notifications | ⬜ Not started |
+| 10 | Mobile money payment | ⬜ Deliberately skipped for now — revisit later, see below |
+| 11 | Push notifications | ⏸️ Backend + T4 done (T1–T4), paused on an Apple Developer Program blocker — see below |
 | 12 | Device testing / pilot rollout | ✅ Both apps running as native dev-client builds on a physical iPhone (see below) |
 
 Beyond the original build order, two follow-up PRD/ticket rounds are done:
@@ -64,7 +64,9 @@ until now) has a real scoped list/create API at
 and the job not yet being terminal; `JobRequestSerializer` gained
 `last_message` to power the customer inbox without a second endpoint.
 `ServiceCategoryListView` (`/api/services/categories/`) exists for
-category pickers.
+category pickers. Four seeded categories now (was three): Cleaning,
+Plumbing, Electrical, and **Gardening** (added 2026-08-26, N$150–350
+estimate — `backend/services/migrations/0003_seed_gardening.py`).
 
 **Shared packages** (`packages/`):
 - `@prizm/ui` — design tokens (brand gradient, Manrope type, spacing) and
@@ -114,8 +116,14 @@ cards to match the hi-fi mockup, Log out redesigned from a standalone
 button to an Account list row, a `Card`-padding mixup that left the new
 Account rows with no left/right inset).
 
-**apps/customer**: full onboarding, Home (category grid, search bar —
-still decorative), the full request flow (submission → searching/
+**apps/customer**: full onboarding, a redesigned **Home** screen (2026-08-26,
+went through two design rounds live with the user — landed on a calmer
+"catalogue" card style over the first full-bleed-photo attempt: first name
+only in the greeting, a "BROWSE SERVICES / See all" section header below a
+divider, then Cleaning/Plumbing/Electrical/Gardening as 2-column cards —
+photo on top (4:3, custom-cropped per category to keep the worker's
+face/hands in frame), category name on a plain white card body below,
+matching a hi-fi mockup closely; search bar still decorative), the full request flow (submission → searching/
 matching → matched → job status tracking → report-a-problem → price
 agreement → rating, with a back button on the tracking screen now, and a
 "Use a saved address" picker on the submission screen), a **Jobs tab**
@@ -192,53 +200,136 @@ cd apps/worker && npx expo start --dev-client -c
   don't remove (SDK 56+'s `expo/fetch` can't send `FormData`).
 - **`.env` files are gitignored** — `.env.example` in each app documents
   what's needed.
-- Two Expo dev servers run side by side: worker on port 8081, customer on
-  port 8082 (`--port 8082` flag).
+- Two Expo dev servers run side by side: worker on port 8081, customer
+  normally on port 8082 (`--port 8082` flag) — though the customer
+  Simulator session as of 2026-08-26 is on **port 8095** instead (see
+  below); either port is fine going forward, 8082 is just the
+  established default.
 - **JWT access tokens expire after 30 min with no auto-refresh mid-
   session** — a real, still-unfixed gap. If a long-idle app session starts
   throwing 401s, that's why; relaunching the app re-triggers the
   refresh-token flow on mount and clears it. Low priority unless it comes
   up again.
+- **No `expo-dev-client` in either app** (verified 2026-08-26 — not in
+  `package.json`, not in `node_modules`, not a Podfile dependency).
+  Consequence: a Simulator launch that doesn't go through `expo run:ios`
+  itself (e.g. `xcrun simctl launch <bundle-id>` after the app's already
+  installed) has no way to discover/remember which Metro port to use, and
+  **silently falls back to React Native's hardcoded default port 8081**
+  — i.e. the *worker* app's Metro, if both apps are running side by side.
+  Since the shared onboarding screens (`packages/auth-flow`) look
+  identical between both apps, this is easy to not notice until you reach
+  a role-specific screen (worker's 5-tab bar vs. customer's 4-tab bar).
+  Symptom besides wrong content: the splash screen's emoji badge
+  (`SplashView icon=`) is 🔧 for worker, 🏠 for customer — a fast way to
+  tell which app's JS is actually loaded. **Workaround** (until
+  `expo-dev-client` is actually added as a real fix — worth doing):
+  `xcrun simctl spawn <device> defaults write <bundle-id> RCT_jsLocation
+  "<mac-lan-ip>:<port>"` before every `simctl launch`, or just always
+  relaunch via a full `npx expo run:ios --device <udid> --port <port>`
+  cycle instead of a bare `simctl launch`.
+- **Local `require()`'d image assets can serve stale/wrong content on
+  Simulator** (discovered + worked around 2026-08-26, customer Home
+  screen's service-tile photos). Metro's local-asset HTTP serving in this
+  monorepo registers each asset with a *directory-level*, not
+  file-specific, `httpServerLocation` containing `unstable_path` — an
+  explicitly experimental Metro feature. Confirmed via direct `curl` that
+  Metro serves 100% correct bytes/hash for the exact asset URL, and that
+  the JS bundle text itself references the correct filename — yet the
+  native `Image` component kept rendering old/wrong photo content for
+  that require() call site. Survived: Metro cache clears, full app
+  uninstall+reinstall, brand-new never-before-used Metro ports, and a
+  full Simulator reboot — ruling out every normal caching layer. **Fix**:
+  don't `require()` local photos in `apps/customer` — inline them as
+  base64 `data:` URIs instead (bypasses Metro's asset pipeline entirely).
+  See `apps/customer/src/serviceImages.ts` for the working pattern and
+  the regeneration script in its header comment. Not yet confirmed
+  whether this also affects physical-device (non-Simulator) builds or is
+  Simulator-specific — worth a real device check next time that app is
+  touched, and worth a genuine root-cause fix (or an `expo-dev-client`
+  install, which might resolve both this and the port-fallback gotcha
+  above at once) rather than living with the workaround long-term.
 
 ## Immediate next steps, in order
 
-1. **A few small pockets of the last two PRDs still haven't been
-   click-tested; everything else now has.**
-   **✅ Confirmed live on a physical phone**: chat's core send/receive
-   loop (2026-08-24, both apps); both apps' Profile screens end to end —
-   hero, stat card, Services-offered/Certifications (worker), Saved
-   addresses (customer), and the new Account section — through several
-   rounds of real device feedback and fixes (see "What's actually built"
-   above and git log for the specific spacing/padding bugs that were
-   caught and fixed this way, e.g. section labels living inside vs.
-   outside their cards, a `Card`-padding mixup that left Account rows
-   with no side inset).
-   **Still not tapped through**:
-   - The 4 new Account-row destination screens themselves
-     (`ComingSoonScreen`, `HelpSupportScreen`, `SafetyTipsScreen`,
-     `TermsLiabilityScreen`, both apps) — built with the same components
-     already proven to work elsewhere on Profile, but never opened.
-   - Chat's minor polish items: the plain-`ScrollView` bubble list
-     anchoring to the bottom on new messages (chosen over an `inverted
-     FlatList` to avoid a transform-flip bug class), the "This job is
-     closed" state on a terminal job, a zero-message thread still
-     appearing correctly in the Messages inbox.
-   - **Saved-address picker** on `RequestSubmissionScreen` — selecting a
-     saved address should fill the address field and remain editable
-     after.
-   - The original pre-profile-redesign item: **T2 (customer Jobs tab) +
-     T3 (photo/name editing)** never got a dedicated combined pass,
-     though T3's underlying screen has since been superseded by the full
-     Profile redesign anyway, so this is largely moot now.
-2. Steps 10–11 (mobile money payment, push notifications) after the
-   live-test pass above, per CLAUDE.md's build order — chat (step 9) is
-   now done and confirmed working.
+1. ✅ **Done (2026-08-25)** — the remaining click-test pockets from the
+   chat + profile-redesign PRDs (the 4 Account-row destination screens,
+   chat's polish states, the saved-address picker on
+   `RequestSubmissionScreen`) were all tapped through live on the phone
+   and confirmed working. Minor visual polish noted as worth revisiting
+   later, but nothing broken — no fixes needed this round.
+2. **Step 10 (mobile money payment) is being deliberately skipped for
+   now** per user decision on 2026-08-25 — provider still TBD (see
+   CLAUDE.md), come back to it later.
+3. **Step 11 (push notifications) is paused on an Apple Developer
+   Program blocker (2026-08-26).** PRD (`docs/prds/push-notifications.md`)
+   and tickets (`docs/tickets/push-notifications.md`, T0–T7) are written.
+   **T1–T3 (backend) are done, tested, and merged** — new
+   `backend/notifications` app (`PushToken` model, register/delete
+   device endpoint), the `send_push_notification` Celery task (the
+   project's first real Celery task, confirmed working end-to-end via a
+   real smoke test through the actual worker, not just configured), and
+   the task wired into the three trigger points (`jobs/matching.py`
+   `try_match`, `jobs/views.py` `AcceptOfferView` +
+   `MessageListCreateView`). 16 new backend tests pass, full suite
+   47/47. This backend work is inert but harmless until a device
+   actually registers a token — safe to have merged ahead of the
+   frontend/T0 being unblocked.
+   **T0 (Apple Developer/EAS credential setup) is blocked**: checked
+   2026-08-26 — `jewelbansah@icloud.com`'s Apple ID is on a **Personal
+   Team only, no paid Apple Developer Program membership** ($99/yr,
+   required for the Push Notifications capability — a hard Apple
+   platform requirement, not something to work around). Also surfaced
+   along the way: the existing `ios/*.xcodeproj` project files reference
+   signing team `LZDFN4R8G7`, which doesn't match the only valid
+   codesigning identity currently in the keychain
+   (`862V45CWK2`/personal team) — unresolved, likely stale from an
+   earlier signing session; hasn't blocked existing device builds so
+   left alone, but worth a look if iOS signing ever acts up.
+   **T4 is also done now** — `packages/api/src/notifications.ts`
+   (`registerDevice`, `unregisterDevice`, `getNotificationRoute`, the
+   last a pure function with no RN/expo-notifications dependency so it
+   didn't need T0 to write or test), 6 new tests pass
+   (`packages/api/src/notifications.test.ts`), both apps typecheck
+   clean. **User decision (2026-08-26): pause push notifications here**
+   — T5–T7 (`expo-notifications` native config, the shared registration
+   hook, the device click-test pass) all genuinely need T0 (real device
+   push credentials) to build/verify, unlike T4. Come back to T0 once/if
+   the Apple ID gets enrolled in the paid Program, then pick up T5–T7.
 
 ## Known loose ends / things to revisit
 
 - JWT 30-min expiry / no mid-session refresh — see Environment gotchas.
 - Customer Home's search bar is decorative (`editable={false}`) — no
   search endpoint exists yet.
+- **Fixed 2026-08-26**: `PinDots` (`packages/ui/src/components/PinDots.tsx`,
+  shared by both apps' 4-digit PIN screens) had near-invisible empty-dot
+  outlines — `colors.border` (`#ECE7E2`) against `colors.pageBackground`
+  (`#F1ECE7`) is barely distinguishable. Now uses `colors.textSecondary`
+  for the border plus a `colors.surfaceMuted` fill, matching the contrast
+  pattern `OtpInput`'s empty boxes already used successfully.
+- **Fixed 2026-08-26**: a real `AuthProvider` bug where, if a stored
+  refresh token succeeded but the immediately-following profile fetch
+  failed (e.g. the underlying account was deleted — the refresh token
+  itself still validated), the app landed on `isAuthenticated=true` with
+  `profile=null` permanently — both apps' `App.tsx` has no recovery path
+  from that combination, so the app was stuck on the splash screen
+  forever. Fixed by extracting the "establish a *new* session" logic
+  (mount-effect restore, `setSession` right after login) into
+  `packages/api/src/sessionEstablishment.ts`'s `restoreSession`/
+  `establishSessionFromTokens` — both are now all-or-nothing: a profile
+  fetch failure there means no partial session is ever produced
+  (`restoreSession` returns `null` and the stored tokens are cleared;
+  `establishSessionFromTokens` throws, already caught by both PIN
+  screens' existing try/catch). Deliberately left `refreshProfile()`
+  (pull-to-refresh on an *already-established, already-working* session)
+  swallowing failures as before — a transient failure there shouldn't
+  log out a user who was already in; only the two session-establishment
+  call sites needed the stricter contract. Verified via 5 new unit tests
+  (`packages/api/src/sessionEstablishment.test.ts`) covering exactly this
+  refresh-succeeds-then-profile-fails case, plus a live repro on the
+  Simulator (deleted the logged-in test account, relaunched, confirmed
+  it drops to the phone-entry screen instead of freezing).
 - No hi-fi mockup existed for the customer Jobs tab (T2) when it was
   built — it's a reasoned adaptation of the worker app's Jobs tab, not a
   pixel spec. Worth a visual gut-check with the user if/when a customer
