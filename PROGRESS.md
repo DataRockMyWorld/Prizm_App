@@ -122,8 +122,18 @@ went through two design rounds live with the user — landed on a calmer
 only in the greeting, a "BROWSE SERVICES / See all" section header below a
 divider, then Cleaning/Plumbing/Electrical/Gardening as 2-column cards —
 photo on top (4:3, custom-cropped per category to keep the worker's
-face/hands in frame), category name on a plain white card body below,
-matching a hi-fi mockup closely; search bar still decorative), the full request flow (submission → searching/
+face/hands in frame), category name on a plain white card body below
+(font size reduced from a follow-up round of live feedback — was
+reading too large), matching a hi-fi mockup closely; search bar still
+decorative). Also fixed the same day: **"Request a Service" (generic,
+no pre-picked category) now shows a "Choose a service" picker list**
+instead of silently defaulting to Cleaning — `RequestSubmissionScreen`
+no longer auto-selects `categories[0]` when it arrives with no
+`categoryId`; the "Change" link (which used to just `navigation.
+goBack()` to Home, discarding whatever the customer had already typed)
+now resets to that same in-place picker instead. Tapping a specific
+Home card still skips the picker and goes straight to the form, as
+before. The full request flow (submission → searching/
 matching → matched → job status tracking → report-a-problem → price
 agreement → rating, with a back button on the tracking screen now, and a
 "Use a saved address" picker on the submission screen), a **Jobs tab**
@@ -182,12 +192,35 @@ cd apps/worker && npx expo start --dev-client -c
 - **Backend**: `docker compose up -d` from the repo root. Check
   `docker compose ps` — should show `backend`, `celery`, `db`, `redis`,
   `minio` all healthy/up.
-- **LAN IP drift**: compare `ipconfig getifaddr en0` against
-  `EXPO_PUBLIC_API_URL` in both apps' `.env` (see USB gotcha above) and
-  against `DJANGO_ALLOWED_HOSTS` in the root `.env` if that's ever set to
-  something other than `*` (currently unset, defaults to `*` under
-  `DEBUG=True`, so this rarely bites — but check if 401s/network errors
-  show up after a long session).
+- **LAN IP drift**: this Wi-Fi network reassigns DHCP addresses often
+  enough that it drifted **four times in one Simulator session**
+  (2026-08-26). Three separate places reference the Mac's LAN IP and all
+  three need to stay in sync with `ipconfig getifaddr en0` — check all
+  three if anything network-shaped breaks, not just the first one you
+  think of:
+  1. `EXPO_PUBLIC_API_URL` in both apps' `.env` (see USB gotcha above).
+  2. The Simulator's per-app `RCT_jsLocation` override (only needed
+     because there's no `expo-dev-client` — see the gotcha below); reset
+     via `xcrun simctl spawn <device> defaults write <bundle-id>
+     RCT_jsLocation "<ip>:<port>"` after any drift, or the app can't even
+     find Metro (shows "Could not connect to development server").
+  3. **`AWS_S3_PUBLIC_ENDPOINT_URL` in the root `.env`** — easy to miss
+     since it's backend-side, not an Expo/Metro concern at all. A stale
+     value here doesn't break uploads (those still reach MinIO fine via
+     the Docker-internal `AWS_S3_ENDPOINT_URL`) — it silently breaks
+     *displaying* anything already uploaded (profile photos, job photos,
+     ID docs), since the signed URLs handed to the client embed this
+     host. Symptom: an upload appears to succeed (200, no error) but the
+     image never renders anywhere — confirmed live 2026-08-26 chasing a
+     profile-photo-not-showing report. After changing it, the backend
+     container needs `docker compose up -d --force-recreate backend`
+     (env_file changes aren't picked up by a plain `restart`) — verified
+     safe, `db` gets recreated alongside it too (compose treats file
+     changes as affecting the whole `.env`-consuming service graph) but
+     its named volume means no data loss.
+  Also check `DJANGO_ALLOWED_HOSTS` in the root `.env` if that's ever set
+  to something other than `*` (currently unset, defaults to `*` under
+  `DEBUG=True`, so this rarely bites).
 - **Uploads are now collision-safe.** Previously every upload (profile
   photo, job photo, ID document, certification) used a hardcoded generic
   client-side filename, and S3/MinIO overwrites same-named objects by
@@ -197,7 +230,15 @@ cd apps/worker && npx expo start --dev-client -c
   photo showing up," this class of bug is already closed — look
   elsewhere first.
 - **`EXPO_PUBLIC_USE_RN_FETCH=1`** is set in both apps' `.env` — required,
-  don't remove (SDK 56+'s `expo/fetch` can't send `FormData`).
+  don't remove. Confirmed 2026-08-26 this is a **real, built-in Expo SDK
+  57 mechanism** (docs: "By default, `expo/fetch` replaces the global
+  `fetch` implementation... set `EXPO_PUBLIC_USE_RN_FETCH=1` to restore
+  React Native's classic `fetch`"), read internally by Expo's own
+  bootstrap — not something this codebase implements or calls anywhere
+  itself, which had briefly looked like dead config before checking the
+  actual docs. Verified live that it's doing its job (a debug probe on
+  `fetch` confirmed RN's classic implementation is active, and a real
+  multipart photo upload round-tripped correctly end-to-end).
 - **`.env` files are gitignored** — `.env.example` in each app documents
   what's needed.
 - Two Expo dev servers run side by side: worker on port 8081, customer
@@ -302,6 +343,17 @@ cd apps/worker && npx expo start --dev-client -c
 - JWT 30-min expiry / no mid-session refresh — see Environment gotchas.
 - Customer Home's search bar is decorative (`editable={false}`) — no
   search endpoint exists yet.
+- A user reported onboarding's profile-photo step (`packages/auth-flow/
+  src/screens/ProfileScreen.tsx`) not persisting a photo at all — traced
+  the code and it's identical in structure to the Profile-tab photo-edit
+  path (same `updateProfile` call, same FormData construction), which
+  was independently verified working the same day (real upload,
+  `photo.url` reachable, image rendered). The stale `AWS_S3_PUBLIC_
+  ENDPOINT_URL` (see Environment gotchas) was live at the time of that
+  report and is the far more likely explanation than a code-level
+  onboarding-specific bug. Not independently re-verified in isolation
+  though — worth a quick real check next time a fresh account goes
+  through onboarding, just to be certain.
 - **Fixed 2026-08-26**: `PinDots` (`packages/ui/src/components/PinDots.tsx`,
   shared by both apps' 4-digit PIN screens) had near-invisible empty-dot
   outlines — `colors.border` (`#ECE7E2`) against `colors.pageBackground`

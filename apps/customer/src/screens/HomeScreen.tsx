@@ -1,5 +1,16 @@
 import { ServiceCategory, listCategories, useAuth } from "@prizm/api";
-import { BrandHeader, Button, Screen, TextField, ThemedText, colors, radii, spacing } from "@prizm/ui";
+import {
+  BrandHeader,
+  Button,
+  Screen,
+  TextField,
+  ThemedText,
+  colors,
+  fontFamily,
+  fontSize,
+  radii,
+  spacing,
+} from "@prizm/ui";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { Dimensions, Image, Pressable, StyleSheet, View } from "react-native";
@@ -73,7 +84,7 @@ export function HomeScreen() {
                 <View style={[styles.cardImage, styles.cardImageFallback]} />
               )}
               <View style={styles.cardBody}>
-                <ThemedText variant="subtitle">{category.name}</ThemedText>
+                <ThemedText style={styles.cardLabel}>{category.name}</ThemedText>
               </View>
             </Pressable>
           );
@@ -169,6 +180,11 @@ const styles = StyleSheet.create({
   cardBody: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
+  },
+  cardLabel: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
   },
   spacer: {
     flex: 1,

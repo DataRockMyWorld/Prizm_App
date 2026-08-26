@@ -13,6 +13,7 @@ type Props = NativeStackScreenProps<RequestStackParamList, "RequestSubmission">;
 
 export function RequestSubmissionScreen({ navigation, route }: Props) {
   const { accessToken } = useAuth();
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [category, setCategory] = useState<ServiceCategory | null>(null);
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
@@ -27,11 +28,16 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
   useEffect(() => {
     if (!accessToken) return;
     listCategories(accessToken)
-      .then((categories) => {
+      .then((data) => {
+        setCategories(data);
+        // A specific category (tapped from a Home tile) skips the picker
+        // below and goes straight to the form. Arriving with no category
+        // (the generic "Request a Service" button) shows the picker
+        // instead of silently defaulting to the first one alphabetically.
         const match = route.params?.categoryId
-          ? categories.find((c) => c.id === route.params.categoryId)
+          ? data.find((c) => c.id === route.params.categoryId)
           : undefined;
-        setCategory(match || categories[0] || null);
+        setCategory(match || null);
       })
       .catch(() => {});
   }, [accessToken, route.params?.categoryId]);
@@ -115,103 +121,120 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
         <View style={{ width: 24 }} />
       </View>
 
-      {category && (
-        <Card style={styles.categoryChip}>
-          <View style={styles.categoryIcon} />
-          <ThemedText variant="subtitle" style={styles.chipLabel}>
-            {category.name}
+      {!category ? (
+        <View style={styles.pickerList}>
+          <ThemedText variant="caption" style={styles.label}>
+            Choose a service
           </ThemedText>
-          <Pressable onPress={() => navigation.goBack()}>
-            <ThemedText variant="caption" style={styles.link}>
-              Change
-            </ThemedText>
-          </Pressable>
-        </Card>
-      )}
-
-      <ThemedText variant="caption" style={styles.label}>
-        What do you need done?
-      </ThemedText>
-      <TextField
-        placeholder="e.g. 2-bedroom flat, deep clean, kitchen and bathroom focus"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        style={styles.descriptionField}
-      />
-
-      <ThemedText variant="caption" style={styles.label}>
-        Location
-      </ThemedText>
-      {savedAddresses.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.savedAddressRow}
-        >
-          {savedAddresses.map((saved) => (
-            <Pressable
-              key={saved.id}
-              onPress={() => selectSavedAddress(saved)}
-              style={styles.savedAddressChip}
-            >
-              <ThemedText variant="caption">{saved.label}</ThemedText>
+          {categories.map((c) => (
+            <Pressable key={c.id} style={styles.pickerRow} onPress={() => setCategory(c)}>
+              <View style={styles.categoryIcon} />
+              <ThemedText variant="body" style={styles.pickerRowLabel}>
+                {c.name}
+              </ThemedText>
+              <ThemedText variant="subtitle" style={styles.pickerChevron}>
+                ›
+              </ThemedText>
             </Pressable>
           ))}
-        </ScrollView>
-      )}
-      {!coords && !locationError ? (
-        <ActivityIndicator color={colors.primary} style={styles.locationLoading} />
-      ) : (
-        <View style={styles.locationRow}>
-          {isEditingAddress ? (
-            <TextField
-              placeholder="Enter your address"
-              value={address}
-              onChangeText={setAddress}
-              style={styles.addressField}
-              autoFocus
-              onBlur={() => setIsEditingAddress(false)}
-            />
-          ) : (
-            <>
-              <ThemedText variant="body" style={{ flex: 1 }}>
-                {address || "Current location"}
-              </ThemedText>
-              <Pressable onPress={() => setIsEditingAddress(true)}>
-                <ThemedText variant="caption" style={styles.link}>
-                  Edit
-                </ThemedText>
-              </Pressable>
-            </>
-          )}
         </View>
-      )}
-      {locationError && <ThemedText variant="caption">{locationError}</ThemedText>}
+      ) : (
+        <>
+          <Card style={styles.categoryChip}>
+            <View style={styles.categoryIcon} />
+            <ThemedText variant="subtitle" style={styles.chipLabel}>
+              {category.name}
+            </ThemedText>
+            <Pressable onPress={() => setCategory(null)}>
+              <ThemedText variant="caption" style={styles.link}>
+                Change
+              </ThemedText>
+            </Pressable>
+          </Card>
 
-      <UploadTile label="Add a photo (optional)" uri={photoUri} onPress={pickPhoto} />
-
-      {category && (
-        <Card style={styles.priceCard}>
-          <ThemedText variant="caption" style={styles.priceTitle}>
-            Typical price range
+          <ThemedText variant="caption" style={styles.label}>
+            What do you need done?
           </ThemedText>
-          <ThemedText variant="caption">
-            Most {category.name} jobs: N${category.estimate_min}–{category.estimate_max} · estimate
-            only, final price is agreed with your worker
-          </ThemedText>
-        </Card>
-      )}
+          <TextField
+            placeholder="e.g. 2-bedroom flat, deep clean, kitchen and bathroom focus"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            style={styles.descriptionField}
+          />
 
-      {error && <ThemedText style={styles.error}>{error}</ThemedText>}
-      <View style={styles.spacer} />
-      <Button
-        label="Submit Request"
-        onPress={handleSubmit}
-        disabled={!canSubmit}
-        loading={isSubmitting}
-        style={styles.submitButton}
-      />
+          <ThemedText variant="caption" style={styles.label}>
+            Location
+          </ThemedText>
+          {savedAddresses.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.savedAddressRow}
+            >
+              {savedAddresses.map((saved) => (
+                <Pressable
+                  key={saved.id}
+                  onPress={() => selectSavedAddress(saved)}
+                  style={styles.savedAddressChip}
+                >
+                  <ThemedText variant="caption">{saved.label}</ThemedText>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+          {!coords && !locationError ? (
+            <ActivityIndicator color={colors.primary} style={styles.locationLoading} />
+          ) : (
+            <View style={styles.locationRow}>
+              {isEditingAddress ? (
+                <TextField
+                  placeholder="Enter your address"
+                  value={address}
+                  onChangeText={setAddress}
+                  style={styles.addressField}
+                  autoFocus
+                  onBlur={() => setIsEditingAddress(false)}
+                />
+              ) : (
+                <>
+                  <ThemedText variant="body" style={{ flex: 1 }}>
+                    {address || "Current location"}
+                  </ThemedText>
+                  <Pressable onPress={() => setIsEditingAddress(true)}>
+                    <ThemedText variant="caption" style={styles.link}>
+                      Edit
+                    </ThemedText>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          )}
+          {locationError && <ThemedText variant="caption">{locationError}</ThemedText>}
+
+          <UploadTile label="Add a photo (optional)" uri={photoUri} onPress={pickPhoto} />
+
+          <Card style={styles.priceCard}>
+            <ThemedText variant="caption" style={styles.priceTitle}>
+              Typical price range
+            </ThemedText>
+            <ThemedText variant="caption">
+              Most {category.name} jobs: N${category.estimate_min}–{category.estimate_max} ·
+              estimate only, final price is agreed with your worker
+            </ThemedText>
+          </Card>
+
+          {error && <ThemedText style={styles.error}>{error}</ThemedText>}
+          <View style={styles.spacer} />
+          <Button
+            label="Submit Request"
+            onPress={handleSubmit}
+            disabled={!canSubmit}
+            loading={isSubmitting}
+            style={styles.submitButton}
+          />
+        </>
+      )}
     </Screen>
   );
 }
@@ -223,6 +246,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: spacing.md,
     marginBottom: spacing.sm,
+  },
+  pickerList: {
+    marginTop: spacing.sm,
+  },
+  pickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  pickerRowLabel: {
+    flex: 1,
+  },
+  pickerChevron: {
+    color: colors.textSecondary,
   },
   categoryChip: {
     flexDirection: "row",
