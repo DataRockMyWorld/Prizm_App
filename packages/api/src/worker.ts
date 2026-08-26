@@ -5,6 +5,7 @@ export type IdStatus = "not_submitted" | "pending" | "approved" | "rejected";
 export interface WorkerProfile {
   categories: number[];
   id_document: string | null;
+  id_document_back: string | null;
   id_status: IdStatus;
   id_rejection_reason: string;
   is_online: boolean;
@@ -25,9 +26,10 @@ export function updateWorkerCategories(token: string, categories: number[]) {
   });
 }
 
-export function submitIdDocument(token: string, uri: string) {
+export function submitIdDocument(token: string, frontUri: string, backUri: string) {
   const form = new FormData();
-  form.append("id_document", toUploadFile(uri, "id_document.jpg"));
+  form.append("id_document", toUploadFile(frontUri, "id_document_front.jpg"));
+  form.append("id_document_back", toUploadFile(backUri, "id_document_back.jpg"));
   return apiRequest<WorkerProfile>("/api/auth/worker-profile/", {
     method: "PATCH",
     token,

@@ -1,38 +1,66 @@
 import { submitIdDocument, useAuth } from "@prizm/api";
-import { Button, fontFamily, ProgressBar, Screen, ThemedText, UploadTile, colors, spacing } from "@prizm/ui";
+import {
+  Button,
+  Card,
+  fontFamily,
+  ProgressBar,
+  Screen,
+  ThemedText,
+  UploadTile,
+  colors,
+  spacing,
+} from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import type { WorkerOnboardingStackParamList } from "../../navigation/types";
 
 type Props = NativeStackScreenProps<WorkerOnboardingStackParamList, "IdUpload">;
 
+/** Offers a photo of the ID document via camera or gallery, whichever the
+ * worker has to hand — most will photograph the physical card fresh, but
+ * someone with an existing scan shouldn't be forced to re-shoot it. */
+function pickIdPhoto(onPicked: (uri: string) => void) {
+  Alert.alert("Add photo", undefined, [
+    {
+      text: "Take Photo",
+      onPress: async () => {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) return;
+        const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
+        if (!result.canceled) onPicked(result.assets[0].uri);
+      },
+    },
+    {
+      text: "Choose from Library",
+      onPress: async () => {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) return;
+        const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
+        if (!result.canceled) onPicked(result.assets[0].uri);
+      },
+    },
+    { text: "Cancel", style: "cancel" },
+  ]);
+}
+
 export function IdUploadScreen({ navigation }: Props) {
   const { accessToken } = useAuth();
-  const [documentUri, setDocumentUri] = useState<string | undefined>();
+  const [frontUri, setFrontUri] = useState<string | undefined>();
+  const [backUri, setBackUri] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const pickDocument = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      setDocumentUri(result.assets[0].uri);
-    }
-  };
+  const canSubmit = Boolean(frontUri && backUri);
 
   const handleSubmit = async () => {
-    if (!documentUri || !accessToken) return;
+    if (!canSubmit || !accessToken || !frontUri || !backUri) return;
     setIsSubmitting(true);
     setError(null);
     try {
-      await submitIdDocument(accessToken, documentUri);
+      await submitIdDocument(accessToken, frontUri, backUri);
       navigation.navigate("Certifications");
     } catch {
       setError("Couldn't upload your ID. Please try again.");
@@ -55,13 +83,31 @@ export function IdUploadScreen({ navigation }: Props) {
         <ThemedText variant="body" style={styles.subtitle}>
           Verify your identity to start accepting paid jobs
         </ThemedText>
-        <UploadTile label="ID document" uri={documentUri} onPress={pickDocument} />
+        <UploadTile
+          label="ID document — front"
+          uri={frontUri}
+          onPress={() => pickIdPhoto(setFrontUri)}
+        />
+        <UploadTile
+          label="ID document — back"
+          uri={backUri}
+          onPress={() => pickIdPhoto(setBackUri)}
+        />
+        <Card style={styles.tipsCard}>
+          <ThemedText variant="caption" style={styles.tipsTitle}>
+            Tips for a clear photo
+          </ThemedText>
+          <ThemedText variant="caption">
+            Make sure all 4 corners are visible, the text is easy to read,
+            and there's no glare or shadows across the card.
+          </ThemedText>
+        </Card>
         {error && <ThemedText style={styles.error}>{error}</ThemedText>}
         <View style={styles.spacer} />
         <Button
           label="Submit for Review"
           onPress={handleSubmit}
-          disabled={!documentUri}
+          disabled={!canSubmit}
           loading={isSubmitting}
         />
       </View>
@@ -83,6 +129,13 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: -spacing.sm,
+  },
+  tipsCard: {
+    backgroundColor: colors.surfaceMuted,
+    gap: 2,
+  },
+  tipsTitle: {
+    fontWeight: "700",
   },
   error: {
     color: colors.danger,

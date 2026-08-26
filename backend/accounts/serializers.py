@@ -111,6 +111,7 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         fields = [
             "categories",
             "id_document",
+            "id_document_back",
             "id_status",
             "id_rejection_reason",
             "is_online",
@@ -139,11 +140,12 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         return round(result["avg"], 1) if result["avg"] is not None else None
 
     def update(self, instance, validated_data):
-        # A fresh ID submission always goes back to Pending review, clearing
-        # any earlier rejection — this is the "ID upload mandatory to go
-        # online" gate's entry point (see WorkerProfile.IDStatus).
-        submitting_new_document = "id_document" in validated_data and bool(
-            validated_data["id_document"]
+        # A fresh ID submission (either side — front, back, or both) always
+        # goes back to Pending review, clearing any earlier rejection — this
+        # is the "ID upload mandatory to go online" gate's entry point (see
+        # WorkerProfile.IDStatus).
+        submitting_new_document = any(
+            validated_data.get(field) for field in ("id_document", "id_document_back")
         )
         instance = super().update(instance, validated_data)
         if submitting_new_document:

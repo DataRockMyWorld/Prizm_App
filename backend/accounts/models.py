@@ -98,6 +98,9 @@ class WorkerProfile(models.Model):
     id_document = models.FileField(
         upload_to=unique_upload_path("id_documents"), blank=True, null=True
     )
+    id_document_back = models.FileField(
+        upload_to=unique_upload_path("id_documents"), blank=True, null=True
+    )
     id_status = models.CharField(
         max_length=20, choices=IDStatus.choices, default=IDStatus.NOT_SUBMITTED
     )

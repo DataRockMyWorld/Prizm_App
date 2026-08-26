@@ -87,7 +87,13 @@ estimate — `backend/services/migrations/0003_seed_gardening.py`).
 - `@prizm/auth-flow` — the shared phone → OTP → PIN → biometric → profile
   onboarding screens, used identically by both apps.
 
-**apps/worker**: full onboarding, Home, ID upload → certifications →
+**apps/worker**: full onboarding, Home, **ID upload — now front + back**
+(2026-08-26, live-tested — `WorkerProfile.id_document_back` added
+alongside the existing `id_document`; both required to submit; each
+tile offers a "Take Photo" / "Choose from Library" action sheet via
+`expo-image-picker`'s `launchCameraAsync`/`launchImageLibraryAsync`,
+this app's first real camera usage; a tips card above Submit gives
+photo-quality guidance — matches a hi-fi mockup) → certifications →
 under-review flow, full active-job flow (incoming offer → accept/decline
 → on-my-way/arrived/in-progress → mark complete → propose price → wait
 for confirmation → done), a redesigned **Jobs tab** (Active/Completed,
@@ -192,6 +198,15 @@ cd apps/worker && npx expo start --dev-client -c
 - **Backend**: `docker compose up -d` from the repo root. Check
   `docker compose ps` — should show `backend`, `celery`, `db`, `redis`,
   `minio` all healthy/up.
+- **Don't use `81 234 5678` for test registrations** — it's the phone
+  field's on-screen placeholder text, easy to type by habit, and it
+  collides with a real pre-existing seed/test account (confirmed
+  2026-08-26, an old customer record). Registering with it doesn't
+  create a new account — OTP verify finds the existing phone and logs
+  into *that* account instead, with whatever role/data it already has,
+  which looks exactly like a broken registration (wrong role, stale
+  name, missing onboarding data) until you check `date_joined` and
+  realize it's not actually new. Pick genuinely random digits instead.
 - **LAN IP drift**: this Wi-Fi network reassigns DHCP addresses often
   enough that it drifted **four times in one Simulator session**
   (2026-08-26). Three separate places reference the Mac's LAN IP and all

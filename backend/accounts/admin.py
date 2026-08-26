@@ -66,6 +66,7 @@ class WorkerProfileAdmin(admin.ModelAdmin):
         "user",
         "id_status",
         "id_document_preview",
+        "id_document_back_preview",
         "id_reviewed_at",
         "id_reviewed_by",
         "is_online",
@@ -74,12 +75,14 @@ class WorkerProfileAdmin(admin.ModelAdmin):
     list_editable = ("id_status",)
     list_filter = ("id_status", "is_online", "subscription_status")
     search_fields = ("user__phone_number", "user__full_name")
-    readonly_fields = ("id_document_preview", "created_at", "updated_at")
+    readonly_fields = ("id_document_preview", "id_document_back_preview", "created_at", "updated_at")
     fields = (
         "user",
         "categories",
         "id_document",
         "id_document_preview",
+        "id_document_back",
+        "id_document_back_preview",
         "id_status",
         "id_reviewed_at",
         "id_reviewed_by",
@@ -91,9 +94,13 @@ class WorkerProfileAdmin(admin.ModelAdmin):
     )
     actions = ["approve_id"]
 
-    @admin.display(description="Document")
+    @admin.display(description="Document (front)")
     def id_document_preview(self, obj):
         return _document_link(obj.id_document)
+
+    @admin.display(description="Document (back)")
+    def id_document_back_preview(self, obj):
+        return _document_link(obj.id_document_back)
 
     @admin.action(description="Approve selected ID documents")
     def approve_id(self, request, queryset):
