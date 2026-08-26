@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User, WorkerProfile
+from notifications.tasks import send_push_notification
 
 from .matching import MATCHING_RADIUS_KM, refresh_job_matching, rematch_nearby_jobs_for_worker, try_match
 from .models import CancellationLog, JobOffer, JobRequest, Message, Rating, Report
@@ -300,6 +301,13 @@ class MessageListCreateView(APIView):
         message = Message.objects.create(
             job=job, sender=request.user, text=serializer.validated_data["text"]
         )
+        recipient_id = job.worker_id if request.user.id == job.customer_id else job.customer_id
+        send_push_notification.delay(
+            recipient_id,
+            title=f"New message from {request.user.full_name}",
+            body=message.text[:120],
+            data={"type": "chat_message", "job_id": job.id},
+        )
         return Response(MessageSerializer(message).data, status=201)
 
 
@@ -326,6 +334,12 @@ class AcceptOfferView(APIView):
         job.status = JobRequest.Status.ACCEPTED
         job.accepted_at = timezone.now()
         job.save(update_fields=["status", "accepted_at", "updated_at"])
+        send_push_notification.delay(
+            job.customer_id,
+            title="Job accepted",
+            body=f"A worker is on the way for your {job.category.name} request",
+            data={"type": "job_accepted", "job_id": job.id},
+        )
         return Response(JobRequestSerializer(job).data)
 
 

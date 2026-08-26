@@ -14,6 +14,7 @@ from django.contrib.gis.measure import D
 from django.utils import timezone
 
 from accounts.models import Certification, User
+from notifications.tasks import send_push_notification
 
 from .models import JobOffer, JobRequest
 
@@ -67,6 +68,12 @@ def try_match(job):
     job.worker = candidate
     job.status = JobRequest.Status.MATCHED
     job.save(update_fields=["worker", "status", "updated_at"])
+    send_push_notification.delay(
+        candidate.id,
+        title="New job offer",
+        body=f"{job.category.name} nearby — respond within 60 seconds",
+        data={"type": "job_offer", "job_id": job.id},
+    )
 
 
 def refresh_job_matching(job):

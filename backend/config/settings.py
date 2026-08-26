@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "accounts",
     "services",
     "jobs",
+    "notifications",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

@@ -6,4 +6,5 @@ export * from "./catalog";
 export * from "./jobs";
 export * from "./address";
 export * from "./messages";
+export * from "./notifications";
 export * from "./AuthContext";
