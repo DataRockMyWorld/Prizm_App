@@ -13,7 +13,7 @@ import {
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import type { WorkerOnboardingStackParamList } from "../../navigation/types";
 
@@ -21,7 +21,12 @@ type Props = NativeStackScreenProps<WorkerOnboardingStackParamList, "IdUpload">;
 
 /** Offers a photo of the ID document via camera or gallery, whichever the
  * worker has to hand — most will photograph the physical card fresh, but
- * someone with an existing scan shouldn't be forced to re-shoot it. */
+ * someone with an existing scan shouldn't be forced to re-shoot it.
+ * `allowsEditing` (with no fixed `aspect` — ID cards aren't square) puts
+ * iOS/Android's own crop-and-confirm screen between capture/selection and
+ * accepting the photo, which is also where "Retake" lives before that
+ * confirm step; `UploadTile`'s onRemove covers un-doing an already-picked
+ * photo afterward. */
 function pickIdPhoto(onPicked: (uri: string) => void) {
   Alert.alert("Add photo", undefined, [
     {
@@ -29,7 +34,11 @@ function pickIdPhoto(onPicked: (uri: string) => void) {
       onPress: async () => {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) return;
-        const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 });
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          allowsEditing: true,
+          quality: 0.8,
+        });
         if (!result.canceled) onPicked(result.assets[0].uri);
       },
     },
@@ -38,7 +47,11 @@ function pickIdPhoto(onPicked: (uri: string) => void) {
       onPress: async () => {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) return;
-        const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsEditing: true,
+          quality: 0.8,
+        });
         if (!result.canceled) onPicked(result.assets[0].uri);
       },
     },
@@ -71,7 +84,11 @@ export function IdUploadScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <View style={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
           <ThemedText variant="title">‹</ThemedText>
         </Pressable>
@@ -87,11 +104,13 @@ export function IdUploadScreen({ navigation }: Props) {
           label="ID document — front"
           uri={frontUri}
           onPress={() => pickIdPhoto(setFrontUri)}
+          onRemove={() => setFrontUri(undefined)}
         />
         <UploadTile
           label="ID document — back"
           uri={backUri}
           onPress={() => pickIdPhoto(setBackUri)}
+          onRemove={() => setBackUri(undefined)}
         />
         <Card style={styles.tipsCard}>
           <ThemedText variant="caption" style={styles.tipsTitle}>
@@ -110,17 +129,17 @@ export function IdUploadScreen({ navigation }: Props) {
           disabled={!canSubmit}
           loading={isSubmitting}
         />
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingTop: spacing.md,
-    gap: spacing.md,
     paddingBottom: spacing.lg,
+    gap: spacing.md,
   },
   step: {
     color: "#FF6C22",
@@ -135,12 +154,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tipsTitle: {
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   error: {
     color: colors.danger,
   },
   spacer: {
     flex: 1,
+    minHeight: spacing.md,
   },
 });

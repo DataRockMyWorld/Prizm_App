@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
-import { colors, spacing } from "../tokens";
+import { colors, fontFamily, spacing } from "../tokens";
 import { Avatar } from "./Avatar";
 import { Button } from "./Button";
 import { TextField } from "./TextField";
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   editLink: {
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   nameInverse: {
     color: colors.textInverse,

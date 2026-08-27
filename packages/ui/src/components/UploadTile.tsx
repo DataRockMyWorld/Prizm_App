@@ -8,16 +8,28 @@ export interface UploadTileProps {
   label: string;
   uri?: string | null;
   onPress: () => void;
+  /** Shows a small "×" button over a filled preview to clear it back to
+   * empty, e.g. if the worker doesn't like the shot. Optional and additive
+   * — omit to keep the old behavior (retake only by tapping the tile
+   * again, which re-opens the picker). */
+  onRemove?: () => void;
 }
 
-export function UploadTile({ label, uri, onPress }: UploadTileProps) {
+export function UploadTile({ label, uri, onPress, onRemove }: UploadTileProps) {
   return (
     <Pressable
       onPress={onPress}
       style={[styles.tile, uri ? styles.tileFilled : styles.tileEmpty]}
     >
       {uri ? (
-        <Image source={{ uri }} style={styles.preview} resizeMode="cover" />
+        <>
+          <Image source={{ uri }} style={styles.preview} resizeMode="cover" />
+          {onRemove && (
+            <Pressable onPress={onRemove} hitSlop={8} style={styles.removeButton}>
+              <ThemedText style={styles.removeButtonLabel}>×</ThemedText>
+            </Pressable>
+          )}
+        </>
       ) : (
         <>
           <View style={styles.icon} />
@@ -44,7 +56,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   tileFilled: {
-    minHeight: 100,
+    // A definite height, not just minHeight — the preview Image below
+    // uses height: "100%", which needs a resolvable parent height to size
+    // against. Without one (the old minHeight-only version), it could
+    // resolve against unbounded available space and balloon to fill
+    // nearly the whole screen — confirmed live on a physical device
+    // (2026-08-26) with a tall crop from the ID-upload camera flow.
+    height: 180,
   },
   icon: {
     width: 34,
@@ -56,6 +74,21 @@ const styles = StyleSheet.create({
   preview: {
     width: "100%",
     height: "100%",
-    minHeight: 100,
+  },
+  removeButton: {
+    position: "absolute",
+    top: spacing.xs,
+    right: spacing.xs,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.overlay,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  removeButtonLabel: {
+    color: colors.textInverse,
+    fontSize: 18,
+    lineHeight: 20,
   },
 });

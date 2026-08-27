@@ -1,5 +1,5 @@
 import { JobRequest, listMyJobs, useAuth } from "@prizm/api";
-import { Avatar, Button, Card, colors, radii, Screen, spacing, ThemedText } from "@prizm/ui";
+import { Avatar, Button, Card, colors, fontFamily, radii, Screen, spacing, ThemedText } from "@prizm/ui";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: colors.textPrimary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   loading: {
     marginTop: spacing.xl,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   jobCard: {
     flexDirection: "row",
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusLabel: {
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
     fontSize: 11,
   },
   jobMeta: {

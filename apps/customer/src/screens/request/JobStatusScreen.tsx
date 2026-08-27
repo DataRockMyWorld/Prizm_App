@@ -1,5 +1,5 @@
 import { JobRequest, JobStatus, getJob, useAuth } from "@prizm/api";
-import { Avatar, Card, Screen, ThemedText, colors, spacing } from "@prizm/ui";
+import { Avatar, Card, Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   stepCheck: {
     color: colors.textInverse,
     fontSize: 11,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   stepLine: {
     width: 2,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   stepLabelCurrent: {
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   stepLabelPending: {
     color: colors.textSecondary,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   reportLink: {
     textAlign: "center",
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
     marginBottom: spacing.md,
   },
 });

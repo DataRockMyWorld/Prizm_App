@@ -1,5 +1,5 @@
 import { JobRequest, getJob, useAuth } from "@prizm/api";
-import { Avatar, Badge, Button, Card, Screen, ThemedText, colors, spacing } from "@prizm/ui";
+import { Avatar, Badge, Button, Card, Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   requestLabel: {
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   spacer: {
     flex: 1,

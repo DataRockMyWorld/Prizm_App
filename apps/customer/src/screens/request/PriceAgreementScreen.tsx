@@ -1,5 +1,5 @@
 import { JobRequest, confirmPrice, disputePrice, getJob, useAuth } from "@prizm/api";
-import { Button, Card, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
+import { Button, Card, Screen, TextField, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
   },
   priceLabel: {
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   disputeField: {
     minHeight: 70,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   disputeLink: {
     textAlign: "center",
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
     marginBottom: spacing.md,
   },
 });

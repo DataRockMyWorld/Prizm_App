@@ -11,6 +11,18 @@ export type WorkerOnboardingStackParamList = {
 export type WorkerRootStackParamList = {
   Tabs: undefined;
   IncomingOffer: undefined;
+  /** Read-only preview of a browsable nearby job — reachable from Home's
+   * "Jobs near you" list regardless of verification status, since browsing
+   * never requires being verified; only the hint copy changes. */
+  JobPreview: {
+    categoryName: string;
+    description: string;
+    distanceKm: number | null;
+    priceMin: string;
+    priceMax: string;
+    createdAt: string;
+    isVerified: boolean;
+  };
   ActiveJob: { jobId: number };
   CancelJob: { jobId: number };
   ProposePrice: { jobId: number };

@@ -13,6 +13,7 @@ import {
   Button,
   Card,
   colors,
+  fontFamily,
   GradientBackground,
   radii,
   spacing,
@@ -255,11 +256,11 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   segmentTextActive: {
     color: colors.textInverse,
-    fontWeight: "800",
+    fontFamily: fontFamily.extraBold,
   },
   detailsCard: {
     gap: spacing.xs,
@@ -270,6 +271,6 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
 });

@@ -1,5 +1,5 @@
 import { Address, deleteAddress, getCustomerProfileStats, listAddresses, updateProfile, useAuth } from "@prizm/api";
-import { Card, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
+import { Card, fontFamily, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -206,11 +206,11 @@ const styles = StyleSheet.create({
   },
   addAddressText: {
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   sectionLabel: {
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   logoutCard: {
     padding: 0,

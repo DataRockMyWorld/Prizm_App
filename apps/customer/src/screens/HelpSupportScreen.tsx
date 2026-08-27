@@ -1,4 +1,4 @@
-import { Card, Screen, ThemedText, colors, spacing } from "@prizm/ui";
+import { Card, Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   note: {
     marginTop: spacing.sm,

@@ -1,5 +1,5 @@
 import { acceptOffer, ApiError, declineOffer, useAuth } from "@prizm/api";
-import { Button, colors, radii, spacing, ThemedText } from "@prizm/ui";
+import { Button, colors, fontFamily, radii, spacing, ThemedText } from "@prizm/ui";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   countdown: {
     color: colors.primary,
-    fontWeight: "800",
+    fontFamily: fontFamily.extraBold,
   },
   summaryCard: {
     backgroundColor: colors.surfaceMuted,

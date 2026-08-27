@@ -1,5 +1,5 @@
 import { ApiError, completeJob, getJob, JobRequest, useAuth } from "@prizm/api";
-import { Button, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
+import { Button, Screen, TextField, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -131,12 +131,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   prefix: {
-    fontWeight: "800",
+    fontFamily: fontFamily.extraBold,
     fontSize: 20,
     color: colors.textSecondary,
   },
   amountInput: {
-    fontWeight: "800",
+    fontFamily: fontFamily.extraBold,
     fontSize: 20,
   },
   rangeHint: {

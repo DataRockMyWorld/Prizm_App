@@ -1,6 +1,6 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-08-26. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-08-27. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
 
@@ -122,6 +122,65 @@ cards to match the hi-fi mockup, Log out redesigned from a standalone
 button to an Account list row, a `Card`-padding mixup that left the new
 Account rows with no left/right inset).
 
+**ID upload (front + back) is now fully confirmed live end-to-end**
+(2026-08-27) — the crop/retake/scroll/tile-sizing bug-fix cycle described
+in past versions of this file is resolved and verified on a physical
+phone; a real OTP round-trip, ID submission, and `id_status` transition to
+`pending` were all confirmed via the backend logs/DB during the session.
+Off the back of that, the **Home and Jobs tab "awaiting verification"
+states were redesigned to match hi-fi wireframes** the user shared mid-
+session: `HomeScreen`'s "under review" banner is now a plain, non-tappable
+card (was wrapped in a `Pressable` that reopened the ID-upload form even
+while pending — a real bug); the "Jobs browsable now — accepting unlocks
+once verified" hint is now a persistent footer below the nearby-jobs list
+instead of only appearing when that list is empty; "Jobs near you" rows
+are now tappable, opening a new **`JobPreviewScreen`** (read-only —
+matches the "Job preview (unverified · read-only)" wireframe; no accept/
+decline action, since CLAUDE.md's matching model is sequential single-
+offer, not browse-and-choose, so this list is informational only
+regardless of verification status). `JobsScreen`'s Active-tab empty state
+now has the equivalent unverified branch (`UnverifiedActiveState`),
+copy-matched to Home's banner so the two tabs never disagree. A real
+stale-state bug also got fixed here: `HomeScreen` only fetched
+`id_status`/categories on mount (`useEffect`), so returning from the
+ID-upload/Certifications/UnderReview flow (pushed on the same nav stack as
+the tabs, not a separate stack) never re-fetched — switched to
+`useFocusEffect`, matching the pattern `JobsScreen`/`ProfileScreen`/
+`MessagesScreen` already used.
+
+Also fixed this round, both product-decision-driven: (1) the verified
+Home greeting now uses just the worker's **first name** ("Hello, Jewel
+👋"), not full name; (2) every "pending" status icon that had been a
+spinning `ActivityIndicator` (Home's banner, Jobs tab's under-review card
+and empty state, `JobPreviewScreen`'s verification hint) is now a static
+⏳ — a live spinner implies active loading, which is misleading for a
+fixed status that isn't going to resolve on its own.
+
+**A systemic dead-styling bug was found and swept across both apps**
+(2026-08-27): `ThemedText` (`packages/ui`) hardcodes a specific Manrope
+font-family file per `variant` (e.g. `Manrope_700Bold` for `title`), and
+React Native silently ignores `fontWeight` once a specific `fontFamily` is
+already set — so any `style={{ fontWeight: "700" }}` passed into a
+`ThemedText` (or into the shared `TextField`, which has the same
+hardcoded-`fontFamily` pattern internally) never actually rendered bold.
+First caught on the Jobs tab's "Browse jobs near you" link and both apps'
+Profile section labels ("SERVICES OFFERED" etc.), then swept
+comprehensively: **29 instances fixed across 18 files** (both apps' Job/
+ActiveJob/IncomingOffer/HelpSupport/ProposePrice/RequestSubmission/
+MatchedScreen/PriceAgreement screens, plus the shared
+`packages/ui/ProfileHeader.tsx`) — every match turned out to be real, none
+were false positives. Fix pattern: replace `fontWeight: "N"` with
+`fontFamily: fontFamily.<token>` (`bold`/`semiBold`/`extraBold` per
+weight) from `@prizm/ui`'s typography tokens. Both apps typecheck clean
+and full test suites pass post-sweep (worker 58/58, customer 42/42) —
+worth a fresh visual scan on a physical device next session since this
+touched text weight broadly, not just the screens being actively worked
+on.
+
+**`expo-dev-client` is now installed in both apps** (2026-08-27) — see
+"Physical iPhone builds" below; this replaces the previous "no
+expo-dev-client" gotcha and its workarounds.
+
 **apps/customer**: full onboarding, a redesigned **Home** screen (2026-08-26,
 went through two design rounds live with the user — landed on a calmer
 "catalogue" card style over the first full-bleed-photo attempt: first name
@@ -166,10 +225,37 @@ addition to the iOS Simulator, which is also still used for quick
 checks). See "One-time setup" below (unchanged from before) for the
 Xcode/CocoaPods/Ruby setup this required.
 
-**Two ways to connect the phone, and a gotcha specific to one of them:**
+**`expo-dev-client` is installed in both apps as of 2026-08-27** (added
+via `npx expo install expo-dev-client` + a full native rebuild — see
+git log). Before this, neither app had it (confirmed absent multiple
+times in earlier sessions), which meant a bare cold relaunch (force-quit
+→ reopen from the home-screen icon, or `xcrun simctl launch` on
+Simulator) had no way to rediscover Metro's URL and crashed with "No
+script URL provided" — the app could *only* be launched through
+`expo run:ios`/Xcode each time. With `expo-dev-client` now in place, a
+cold relaunch instead shows a proper launcher screen (Bonjour
+auto-discovery of dev servers, or "Enter URL manually") rather than
+hard-crashing — much more resilient, though see the Wi-Fi gotcha below
+for the one real failure mode hit so far.
+
+**Two ways to connect the phone, and gotchas specific to each:**
 - **LAN/Wi-Fi** (`npx expo start --dev-client -c`, phone on the same
   Wi-Fi network): `getApiUrl()` correctly derives the backend host from
-  Metro's own LAN IP. No `.env` changes needed.
+  Metro's own LAN IP. No `.env` changes needed for API calls specifically,
+  but the dev-client launcher's manual URL entry still needs the current
+  LAN IP (`<mac-lan-ip>:8081`) if Bonjour auto-discovery doesn't find it.
+  **Real gotcha hit 2026-08-27, easy to misdiagnose as ordinary IP
+  drift**: the Mac was actually connected to a *different Wi-Fi network*
+  than the phone (not just a stale IP on the same network) — symptom was
+  "server rejected the connection" / connection-refused on manual dev-
+  client URL entry, and even a plain Safari page load to the Mac's LAN IP
+  from the phone failed, while the Mac could `curl` itself fine on that
+  same IP. Confirmed macOS firewall was disabled (not the cause) before
+  realizing it was a genuinely different network. **If Wi-Fi connectivity
+  between phone and Mac ever fully fails (not just wrong-but-reachable
+  IP), check both devices are on the literal same Wi-Fi network before
+  assuming it's the usual DHCP-drift IP problem** — the fix there is
+  reconnecting the Mac to the right network, not more `.env` edits.
 - **USB via Xcode** (`npx expo run:ios --device`, or reopening an
   already-installed dev client that was last connected this way): Metro
   gets tunneled through USB and reports itself as `localhost` to the JS
@@ -180,7 +266,13 @@ Xcode/CocoaPods/Ruby setup this required.
   and falls back to the env var, (2) both apps' `.env` have
   `EXPO_PUBLIC_API_URL=http://<this Mac's current LAN IP>:8000`
   uncommented — **keep that IP in sync with `ipconfig getifaddr en0`** if
-  it ever changes (DHCP drift bit this project before).
+  it ever changes (DHCP drift bit this project before, repeatedly — see
+  "LAN IP drift" below, which got worse this session: it drifted three
+  more times in a single afternoon). Also note: installing/launching over
+  USB still needs the phone **unlocked**, or `expo run:ios`'s install
+  step succeeds but the launch step fails with `CommandError: Cannot
+  launch ... because the device is locked` (confirmed 2026-08-27) — just
+  unlock and rerun the same command, no rebuild needed.
 
 **To (re)install after a fresh clone or a native-code change:**
 ```
@@ -207,18 +299,18 @@ cd apps/worker && npx expo start --dev-client -c
   which looks exactly like a broken registration (wrong role, stale
   name, missing onboarding data) until you check `date_joined` and
   realize it's not actually new. Pick genuinely random digits instead.
-- **LAN IP drift**: this Wi-Fi network reassigns DHCP addresses often
-  enough that it drifted **four times in one Simulator session**
-  (2026-08-26). Three separate places reference the Mac's LAN IP and all
-  three need to stay in sync with `ipconfig getifaddr en0` — check all
-  three if anything network-shaped breaks, not just the first one you
-  think of:
+- **LAN IP drift**: this Wi-Fi network reassigns DHCP addresses often —
+  four times in one Simulator session on 2026-08-26, then **three more
+  times in a single afternoon on 2026-08-27** while debugging physical-
+  device connectivity (don't assume you've caught the last drift; always
+  re-check `ipconfig getifaddr en0` if anything network-shaped breaks
+  again, even minutes after last fixing it). Separate places reference
+  the Mac's LAN IP and all need to stay in sync:
   1. `EXPO_PUBLIC_API_URL` in both apps' `.env` (see USB gotcha above).
-  2. The Simulator's per-app `RCT_jsLocation` override (only needed
-     because there's no `expo-dev-client` — see the gotcha below); reset
-     via `xcrun simctl spawn <device> defaults write <bundle-id>
-     RCT_jsLocation "<ip>:<port>"` after any drift, or the app can't even
-     find Metro (shows "Could not connect to development server").
+  2. The dev-client's manual "Enter URL manually" host, if Bonjour
+     auto-discovery doesn't find Metro on its own (`<ip>:8081`) — now
+     that `expo-dev-client` is installed, the old Simulator-only
+     `RCT_jsLocation`/`simctl` workaround for this no longer applies.
   3. **`AWS_S3_PUBLIC_ENDPOINT_URL` in the root `.env`** — easy to miss
      since it's backend-side, not an Expo/Metro concern at all. A stale
      value here doesn't break uploads (those still reach MinIO fine via
@@ -266,24 +358,18 @@ cd apps/worker && npx expo start --dev-client -c
   throwing 401s, that's why; relaunching the app re-triggers the
   refresh-token flow on mount and clears it. Low priority unless it comes
   up again.
-- **No `expo-dev-client` in either app** (verified 2026-08-26 — not in
-  `package.json`, not in `node_modules`, not a Podfile dependency).
-  Consequence: a Simulator launch that doesn't go through `expo run:ios`
-  itself (e.g. `xcrun simctl launch <bundle-id>` after the app's already
-  installed) has no way to discover/remember which Metro port to use, and
-  **silently falls back to React Native's hardcoded default port 8081**
-  — i.e. the *worker* app's Metro, if both apps are running side by side.
-  Since the shared onboarding screens (`packages/auth-flow`) look
-  identical between both apps, this is easy to not notice until you reach
-  a role-specific screen (worker's 5-tab bar vs. customer's 4-tab bar).
-  Symptom besides wrong content: the splash screen's emoji badge
-  (`SplashView icon=`) is 🔧 for worker, 🏠 for customer — a fast way to
-  tell which app's JS is actually loaded. **Workaround** (until
-  `expo-dev-client` is actually added as a real fix — worth doing):
-  `xcrun simctl spawn <device> defaults write <bundle-id> RCT_jsLocation
-  "<mac-lan-ip>:<port>"` before every `simctl launch`, or just always
-  relaunch via a full `npx expo run:ios --device <udid> --port <port>`
-  cycle instead of a bare `simctl launch`.
+- **`expo-dev-client` is now installed in both apps (2026-08-27)** — see
+  "Physical iPhone builds" above for the full story and its one known
+  gotcha (Wi-Fi network mismatch). Before this fix, neither app had it,
+  which caused both a physical-device "No script URL provided" crash on
+  cold relaunch and a Simulator-specific port-fallback bug (a bare
+  `simctl launch` had no way to discover the right Metro port and
+  silently fell back to 8081, i.e. the worker app's port, even when
+  launching the customer app). Not yet independently re-verified whether
+  the Simulator port-fallback symptom is actually gone now that
+  `expo-dev-client` is in — likely yes (that was the suspected fix in the
+  original gotcha note) but worth confirming next time the Simulator
+  (not just the physical device) is used for the customer app.
 - **Local `require()`'d image assets can serve stale/wrong content on
   Simulator** (discovered + worked around 2026-08-26, customer Home
   screen's service-tile photos). Metro's local-asset HTTP serving in this
@@ -302,11 +388,19 @@ cd apps/worker && npx expo start --dev-client -c
   the regeneration script in its header comment. Not yet confirmed
   whether this also affects physical-device (non-Simulator) builds or is
   Simulator-specific — worth a real device check next time that app is
-  touched, and worth a genuine root-cause fix (or an `expo-dev-client`
-  install, which might resolve both this and the port-fallback gotcha
-  above at once) rather than living with the workaround long-term.
+  touched. `expo-dev-client` is now installed (see above), which might
+  incidentally resolve this too — worth checking before assuming the
+  base64-inline workaround is still needed long-term.
 
 ## Immediate next steps, in order
+
+0. ✅ **Done (2026-08-27)** — the worker ID-upload bug-fix cycle (crop/
+   retake/delete, scroll fix, tile-sizing fix) described in earlier
+   versions of this file is now fully confirmed live end-to-end on a
+   physical phone, plus the follow-on Home/Jobs verification-state
+   redesign and font-weight sweep — see "What's actually built" above for
+   the full rundown. This round is committed (see git log around
+   2026-08-27).
 
 1. ✅ **Done (2026-08-25)** — the remaining click-test pockets from the
    chat + profile-redesign PRDs (the 4 Account-row destination screens,

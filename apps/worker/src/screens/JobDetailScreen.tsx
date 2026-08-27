@@ -1,5 +1,5 @@
 import { getJob, JobRequest, useAuth } from "@prizm/api";
-import { Avatar, Card, colors, radii, Screen, spacing, ThemedText } from "@prizm/ui";
+import { Avatar, Card, colors, fontFamily, radii, Screen, spacing, ThemedText } from "@prizm/ui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusPillText: {
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
     fontSize: 11,
   },
   card: {

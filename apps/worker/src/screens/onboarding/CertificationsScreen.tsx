@@ -105,6 +105,7 @@ export function CertificationsScreen({ navigation, route }: Props) {
           label={selectedCategoryId ? "Certificate document" : "Choose a category first"}
           uri={documentUri}
           onPress={selectedCategoryId ? pickDocument : () => {}}
+          onRemove={() => setDocumentUri(undefined)}
         />
 
         <Card style={styles.infoCard}>

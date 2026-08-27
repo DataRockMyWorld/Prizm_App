@@ -10,6 +10,7 @@ import { HelpSupportScreen } from "../screens/HelpSupportScreen";
 import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
 import { JobCompleteScreen } from "../screens/JobCompleteScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
+import { JobPreviewScreen } from "../screens/JobPreviewScreen";
 import { ProposePriceScreen } from "../screens/ProposePriceScreen";
 import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
 import { TermsLiabilityScreen } from "../screens/TermsLiabilityScreen";
@@ -81,6 +82,7 @@ export function RootNavigator() {
           options={{ gestureEnabled: false }}
         />
         <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+        <Stack.Screen name="JobPreview" component={JobPreviewScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
         <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
         <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />

@@ -9,7 +9,7 @@ import {
   useAuth,
   WorkerProfile,
 } from "@prizm/api";
-import { Badge, Card, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
+import { Badge, Card, fontFamily, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useState } from "react";
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   chipRemove: {
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   addChip: {
     borderRadius: 999,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   addChipText: {
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   error: {
     color: colors.danger,
@@ -361,11 +361,11 @@ const styles = StyleSheet.create({
   },
   addCertText: {
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   sectionLabel: {
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   logoutCard: {
     padding: 0,

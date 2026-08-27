@@ -9,8 +9,8 @@ import {
   useAuth,
   WorkerStatus,
 } from "@prizm/api";
-import { BrandHeader, Card, Screen, ThemedText, colors, spacing } from "@prizm/ui";
-import { useNavigation } from "@react-navigation/native";
+import { BrandHeader, Card, Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
@@ -18,9 +18,11 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, View } fr
 interface NearbyJob {
   id: number;
   category: ServiceCategory;
+  description: string;
   distance_km: number | null;
   price_range_min: string;
   price_range_max: string;
+  created_at: string;
 }
 
 export function HomeScreen() {
@@ -55,10 +57,12 @@ export function HomeScreen() {
     }
   }, [accessToken]);
 
-  useEffect(() => {
-    loadStatus();
-    loadCategories();
-  }, [loadStatus, loadCategories]);
+  useFocusEffect(
+    useCallback(() => {
+      loadStatus();
+      loadCategories();
+    }, [loadStatus, loadCategories])
+  );
 
   const loadNearbyJobs = useCallback(async () => {
     if (!accessToken) return;
@@ -114,6 +118,19 @@ export function HomeScreen() {
 
   const idStatus = status?.id_status ?? "not_submitted";
   const isVerified = idStatus === "approved";
+  const firstName = profile?.full_name?.split(" ")[0] || "there";
+
+  const openJobPreview = (job: NearbyJob) => {
+    navigation.navigate("JobPreview", {
+      categoryName: job.category.name,
+      description: job.description,
+      distanceKm: job.distance_km,
+      priceMin: job.price_range_min,
+      priceMax: job.price_range_max,
+      createdAt: job.created_at,
+      isVerified,
+    });
+  };
 
   return (
     <Screen>
@@ -124,7 +141,7 @@ export function HomeScreen() {
       ) : isVerified ? (
         <>
           <ThemedText variant="title" style={styles.greeting}>
-            Hello, {profile?.full_name || "there"} 👋
+            Hello, {firstName} 👋
           </ThemedText>
 
           <Card style={styles.onlineCard}>
@@ -175,25 +192,33 @@ export function HomeScreen() {
             })}
           </ScrollView>
 
-          <Pressable onPress={() => navigation.navigate("IdUpload")}>
+          {idStatus === "pending" ? (
             <Card style={styles.bannerCard}>
+              <View style={styles.bannerIconCircle}>
+                <ThemedText style={styles.bannerIcon}>⏳</ThemedText>
+              </View>
               <View style={{ flex: 1 }}>
-                <ThemedText variant="subtitle">
-                  {idStatus === "pending"
-                    ? "Your ID is under review"
-                    : idStatus === "rejected"
+                <ThemedText variant="subtitle">Your ID is under review</ThemedText>
+                <ThemedText variant="caption">We'll notify you within 24 hours.</ThemedText>
+              </View>
+            </Card>
+          ) : (
+            <Pressable onPress={() => navigation.navigate("IdUpload")}>
+              <Card style={styles.bannerCard}>
+                <View style={{ flex: 1 }}>
+                  <ThemedText variant="subtitle">
+                    {idStatus === "rejected"
                       ? "Your ID was rejected — resubmit"
                       : "Upload your ID to start accepting jobs"}
+                  </ThemedText>
+                  <ThemedText variant="caption">Takes 2 minutes</ThemedText>
+                </View>
+                <ThemedText variant="title" style={styles.bannerArrow}>
+                  →
                 </ThemedText>
-                <ThemedText variant="caption">
-                  {idStatus === "pending" ? "We'll notify you within 24 hours" : "Takes 2 minutes"}
-                </ThemedText>
-              </View>
-              <ThemedText variant="title" style={styles.bannerArrow}>
-                →
-              </ThemedText>
-            </Card>
-          </Pressable>
+              </Card>
+            </Pressable>
+          )}
         </>
       )}
 
@@ -210,16 +235,23 @@ export function HomeScreen() {
         </ThemedText>
       ) : (
         nearbyJobs.map((job) => (
-          <Card key={job.id} style={styles.jobRow}>
-            <ThemedText variant="body">
-              {job.category.name}
-              {job.distance_km !== null ? ` · ${job.distance_km}km` : ""}
-            </ThemedText>
-            <ThemedText variant="caption" style={isVerified ? styles.priceVerified : undefined}>
-              Est. N${job.price_range_min}–{job.price_range_max}
-            </ThemedText>
-          </Card>
+          <Pressable key={job.id} onPress={() => openJobPreview(job)}>
+            <Card style={styles.jobRow}>
+              <ThemedText variant="body">
+                {job.category.name}
+                {job.distance_km !== null ? ` · ${job.distance_km}km` : ""}
+              </ThemedText>
+              <ThemedText variant="caption" style={isVerified ? styles.priceVerified : undefined}>
+                Est. N${job.price_range_min}–{job.price_range_max}
+              </ThemedText>
+            </Card>
+          </Pressable>
         ))
+      )}
+      {!isVerified && nearbyJobs.length > 0 && (
+        <ThemedText variant="caption" style={styles.browsingHint}>
+          Jobs browsable now — accepting unlocks once verified.
+        </ThemedText>
       )}
     </Screen>
   );
@@ -271,9 +303,21 @@ const styles = StyleSheet.create({
   bannerCard: {
     flexDirection: "row",
     alignItems: "center",
+    gap: spacing.sm,
     backgroundColor: "#FFF3EA",
     borderColor: "#FFE6D3",
     marginTop: spacing.md,
+  },
+  bannerIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bannerIcon: {
+    fontSize: 15,
   },
   bannerArrow: {
     color: colors.primary,
@@ -290,10 +334,15 @@ const styles = StyleSheet.create({
   },
   priceVerified: {
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   emptyState: {
     textAlign: "center",
     marginTop: spacing.md,
+  },
+  browsingHint: {
+    textAlign: "center",
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
   },
 });

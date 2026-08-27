@@ -1,5 +1,5 @@
 import { Address, ServiceCategory, createJobRequest, listAddresses, listCategories, useAuth } from "@prizm/api";
-import { Button, Card, Screen, TextField, ThemedText, UploadTile, colors, spacing } from "@prizm/ui";
+import { Button, Card, Screen, TextField, ThemedText, UploadTile, colors, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
@@ -212,7 +212,12 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
           )}
           {locationError && <ThemedText variant="caption">{locationError}</ThemedText>}
 
-          <UploadTile label="Add a photo (optional)" uri={photoUri} onPress={pickPhoto} />
+          <UploadTile
+            label="Add a photo (optional)"
+            uri={photoUri}
+            onPress={pickPhoto}
+            onRemove={() => setPhotoUri(undefined)}
+          />
 
           <Card style={styles.priceCard}>
             <ThemedText variant="caption" style={styles.priceTitle}>
@@ -329,7 +334,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   priceTitle: {
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   error: {
     color: colors.danger,

@@ -1,5 +1,5 @@
-import { JobRequest, listMyJobs, useAuth } from "@prizm/api";
-import { Avatar, Button, Card, colors, radii, Screen, spacing, ThemedText } from "@prizm/ui";
+import { getWorkerStatus, IdStatus, JobRequest, listMyJobs, useAuth } from "@prizm/api";
+import { Avatar, Button, Card, colors, fontFamily, radii, Screen, spacing, ThemedText } from "@prizm/ui";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
@@ -32,6 +32,7 @@ export function JobsScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
   const [jobs, setJobs] = useState<JobRequest[] | null>(null);
+  const [idStatus, setIdStatus] = useState<IdStatus | null>(null);
   const [tab, setTab] = useState<Tab>("active");
 
   const loadJobs = useCallback(async () => {
@@ -43,11 +44,23 @@ export function JobsScreen() {
     }
   }, [accessToken]);
 
+  const loadStatus = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      setIdStatus((await getWorkerStatus(accessToken)).id_status);
+    } catch {
+      // header/empty-state verification copy just won't render until this loads
+    }
+  }, [accessToken]);
+
   useFocusEffect(
     useCallback(() => {
       loadJobs();
-    }, [loadJobs])
+      loadStatus();
+    }, [loadJobs, loadStatus])
   );
+
+  const isVerified = idStatus === "approved";
 
   const handlePress = (job: JobRequest) => {
     navigation.navigate(getJobsTabRoute(job.status), { jobId: job.id });
@@ -62,10 +75,12 @@ export function JobsScreen() {
     <Screen>
       <View style={styles.headerRow}>
         <ThemedText variant="title">Jobs</ThemedText>
-        <ThemedText variant="caption">
-          {tab === "active"
-            ? `${activeJobs.length} active`
-            : `N$${agreedThisMonth} agreed this month`}
+        <ThemedText variant="caption" style={!isVerified ? styles.unverifiedLabel : undefined}>
+          {!isVerified
+            ? "Not yet verified"
+            : tab === "active"
+              ? `${activeJobs.length} active`
+              : `N$${agreedThisMonth} agreed this month`}
         </ThemedText>
       </View>
 
@@ -94,7 +109,9 @@ export function JobsScreen() {
       {jobs === null ? (
         <ActivityIndicator color={colors.primary} style={styles.loading} />
       ) : tab === "active" ? (
-        activeJobs.length === 0 ? (
+        !isVerified ? (
+          <UnverifiedActiveState idStatus={idStatus} navigation={navigation} />
+        ) : activeJobs.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconCircle}>
               <ThemedText style={styles.emptyIcon}>🧰</ThemedText>
@@ -146,6 +163,75 @@ export function JobsScreen() {
         </>
       )}
     </Screen>
+  );
+}
+
+/** Active-tab empty state while the worker isn't verified yet — going online
+ * (and therefore ever having an active job) is gated on `id_status ===
+ * "approved"`, so this fully replaces the normal "No active jobs" empty
+ * state rather than layering on top of it. Copy mirrors HomeScreen's
+ * verification banner so the two tabs never disagree about where the
+ * worker stands. */
+function UnverifiedActiveState({
+  idStatus,
+  navigation,
+}: {
+  idStatus: IdStatus | null;
+  navigation: any;
+}) {
+  const status = idStatus ?? "not_submitted";
+
+  const card =
+    status === "pending" ? (
+      <Card style={styles.statusCard}>
+        <View style={styles.statusIconCircle}>
+          <ThemedText style={styles.statusIcon}>⏳</ThemedText>
+        </View>
+        <View style={{ flex: 1 }}>
+          <ThemedText variant="subtitle">Your ID is under review</ThemedText>
+          <ThemedText variant="caption">We'll notify you within 24 hours.</ThemedText>
+        </View>
+      </Card>
+    ) : (
+      <Pressable onPress={() => navigation.navigate("IdUpload")}>
+        <Card style={styles.statusCard}>
+          <View style={styles.statusIconCircle}>
+            <ThemedText style={styles.statusIcon}>🪪</ThemedText>
+          </View>
+          <View style={{ flex: 1 }}>
+            <ThemedText variant="subtitle">
+              {status === "rejected"
+                ? "Your ID was rejected — resubmit"
+                : "Upload your ID to start accepting jobs"}
+            </ThemedText>
+            <ThemedText variant="caption">Takes 2 minutes</ThemedText>
+          </View>
+          <ThemedText variant="title" style={styles.statusArrow}>
+            →
+          </ThemedText>
+        </Card>
+      </Pressable>
+    );
+
+  return (
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIconCircle}>
+        <ThemedText style={styles.emptyIcon}>⏳</ThemedText>
+      </View>
+      <ThemedText variant="subtitle" style={styles.centered}>
+        Your jobs will appear here
+      </ThemedText>
+      <ThemedText variant="caption" style={styles.centered}>
+        Once your ID is approved you'll be able to accept jobs, and everything you take on shows up
+        in this tab.
+      </ThemedText>
+      {card}
+      <Pressable onPress={() => navigation.navigate("Tabs", { screen: "Home" })} hitSlop={8}>
+        <ThemedText variant="body" style={styles.browseLink}>
+          Browse jobs near you ›
+        </ThemedText>
+      </Pressable>
+    </View>
   );
 }
 
@@ -217,7 +303,7 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: colors.textPrimary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   loading: {
     marginTop: spacing.xl,
@@ -226,7 +312,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
   },
   jobCard: {
     flexDirection: "row",
@@ -260,7 +346,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusLabel: {
-    fontWeight: "700",
+    fontFamily: fontFamily.bold,
     fontSize: 11,
   },
   jobMeta: {
@@ -291,5 +377,36 @@ const styles = StyleSheet.create({
   emptyButton: {
     marginTop: spacing.sm,
     width: "100%",
+  },
+  unverifiedLabel: {
+    color: colors.textSecondary,
+  },
+  statusCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: "#FFF3EA",
+    borderColor: "#FFE6D3",
+    width: "100%",
+    marginTop: spacing.sm,
+  },
+  statusIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusIcon: {
+    fontSize: 18,
+  },
+  statusArrow: {
+    color: colors.primary,
+  },
+  browseLink: {
+    color: colors.primary,
+    fontFamily: fontFamily.bold,
+    marginTop: spacing.sm,
   },
 });
