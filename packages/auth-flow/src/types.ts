@@ -8,7 +8,3 @@ export type AuthStackParamList = {
   ConfirmPin: { phoneNumber: string; otpToken: string; pin: string };
 };
 
-export type PostAuthStackParamList = {
-  Biometric: undefined;
-  Profile: undefined;
-};

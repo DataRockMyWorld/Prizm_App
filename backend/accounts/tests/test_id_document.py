@@ -1,12 +1,21 @@
+import io
+
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from accounts.models import User, WorkerProfile
 from accounts.tests.factories import WorkerProfileFactory
 
 
 def _fake_image(name="id.jpg"):
-    return SimpleUploadedFile(name, b"fake-image-bytes", content_type="image/jpeg")
+    # A real, decodable 1x1 JPEG — id_document/id_document_back are validated
+    # server-side as actual images now (see WorkerProfileSerializer), so
+    # arbitrary bytes with a spoofed content-type no longer pass.
+    buffer = io.BytesIO()
+    Image.new("RGB", (1, 1), color="white").save(buffer, format="JPEG")
+    buffer.seek(0)
+    return SimpleUploadedFile(name, buffer.read(), content_type="image/jpeg")
 
 
 @pytest.mark.django_db
@@ -83,6 +92,48 @@ def test_patch_without_a_document_field_does_not_touch_review_state(api_client):
     assert response.status_code == 200
     profile.refresh_from_db()
     assert profile.id_status == WorkerProfile.IDStatus.APPROVED
+
+
+@pytest.mark.django_db
+def test_submitting_a_non_image_file_is_rejected(api_client):
+    profile = WorkerProfileFactory(id_status=WorkerProfile.IDStatus.NOT_SUBMITTED)
+    api_client.force_authenticate(user=profile.user)
+    not_an_image = SimpleUploadedFile(
+        "front.jpg", b"<html>not an image</html>", content_type="image/jpeg"
+    )
+
+    response = api_client.patch(
+        "/api/auth/worker-profile/",
+        {"id_document": not_an_image},
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    profile.refresh_from_db()
+    assert profile.id_status == WorkerProfile.IDStatus.NOT_SUBMITTED
+    assert not profile.id_document
+
+
+@pytest.mark.django_db
+def test_submitting_an_oversized_file_is_rejected(api_client, monkeypatch):
+    # Generating a genuinely >10MB real image would make this test slow for
+    # no benefit — lower the threshold instead and confirm a normal small
+    # image now trips it, proving the validator is actually wired into this
+    # endpoint's request path (not just unit-tested in isolation).
+    monkeypatch.setattr("config.validators.MAX_UPLOAD_SIZE_BYTES", 10)
+    profile = WorkerProfileFactory(id_status=WorkerProfile.IDStatus.NOT_SUBMITTED)
+    api_client.force_authenticate(user=profile.user)
+
+    response = api_client.patch(
+        "/api/auth/worker-profile/",
+        {"id_document": _fake_image("front.jpg")},
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    profile.refresh_from_db()
+    assert profile.id_status == WorkerProfile.IDStatus.NOT_SUBMITTED
+    assert not profile.id_document
 
 
 @pytest.mark.django_db

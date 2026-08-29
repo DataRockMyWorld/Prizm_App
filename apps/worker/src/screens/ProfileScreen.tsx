@@ -3,6 +3,7 @@ import {
   getWorkerProfile,
   listCategories,
   listCertifications,
+  listMyJobs,
   ServiceCategory,
   updateProfile,
   updateWorkerCategories,
@@ -17,6 +18,7 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { canRemoveCategory } from "../profile/categoryGuard";
 import { formatMemberSince } from "../profile/formatMemberSince";
+import { isActiveJobStatus } from "../jobsTab/jobsTabGrouping";
 
 const CERTIFICATION_STATUS_LABEL: Record<string, string> = {
   pending: "Pending review",
@@ -33,6 +35,7 @@ export function ProfileScreen() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [isCheckingDeleteEligibility, setIsCheckingDeleteEligibility] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!accessToken) return;
@@ -150,6 +153,22 @@ export function ProfileScreen() {
     const jobsLabel = `${jobsCompleted} job${jobsCompleted === 1 ? "" : "s"} completed`;
     ratingLine = ratingAverage !== null ? `★ ${ratingAverage.toFixed(1)} · ${jobsLabel}` : jobsLabel;
   }
+
+  const handleDeleteAccountPress = async () => {
+    if (!accessToken || isCheckingDeleteEligibility) return;
+    setIsCheckingDeleteEligibility(true);
+    try {
+      const jobs = await listMyJobs(accessToken);
+      const blockingJob = jobs.find((job) => isActiveJobStatus(job.status));
+      if (blockingJob) {
+        navigation.navigate("DeleteAccountBlocked", { job: blockingJob });
+      } else {
+        navigation.navigate("DeleteAccountWarning");
+      }
+    } finally {
+      setIsCheckingDeleteEligibility(false);
+    }
+  };
 
   return (
     <Screen edges={["top", "bottom"]} style={styles.screen}>
@@ -281,6 +300,13 @@ export function ProfileScreen() {
               </ThemedText>
             </Pressable>
           </Card>
+          <Card style={styles.logoutCard}>
+            <Pressable onPress={handleDeleteAccountPress} style={styles.logoutRow}>
+              <ThemedText variant="subtitle" style={styles.deleteText}>
+                Delete account
+              </ThemedText>
+            </Pressable>
+          </Card>
         </View>
       </ScrollView>
     </Screen>
@@ -377,5 +403,8 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: colors.primary,
+  },
+  deleteText: {
+    color: colors.danger,
   },
 });

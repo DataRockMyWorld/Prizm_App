@@ -1,4 +1,4 @@
-import { apiRequest, toUploadFile } from "./client";
+import { ApiError, apiRequest, toUploadFile } from "./client";
 
 export type Role = "customer" | "worker";
 
@@ -42,13 +42,43 @@ export function refreshAccessToken(refresh: string) {
   });
 }
 
+/** Actually revokes the refresh token server-side (blacklists it) instead of
+ * just discarding it client-side — see AuthContext.clearSession. */
+export function logout(token: string, refresh: string) {
+  return apiRequest<void>("/api/auth/logout/", {
+    method: "POST",
+    token,
+    body: { refresh },
+  });
+}
+
+const DELETE_ACCOUNT_FALLBACK_MESSAGE = "Couldn't delete your account. Please try again.";
+
+/** Anonymizes the account server-side (see backend DeleteAccountView) —
+ * blocked with a 400 while a job is still active; the caller should surface
+ * `getDeleteAccountErrorMessage(err)` rather than a generic failure message,
+ * since the guard-rail's explanation is the whole point of a 400 here. */
+export function deleteAccount(token: string) {
+  return apiRequest<void>("/api/auth/delete-account/", { method: "POST", token });
+}
+
+/** Pulls the backend's actual explanation (e.g. "Finish or cancel your
+ * active job before deleting your account.") out of a failed
+ * `deleteAccount` call, falling back to a generic message for anything
+ * that isn't a well-formed 400 from that endpoint (network error, etc.). */
+export function getDeleteAccountErrorMessage(err: unknown): string {
+  if (err instanceof ApiError && typeof (err.data as { detail?: unknown })?.detail === "string") {
+    return (err.data as { detail: string }).detail;
+  }
+  return DELETE_ACCOUNT_FALLBACK_MESSAGE;
+}
+
 export interface Profile {
   phone_number: string;
   role: Role;
   full_name: string;
   photo: string | null;
   liability_acknowledged_at: string | null;
-  biometric_enabled: boolean;
   date_joined: string;
 }
 
@@ -59,7 +89,6 @@ export function getProfile(token: string) {
 export interface ProfileUpdate {
   full_name?: string;
   liability_acknowledged?: boolean;
-  biometric_enabled?: boolean;
   photoUri?: string;
 }
 
@@ -72,8 +101,6 @@ export function updateProfile(token: string, data: ProfileUpdate) {
   if (fields.full_name !== undefined) form.append("full_name", fields.full_name);
   if (fields.liability_acknowledged !== undefined)
     form.append("liability_acknowledged", String(fields.liability_acknowledged));
-  if (fields.biometric_enabled !== undefined)
-    form.append("biometric_enabled", String(fields.biometric_enabled));
   form.append("photo", toUploadFile(photoUri, "photo.jpg"));
   return apiRequest<Profile>("/api/auth/profile/", { method: "PATCH", token, body: form });
 }

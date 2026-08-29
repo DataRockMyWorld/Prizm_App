@@ -1,7 +1,6 @@
 import { submitIdDocument, useAuth } from "@prizm/api";
 import {
   Button,
-  Card,
   fontFamily,
   ProgressBar,
   Screen,
@@ -74,7 +73,7 @@ export function IdUploadScreen({ navigation }: Props) {
     setError(null);
     try {
       await submitIdDocument(accessToken, frontUri, backUri);
-      navigation.navigate("Certifications");
+      navigation.navigate("CertificationsInfo");
     } catch {
       setError("Couldn't upload your ID. Please try again.");
     } finally {
@@ -96,9 +95,9 @@ export function IdUploadScreen({ navigation }: Props) {
           STEP 1 OF 2
         </ThemedText>
         <ProgressBar progress={0.5} />
-        <ThemedText variant="title">Unlock your earning potential</ThemedText>
+        <ThemedText variant="title">Upload your ID</ThemedText>
         <ThemedText variant="body" style={styles.subtitle}>
-          Verify your identity to start accepting paid jobs
+          Front and back, as shown in the example
         </ThemedText>
         <UploadTile
           label="ID document — front"
@@ -112,15 +111,23 @@ export function IdUploadScreen({ navigation }: Props) {
           onPress={() => pickIdPhoto(setBackUri)}
           onRemove={() => setBackUri(undefined)}
         />
-        <Card style={styles.tipsCard}>
-          <ThemedText variant="caption" style={styles.tipsTitle}>
-            Tips for a clear photo
+        <ThemedText variant="caption" style={styles.consent}>
+          By submitting, you're allowing Prism's team to manually review
+          this document to verify your identity.{" "}
+          <ThemedText
+            variant="caption"
+            style={styles.consentLink}
+            onPress={() =>
+              // No real privacy-policy screen/URL exists yet (open question,
+              // see docs/prds/app-store-readiness.md §6/§9) — a placeholder
+              // rather than silently pointing this at Terms & liability,
+              // which is a different document.
+              Alert.alert("Privacy policy", "Coming soon.")
+            }
+          >
+            Privacy policy
           </ThemedText>
-          <ThemedText variant="caption">
-            Make sure all 4 corners are visible, the text is easy to read,
-            and there's no glare or shadows across the card.
-          </ThemedText>
-        </Card>
+        </ThemedText>
         {error && <ThemedText style={styles.error}>{error}</ThemedText>}
         <View style={styles.spacer} />
         <Button
@@ -149,11 +156,11 @@ const styles = StyleSheet.create({
   subtitle: {
     marginTop: -spacing.sm,
   },
-  tipsCard: {
-    backgroundColor: colors.surfaceMuted,
-    gap: 2,
+  consent: {
+    color: colors.textSecondary,
   },
-  tipsTitle: {
+  consentLink: {
+    color: colors.primary,
     fontFamily: fontFamily.bold,
   },
   error: {

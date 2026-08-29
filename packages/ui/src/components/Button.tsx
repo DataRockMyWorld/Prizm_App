@@ -11,7 +11,7 @@ import { colors, fontFamily, fontSize, radii, spacing } from "../tokens";
 import { GradientBackground } from "./GradientBackground";
 import { ThemedText } from "./ThemedText";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "dark";
 
 export interface ButtonProps {
   label: string;
@@ -31,8 +31,9 @@ export function Button({
   style,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const isDarkBackground = variant === "primary" || variant === "danger" || variant === "dark";
   const content = loading ? (
-    <ActivityIndicator color={variant === "primary" ? colors.textInverse : colors.primary} />
+    <ActivityIndicator color={isDarkBackground ? colors.textInverse : colors.primary} />
   ) : (
     <ThemedText
       variant="subtitle"
@@ -41,6 +42,8 @@ export function Button({
         variant === "primary" && styles.labelOnPrimary,
         variant === "secondary" && styles.labelSecondary,
         variant === "ghost" && styles.labelGhost,
+        variant === "danger" && styles.labelOnDanger,
+        variant === "dark" && styles.labelOnDark,
       ]}
     >
       {label}
@@ -72,6 +75,8 @@ export function Button({
         styles.base,
         variant === "secondary" && styles.secondary,
         variant === "ghost" && styles.ghost,
+        variant === "danger" && styles.danger,
+        variant === "dark" && styles.dark,
         isDisabled && styles.disabled,
         pressed && styles.pressed,
         style,
@@ -102,6 +107,12 @@ const styles = StyleSheet.create({
   ghost: {
     backgroundColor: "transparent",
   },
+  danger: {
+    backgroundColor: colors.danger,
+  },
+  dark: {
+    backgroundColor: colors.textPrimary,
+  },
   label: {
     fontFamily: fontFamily.bold,
     fontSize: fontSize.md,
@@ -114,6 +125,12 @@ const styles = StyleSheet.create({
   },
   labelGhost: {
     color: colors.textPrimary,
+  },
+  labelOnDanger: {
+    color: colors.textInverse,
+  },
+  labelOnDark: {
+    color: colors.textInverse,
   },
   disabled: {
     opacity: 0.5,

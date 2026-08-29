@@ -1,4 +1,4 @@
-import { Address, deleteAddress, getCustomerProfileStats, listAddresses, updateProfile, useAuth } from "@prizm/api";
+import { Address, deleteAddress, getCustomerProfileStats, listAddresses, listMyJobs, updateProfile, useAuth } from "@prizm/api";
 import { Card, fontFamily, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
+import { isActiveJobStatus } from "../jobsTab/jobsTabGrouping";
 import { formatMemberSince } from "../profile/formatMemberSince";
 
 export function ProfileScreen() {
@@ -14,6 +15,7 @@ export function ProfileScreen() {
   const [requestsCompleted, setRequestsCompleted] = useState(0);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isCheckingDeleteEligibility, setIsCheckingDeleteEligibility] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!accessToken) return;
@@ -73,6 +75,22 @@ export function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  const handleDeleteAccountPress = async () => {
+    if (!accessToken || isCheckingDeleteEligibility) return;
+    setIsCheckingDeleteEligibility(true);
+    try {
+      const jobs = await listMyJobs(accessToken);
+      const blockingJob = jobs.find((job) => isActiveJobStatus(job.status));
+      if (blockingJob) {
+        navigation.navigate("DeleteAccountBlocked", { job: blockingJob });
+      } else {
+        navigation.navigate("DeleteAccountWarning");
+      }
+    } finally {
+      setIsCheckingDeleteEligibility(false);
+    }
   };
 
   return (
@@ -160,6 +178,13 @@ export function ProfileScreen() {
               </ThemedText>
             </Pressable>
           </Card>
+          <Card style={styles.logoutCard}>
+            <Pressable onPress={handleDeleteAccountPress} style={styles.logoutRow}>
+              <ThemedText variant="subtitle" style={styles.deleteText}>
+                Delete account
+              </ThemedText>
+            </Pressable>
+          </Card>
         </View>
       </ScrollView>
     </Screen>
@@ -222,5 +247,8 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: colors.primary,
+  },
+  deleteText: {
+    color: colors.danger,
   },
 });

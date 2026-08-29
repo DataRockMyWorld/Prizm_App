@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.gis",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "accounts",
     "services",
@@ -139,9 +140,22 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    # A backstop for every endpoint that isn't already covered by one of the
+    # more specific phone-scoped throttles above (jobs, messages, offers,
+    # addresses, device registration, etc. had zero rate limiting before
+    # this). Rates are deliberately generous — several screens poll every
+    # few seconds (chat, job status, incoming offers), and this must never
+    # throttle normal use, only clearly-scripted abuse.
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
     "DEFAULT_THROTTLE_RATES": {
+        "user": "1200/min",
+        "anon": "60/min",
         "otp_request": "5/min",
         "otp_verify": "10/min",
+        "pin_login": "10/hour",
     },
 }
 
@@ -220,6 +234,19 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+# Refuse to boot with DEBUG=False while SECRET_KEY/MinIO credentials still
+# equal their insecure local-dev defaults — see security_checks.py.
+from config.security_checks import check_no_insecure_defaults  # noqa: E402
+
+check_no_insecure_defaults(
+    debug=DEBUG,
+    values={
+        "SECRET_KEY": SECRET_KEY,
+        "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
+        "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
+    },
+)
 
 
 # Default primary key field type

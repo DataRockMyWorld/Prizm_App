@@ -193,7 +193,7 @@ function UnverifiedActiveState({
         </View>
       </Card>
     ) : (
-      <Pressable onPress={() => navigation.navigate("IdUpload")}>
+      <Pressable onPress={() => navigation.navigate("IdVerificationInfo")}>
         <Card style={styles.statusCard}>
           <View style={styles.statusIconCircle}>
             <ThemedText style={styles.statusIcon}>🪪</ThemedText>

@@ -2,10 +2,15 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
 import { OfferPollingProvider } from "../offers/OfferPollingProvider";
+import { AccountDeletedScreen } from "../screens/AccountDeletedScreen";
 import { ActiveJobScreen } from "../screens/ActiveJobScreen";
 import { CancelJobScreen } from "../screens/CancelJobScreen";
 import { ChatScreen } from "../screens/ChatScreen";
 import { ComingSoonScreen } from "../screens/ComingSoonScreen";
+import { DeleteAccountBlockedScreen } from "../screens/DeleteAccountBlockedScreen";
+import { DeleteAccountConfirmScreen } from "../screens/DeleteAccountConfirmScreen";
+import { DeleteAccountPinScreen } from "../screens/DeleteAccountPinScreen";
+import { DeleteAccountWarningScreen } from "../screens/DeleteAccountWarningScreen";
 import { HelpSupportScreen } from "../screens/HelpSupportScreen";
 import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
 import { JobCompleteScreen } from "../screens/JobCompleteScreen";
@@ -15,8 +20,10 @@ import { ProposePriceScreen } from "../screens/ProposePriceScreen";
 import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
 import { TermsLiabilityScreen } from "../screens/TermsLiabilityScreen";
 import { WaitingForConfirmationScreen } from "../screens/WaitingForConfirmationScreen";
+import { CertificationsInfoScreen } from "../screens/onboarding/CertificationsInfoScreen";
 import { CertificationsScreen } from "../screens/onboarding/CertificationsScreen";
 import { IdUploadScreen } from "../screens/onboarding/IdUploadScreen";
+import { IdVerificationInfoScreen } from "../screens/onboarding/IdVerificationInfoScreen";
 import { UnderReviewScreen } from "../screens/onboarding/UnderReviewScreen";
 import { RootTabs } from "./RootTabs";
 import type { WorkerRootStackParamList } from "./types";
@@ -32,14 +39,27 @@ export function RootNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Tabs" component={RootTabs} />
         <Stack.Screen
-          name="IdUpload"
-          component={IdUploadScreen}
+          name="IdVerificationInfo"
+          component={IdVerificationInfoScreen}
           options={{ presentation: "modal" }}
         />
+        <Stack.Screen name="IdUpload" component={IdUploadScreen} />
+        <Stack.Screen
+          name="CertificationsInfo"
+          component={CertificationsInfoScreen}
+          options={{ presentation: "modal" }}
+        />
+        {/* Reached two ways: pushed from CertificationsInfo within the
+            onboarding flow (plain push, that screen already owns the modal
+            presentation) — or straight from the Profile tab's "+ Add
+            another certificate" with returnTo: "profile", which has no
+            modal screen underneath it and needs its own. */}
         <Stack.Screen
           name="Certifications"
           component={CertificationsScreen}
-          options={{ presentation: "modal" }}
+          options={({ route }) => ({
+            presentation: route.params?.returnTo === "profile" ? "modal" : undefined,
+          })}
         />
         <Stack.Screen
           name="UnderReview"
@@ -88,6 +108,15 @@ export function RootNavigator() {
         <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
         <Stack.Screen name="SafetyTips" component={SafetyTipsScreen} />
         <Stack.Screen name="TermsLiability" component={TermsLiabilityScreen} />
+        <Stack.Screen name="DeleteAccountWarning" component={DeleteAccountWarningScreen} />
+        <Stack.Screen name="DeleteAccountBlocked" component={DeleteAccountBlockedScreen} />
+        <Stack.Screen name="DeleteAccountPin" component={DeleteAccountPinScreen} />
+        <Stack.Screen name="DeleteAccountConfirm" component={DeleteAccountConfirmScreen} />
+        <Stack.Screen
+          name="AccountDeleted"
+          component={AccountDeletedScreen}
+          options={{ gestureEnabled: false }}
+        />
       </Stack.Navigator>
     </OfferPollingProvider>
   );

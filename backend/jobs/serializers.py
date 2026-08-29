@@ -4,6 +4,7 @@ from django.db.models import Avg
 from rest_framework import serializers
 
 from accounts.models import User, WorkerProfile
+from config.validators import validate_file_size
 from services.models import ServiceCategory
 
 from .models import CancellationLog, JobOffer, JobRequest, Message, Rating, Report
@@ -137,7 +138,9 @@ class JobRequestCreateSerializer(serializers.Serializer):
     address = serializers.CharField(required=False, allow_blank=True, default="")
     latitude = serializers.FloatField(min_value=-90, max_value=90)
     longitude = serializers.FloatField(min_value=-180, max_value=180)
-    photo = serializers.ImageField(required=False, allow_null=True)
+    photo = serializers.ImageField(
+        required=False, allow_null=True, validators=[validate_file_size]
+    )
 
 
 class NearbyJobSerializer(serializers.ModelSerializer):

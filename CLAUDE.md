@@ -12,7 +12,8 @@ needing services (cleaning, plumbing, electrical, etc).
 - Storage: S3-compatible object storage for ID docs, certifications,
   photos (signed URLs, never public)
 - Auth: JWT (djangorestframework-simplejwt), phone number + SMS OTP + PIN
-  (not passwords), optional biometric unlock client-side
+  (not passwords) — the only login method, no biometric unlock (removed
+  2026-08-28, see "Auth & verification flow updates" below)
 - Push: Expo push notifications (FCM/APNs)
 - Payments: mobile money integration (provider TBD)
 
@@ -71,8 +72,8 @@ in_progress → awaiting_price_confirmation → completed` (or `cancelled` /
 `disputed` at various points)
 
 ## Auth flow (both apps, same sequence)
-Phone number → SMS OTP → set PIN → confirm PIN → optional biometric
-enable → name + photo + liability checkbox → role split:
+Phone number → SMS OTP → set PIN → confirm PIN → name + photo +
+liability checkbox → role split:
 - Customer → home (request a service)
 - Worker → category/job browse (ID upload banner, non-blocking) → ID
   upload (required to go online) → optional certification upload
@@ -183,4 +184,70 @@ methods, instant payouts, business-account features.
 - OTPs are logged to console in local dev, not sent via a real SMS
   gateway. Payment gateway is stubbed until a specific provider is
   chosen.
-  
+
+## Auth & verification flow updates (2026-08-28 design session)
+
+Decisions from a design session on 2026-08-28, covering the onboarding/
+verification flow, two new App Store-driven requirements, and open
+compliance questions. See `docs/prds/app-store-readiness.md` /
+`docs/tickets/app-store-readiness.md` for the full PRD and tickets.
+Hi-fi reference: `docs/design/prism-auth-flow-hifi.html` — supersedes
+any earlier auth-flow wireframe.
+
+**Auth flow changes:**
+- Face ID / biometric login has been removed entirely (already shipped
+  in code as of 2026-08-27) — PIN is the only login method, matching
+  how comparable apps (Uber, Bolt) handle this: the app just opens on
+  launch, no forced re-auth. See the "Auth flow" section above, already
+  updated to match.
+- The shared Basic Profile screen's name field is now role-conditional:
+  Worker path labels it "Full name (as it appears on your ID)" with a
+  placeholder example ("e.g. Jane M. Nghidinwa"); Customer path keeps
+  plain "Full name". Still one field — no first/last name split.
+- The ID verification step is now two screens instead of one: an
+  instructions screen (numbered tips, a zoomable example image,
+  "Continue") followed by the upload screen itself (front/back capture,
+  a manual-review consent line, "Submit for Review"). The
+  certifications step gets the same split. Screen numbering in the flow
+  shifts accordingly — see the hi-fi reference and PRD for the full
+  updated sequence.
+
+**Verification guidance:** ID upload, profile photo, and certificate
+upload screens now include tip lists, an example image, and consent
+copy — modeled on Uber's ID-verification UX pattern, but explicitly
+adapted: Prism uses manual human review, not automated facial
+recognition/biometric matching, and consent copy must never claim
+biometric verification.
+
+**Account deletion (required, not yet built):** Apple and Google Play
+both require in-app account deletion for any app with account
+creation — a hard submission requirement, not optional. Real deletion
+(not deactivation), placed in Profile → Account near Log out, blocked
+while a job is active or a payment is unresolved, with a legal-
+retention exception for anonymized financial/transaction records. See
+the PRD's Technical decisions section for a real FK-cascade risk this
+surfaced (hard-deleting a `User` row today would cascade-destroy the
+*other* party's job/message history too) and the proposed fix.
+
+**App Store compliance — open items, tracked but not yet resolved:**
+- **Chat safety (Apple Guideline 1.2):** the existing "Report a
+  problem" flow covers job-outcome disputes, not in-chat report-
+  message/block-user actions — required for any app with user
+  messaging. Needs its own design pass before it's buildable; tracked
+  as a blocked placeholder ticket, not scoped yet.
+- **Privacy Nutrition Label (Apple) / Data Safety form (Google Play):**
+  mandatory data-collection disclosures at submission time, given
+  Prism collects ID documents, location, photos, and payment info —
+  not a code task, but budget real time for it before submission.
+- **Worker subscription/lead-access model:** real job payments are
+  exempt from Apple's in-app purchase system (person-to-person
+  real-world services), but a paid subscription unlocking more
+  leads/visibility inside the app is a gray area that may require
+  Apple's IAP instead of direct billing. **Must resolve before
+  implementing** the freemium/subscription model referenced under
+  Monetization above.
+- **Minimum worker age:** the original pitch deck describes workers
+  aged 16–60, but the liability waiver assumes a binding contract,
+  which minors generally can't enter without a guardian. Leaning
+  toward raising the effective minimum to 18 for the MVP pending a
+  firm decision — do not build age-gating either way until decided.

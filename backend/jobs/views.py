@@ -289,11 +289,7 @@ class MessageListCreateView(APIView):
             return Response({"detail": "Not your job."}, status=403)
         if job.worker_id is None:
             return Response({"detail": "No worker assigned yet."}, status=400)
-        if job.status in (
-            JobRequest.Status.COMPLETED,
-            JobRequest.Status.CANCELLED,
-            JobRequest.Status.DISPUTED,
-        ):
+        if job.status in JobRequest.TERMINAL_STATUSES:
             return Response({"detail": "This job is closed."}, status=400)
 
         serializer = MessageSerializer(data=request.data)

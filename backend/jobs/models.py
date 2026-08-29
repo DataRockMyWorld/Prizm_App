@@ -4,6 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from config.storage_backends import unique_upload_path
+from config.validators import validate_file_size
 
 
 class JobRequest(models.Model):
@@ -22,6 +23,10 @@ class JobRequest(models.Model):
         COMPLETED = "completed", "Completed"
         CANCELLED = "cancelled", "Cancelled"
         DISPUTED = "disputed", "Disputed"
+
+    # Shared with DeleteAccountView's active-job guard rail — a job in any
+    # other status is still "in flight" and blocks account deletion.
+    TERMINAL_STATUSES = (Status.COMPLETED, Status.CANCELLED, Status.DISPUTED)
 
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -42,7 +47,10 @@ class JobRequest(models.Model):
     location = gis_models.PointField(geography=True)
     address = models.CharField(max_length=255, blank=True)
     photo = models.ImageField(
-        upload_to=unique_upload_path("job_photos"), blank=True, null=True
+        upload_to=unique_upload_path("job_photos"),
+        blank=True,
+        null=True,
+        validators=[validate_file_size],
     )
     status = models.CharField(
         max_length=30, choices=Status.choices, default=Status.REQUESTED

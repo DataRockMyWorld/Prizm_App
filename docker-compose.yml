@@ -6,7 +6,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      # Localhost-only: only Django/Celery talk to Postgres, over the
+      # internal Docker network — this host mapping is just for optionally
+      # pointing a local DB GUI at it from the Mac itself. Never needed by a
+      # phone/mobile app, so it must not be LAN-reachable.
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -16,7 +20,9 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      # Localhost-only — same reasoning as Postgres above: internal-only,
+      # never touched by a phone/mobile app directly.
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -34,8 +40,14 @@ services:
     volumes:
       - minio_data:/data
     ports:
+      # 9000 (S3 API) stays LAN-accessible on purpose: AWS_S3_PUBLIC_ENDPOINT_URL
+      # points the phone directly at this host:port for signed image URLs
+      # (profile photos, ID docs, job photos) — binding it to localhost would
+      # silently break every image rendered on a physical device.
       - "9000:9000"
-      - "9001:9001"
+      # 9001 is the MinIO web admin console — a browser-only tool, never used
+      # by either mobile app, so it's localhost-only.
+      - "127.0.0.1:9001:9001"
 
   createbuckets:
     image: minio/mc:latest

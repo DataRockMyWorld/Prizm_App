@@ -16,3 +16,7 @@ class OTPRequestThrottle(PhoneScopedThrottle):
 
 class OTPVerifyThrottle(PhoneScopedThrottle):
     scope = "otp_verify"
+
+
+class PinLoginThrottle(PhoneScopedThrottle):
+    scope = "pin_login"

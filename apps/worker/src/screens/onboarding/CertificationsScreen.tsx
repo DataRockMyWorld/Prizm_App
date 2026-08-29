@@ -6,7 +6,18 @@ import {
   updateWorkerCategories,
   useAuth,
 } from "@prizm/api";
-import { Badge, Button, Card, Screen, ThemedText, UploadTile, colors, spacing } from "@prizm/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  fontFamily,
+  ProgressBar,
+  Screen,
+  ThemedText,
+  UploadTile,
+  colors,
+  spacing,
+} from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
@@ -72,16 +83,35 @@ export function CertificationsScreen({ navigation, route }: Props) {
     }
   };
 
+  const selectedCategoryName = categories.find((c) => c.id === selectedCategoryId)?.name;
+
   return (
     <Screen>
-      <View style={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+          <ThemedText variant="title">‹</ThemedText>
+        </Pressable>
+        {/* No "step 2 of 2" framing when reached from the Profile tab's "+ Add
+            another certificate" — that's not onboarding, there's no step
+            count to speak of. */}
+        {returnTo !== "profile" && (
+          <>
+            <ThemedText variant="caption" style={styles.step}>
+              STEP 2 OF 2
+            </ThemedText>
+            <ProgressBar progress={1} />
+          </>
+        )}
         <View style={styles.badgeRow}>
           <Badge label="OPTIONAL" tone="neutral" />
         </View>
-        <ThemedText variant="title">Add certifications</ThemedText>
+        <ThemedText variant="title">Upload your certificate</ThemedText>
         <ThemedText variant="body" style={styles.subtitle}>
-          Optional — upload certificates for the services you offer to earn a Certified badge on
-          your profile
+          One per service category you're certified in
         </ThemedText>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
@@ -102,7 +132,7 @@ export function CertificationsScreen({ navigation, route }: Props) {
         </ScrollView>
 
         <UploadTile
-          label={selectedCategoryId ? "Certificate document" : "Choose a category first"}
+          label={selectedCategoryName ? `Certificate — ${selectedCategoryName}` : "Choose a category first"}
           uri={documentUri}
           onPress={selectedCategoryId ? pickDocument : () => {}}
           onRemove={() => setDocumentUri(undefined)}
@@ -135,17 +165,22 @@ export function CertificationsScreen({ navigation, route }: Props) {
             </ThemedText>
           </Pressable>
         )}
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingTop: spacing.md,
     gap: spacing.md,
     paddingBottom: spacing.md,
+  },
+  step: {
+    color: "#FF6C22",
+    fontFamily: fontFamily.extraBold,
+    letterSpacing: 0.5,
   },
   badgeRow: {
     flexDirection: "row",

@@ -8,7 +8,7 @@ import React, {
   useState,
 } from "react";
 
-import { AuthTokens, Profile, getProfile } from "./auth";
+import { AuthTokens, Profile, getProfile, logout } from "./auth";
 import { establishSessionFromTokens, restoreSession } from "./sessionEstablishment";
 
 const ACCESS_KEY = "prizm.accessToken";
@@ -77,12 +77,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearSession = useCallback(async () => {
+    if (accessToken && refreshToken) {
+      try {
+        // Actually revoke the refresh token server-side, not just discard it
+        // locally — best-effort: local logout must still succeed even if
+        // this fails (offline, already-expired token, etc.).
+        await logout(accessToken, refreshToken);
+      } catch {
+        // ignore — see above
+      }
+    }
     setAccessToken(null);
     setRefreshToken(null);
     setProfileState(null);
     await SecureStore.deleteItemAsync(ACCESS_KEY);
     await SecureStore.deleteItemAsync(REFRESH_KEY);
-  }, []);
+  }, [accessToken, refreshToken]);
 
   const refreshProfile = useCallback(async () => {
     if (accessToken) {

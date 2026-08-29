@@ -33,7 +33,7 @@ class UserAdmin(DjangoUserAdmin):
         ("Personal info", {"fields": ("full_name", "photo", "role")}),
         (
             "Onboarding",
-            {"fields": ("liability_acknowledged_at", "biometric_enabled")},
+            {"fields": ("liability_acknowledged_at",)},
         ),
         (
             "Permissions",
@@ -205,7 +205,9 @@ class CertificationAdmin(admin.ModelAdmin):
 
 @admin.register(PhoneOTP)
 class PhoneOTPAdmin(admin.ModelAdmin):
-    list_display = ("phone_number", "code", "created_at", "expires_at", "is_used")
+    # code_hash is a one-way hash (see PhoneOTP.code_hash) — this admin can no
+    # longer be used to read a live, usable OTP code for any phone number.
+    list_display = ("phone_number", "created_at", "expires_at", "is_used")
     list_filter = ("is_used",)
     search_fields = ("phone_number",)
-    readonly_fields = ("phone_number", "code", "created_at", "expires_at", "is_used")
+    readonly_fields = ("phone_number", "code_hash", "created_at", "expires_at", "is_used")

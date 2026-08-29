@@ -1,9 +1,20 @@
+import type { JobRequest } from "@prizm/api";
+
 export type WorkerOnboardingStackParamList = {
+  /** Instructions-only entry point for ID verification (screen 7 in the
+   * hi-fi flow) — every "Upload your ID" call site should navigate here,
+   * not straight to IdUpload, so the tips/example are always seen first. */
+  IdVerificationInfo: undefined;
   IdUpload: undefined;
+  /** Onboarding-only entry point for the certifications step — the Profile
+   * tab's "+ Add another certificate" bypasses this and navigates straight
+   * to Certifications with returnTo: "profile" instead (see below). */
+  CertificationsInfo: undefined;
   /** `returnTo: "profile"` — reached from the Profile tab's "+ Add another
    * certificate" (not the onboarding sequence): returns to the Profile
-   * screen on submit instead of continuing to UnderReview, and hides the
-   * onboarding-only "Skip for now" link. */
+   * screen on submit instead of continuing to UnderReview, hides the
+   * onboarding-only "Skip for now" link, and skips the "step 2 of 2"
+   * framing. */
   Certifications: { returnTo?: "profile" } | undefined;
   UnderReview: undefined;
 };
@@ -34,4 +45,12 @@ export type WorkerRootStackParamList = {
   HelpSupport: undefined;
   SafetyTips: undefined;
   TermsLiability: undefined;
+  /** Account deletion — 5-screen flow (D1/D2/D3/D4/D5 in the hi-fi design),
+   * see docs/prds/app-store-readiness.md §5d. Entry point is a pre-check
+   * from the Profile row, not a fixed first screen — see ProfileScreen. */
+  DeleteAccountWarning: undefined;
+  DeleteAccountBlocked: { job: JobRequest };
+  DeleteAccountPin: undefined;
+  DeleteAccountConfirm: undefined;
+  AccountDeleted: undefined;
 } & WorkerOnboardingStackParamList;

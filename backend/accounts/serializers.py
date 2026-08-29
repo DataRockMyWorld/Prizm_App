@@ -4,6 +4,7 @@ from django.db.models import Avg
 from django.utils import timezone
 from rest_framework import serializers
 
+from config.validators import validate_file_size
 from jobs.models import JobRequest, Rating
 from services.models import ServiceCategory
 
@@ -84,7 +85,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             "full_name",
             "photo",
             "liability_acknowledged_at",
-            "biometric_enabled",
             "liability_acknowledged",
             "date_joined",
         ]
@@ -102,6 +102,18 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         many=True,
         queryset=ServiceCategory.objects.filter(is_active=True),
         required=False,
+    )
+    # Explicit ImageField overrides (the model fields are plain FileField, so
+    # ModelSerializer would otherwise auto-generate an unvalidated FileField
+    # here) — these are government ID photos, so the upload must actually be
+    # a decodable image, not just anything with an image/* content-type header.
+    # An explicit serializer field like this doesn't automatically inherit
+    # the model field's `validators=`, so validate_file_size is repeated here.
+    id_document = serializers.ImageField(
+        required=False, allow_null=True, validators=[validate_file_size]
+    )
+    id_document_back = serializers.ImageField(
+        required=False, allow_null=True, validators=[validate_file_size]
     )
     jobs_completed = serializers.SerializerMethodField()
     rating_average = serializers.SerializerMethodField()
@@ -175,6 +187,10 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
 
 
 class CertificationSerializer(serializers.ModelSerializer):
+    # Same reasoning as WorkerProfileSerializer.id_document — force real
+    # image-format verification instead of trusting the FileField default.
+    document = serializers.ImageField(validators=[validate_file_size])
+
     class Meta:
         model = Certification
         fields = ["id", "category", "document", "status", "rejection_reason", "created_at"]

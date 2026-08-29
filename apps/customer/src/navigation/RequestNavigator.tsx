@@ -1,8 +1,13 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
+import { AccountDeletedScreen } from "../screens/AccountDeletedScreen";
 import { AddressFormScreen } from "../screens/AddressFormScreen";
 import { ComingSoonScreen } from "../screens/ComingSoonScreen";
+import { DeleteAccountBlockedScreen } from "../screens/DeleteAccountBlockedScreen";
+import { DeleteAccountConfirmScreen } from "../screens/DeleteAccountConfirmScreen";
+import { DeleteAccountPinScreen } from "../screens/DeleteAccountPinScreen";
+import { DeleteAccountWarningScreen } from "../screens/DeleteAccountWarningScreen";
 import { HelpSupportScreen } from "../screens/HelpSupportScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
@@ -52,6 +57,15 @@ export function RequestNavigator() {
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
       <Stack.Screen name="SafetyTips" component={SafetyTipsScreen} />
       <Stack.Screen name="TermsLiability" component={TermsLiabilityScreen} />
+      <Stack.Screen name="DeleteAccountWarning" component={DeleteAccountWarningScreen} />
+      <Stack.Screen name="DeleteAccountBlocked" component={DeleteAccountBlockedScreen} />
+      <Stack.Screen name="DeleteAccountPin" component={DeleteAccountPinScreen} />
+      <Stack.Screen name="DeleteAccountConfirm" component={DeleteAccountConfirmScreen} />
+      <Stack.Screen
+        name="AccountDeleted"
+        component={AccountDeletedScreen}
+        options={{ gestureEnabled: false }}
+      />
     </Stack.Navigator>
   );
 }

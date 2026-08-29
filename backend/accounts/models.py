@@ -7,6 +7,7 @@ from django.db import models
 from django.utils import timezone
 
 from config.storage_backends import unique_upload_path
+from config.validators import validate_file_size
 
 phone_number_validator = RegexValidator(
     regex=r"^\+?[1-9]\d{7,14}$",
@@ -60,10 +61,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=10, choices=Role.choices)
     full_name = models.CharField(max_length=150, blank=True)
     photo = models.ImageField(
-        upload_to=unique_upload_path("user_photos"), blank=True, null=True
+        upload_to=unique_upload_path("user_photos"),
+        blank=True,
+        null=True,
+        validators=[validate_file_size],
     )
     liability_acknowledged_at = models.DateTimeField(null=True, blank=True)
-    biometric_enabled = models.BooleanField(default=False)
+    # Account deletion anonymizes rather than hard-deletes the row (see
+    # DeleteAccountView) — deleted_at is the actual "is this deleted" signal;
+    # is_active is also set False on deletion (blocks login/JWT auth
+    # immediately, see JWTAuthentication.get_user) but isn't reused as the
+    # sole deletion marker, since some future "suspended" state might also
+    # want is_active=False without meaning "deleted."
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -96,10 +106,16 @@ class WorkerProfile(models.Model):
         "services.ServiceCategory", related_name="workers", blank=True
     )
     id_document = models.FileField(
-        upload_to=unique_upload_path("id_documents"), blank=True, null=True
+        upload_to=unique_upload_path("id_documents"),
+        blank=True,
+        null=True,
+        validators=[validate_file_size],
     )
     id_document_back = models.FileField(
-        upload_to=unique_upload_path("id_documents"), blank=True, null=True
+        upload_to=unique_upload_path("id_documents"),
+        blank=True,
+        null=True,
+        validators=[validate_file_size],
     )
     id_status = models.CharField(
         max_length=20, choices=IDStatus.choices, default=IDStatus.NOT_SUBMITTED
@@ -158,7 +174,9 @@ class Certification(models.Model):
         on_delete=models.CASCADE,
         related_name="certifications",
     )
-    document = models.FileField(upload_to=unique_upload_path("certifications"))
+    document = models.FileField(
+        upload_to=unique_upload_path("certifications"), validators=[validate_file_size]
+    )
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.PENDING
     )
@@ -208,7 +226,10 @@ class PhoneOTP(models.Model):
     """
 
     phone_number = models.CharField(max_length=20, validators=[phone_number_validator])
-    code = models.CharField(max_length=6)
+    # Hashed the same way the PIN is (Django's make_password/check_password)
+    # — the raw code is never stored, so a staff account browsing Django
+    # admin can no longer read a live, usable OTP for any phone number.
+    code_hash = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)

@@ -1,8 +1,20 @@
 import { updateProfile, useAuth } from "@prizm/api";
-import { Avatar, Button, Checkbox, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
+import {
+  Avatar,
+  Button,
+  Checkbox,
+  fontFamily,
+  Screen,
+  TextField,
+  ThemedText,
+  colors,
+  spacing,
+} from "@prizm/ui";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
+
+import { getNameFieldCopy } from "../profile/getNameFieldCopy";
 
 const TERMS_TEXT =
   "Prism is a platform that connects independent service providers (workers) with customers who need services performed. " +
@@ -10,12 +22,18 @@ const TERMS_TEXT =
   "Both parties are responsible for their own conduct, and disputes are handled through Prism's in-app reporting tools.";
 
 export function ProfileScreen() {
-  const { accessToken, setProfile } = useAuth();
+  const { accessToken, profile, setProfile } = useAuth();
   const [fullName, setFullName] = useState("");
   const [photoUri, setPhotoUri] = useState<string | undefined>();
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Role is already known by this point — RegisterView sets it at PIN
+  // creation, and establishSessionFromTokens fetches the full profile right
+  // after, before this screen is ever reached. The "customer" fallback below
+  // only matters for the type checker, not real usage.
+  const nameCopy = getNameFieldCopy(profile?.role ?? "customer");
 
   const canContinue = fullName.trim().length > 0 && agreed;
 
@@ -62,13 +80,20 @@ export function ProfileScreen() {
           Just the basics for now
         </ThemedText>
         <Avatar uri={photoUri} onPress={pickPhoto} />
-        <TextField
-          placeholder="Full name"
-          value={fullName}
-          onChangeText={setFullName}
-          autoCapitalize="words"
-          style={styles.nameField}
-        />
+        <View style={styles.nameFieldGroup}>
+          {nameCopy.label && (
+            <ThemedText variant="caption" style={styles.nameFieldLabel}>
+              {nameCopy.label}
+            </ThemedText>
+          )}
+          <TextField
+            placeholder={nameCopy.placeholder}
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
+            style={styles.nameField}
+          />
+        </View>
         <View style={styles.spacer} />
         <Checkbox checked={agreed} onToggle={() => setAgreed((v) => !v)}>
           <ThemedText variant="caption">
@@ -107,6 +132,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginBottom: spacing.sm,
+  },
+  nameFieldGroup: {
+    gap: spacing.xs,
+  },
+  nameFieldLabel: {
+    fontFamily: fontFamily.bold,
   },
   nameField: {},
   spacer: {

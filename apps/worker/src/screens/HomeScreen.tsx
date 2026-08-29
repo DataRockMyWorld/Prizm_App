@@ -203,7 +203,7 @@ export function HomeScreen() {
               </View>
             </Card>
           ) : (
-            <Pressable onPress={() => navigation.navigate("IdUpload")}>
+            <Pressable onPress={() => navigation.navigate("IdVerificationInfo")}>
               <Card style={styles.bannerCard}>
                 <View style={{ flex: 1 }}>
                   <ThemedText variant="subtitle">

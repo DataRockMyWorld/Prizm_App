@@ -1,4 +1,4 @@
-import type { Address } from "@prizm/api";
+import type { Address, JobRequest } from "@prizm/api";
 
 export type RequestStackParamList = {
   Tabs: undefined;
@@ -17,4 +17,13 @@ export type RequestStackParamList = {
   HelpSupport: undefined;
   SafetyTips: undefined;
   TermsLiability: undefined;
+  /** Account deletion — 5-screen flow (D1b/D2b/D3/D4/D5 in the hi-fi
+   * design), see docs/prds/app-store-readiness.md §5d. Entry point is a
+   * pre-check from the Profile row, not a fixed first screen — see
+   * ProfileScreen. */
+  DeleteAccountWarning: undefined;
+  DeleteAccountBlocked: { job: JobRequest };
+  DeleteAccountPin: undefined;
+  DeleteAccountConfirm: undefined;
+  AccountDeleted: undefined;
 };
