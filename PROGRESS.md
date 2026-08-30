@@ -1,6 +1,6 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-08-27. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-08-30. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
 
@@ -31,6 +31,16 @@ Beyond the original build order, two follow-up PRD/ticket rounds are done:
   the fuller hi-fi Profile redesign (gradient hero, badges, rating, stats,
   Services-offered editor, Certifications list, Saved addresses CRUD).
   All 7 tickets (T1–T7) done and committed.
+- `docs/prds/chat-safety.md` / `docs/tickets/chat-safety.md` (2026-08-30)
+  — report-message / report-user / block-user, closing out
+  `app-store-readiness`'s previously-blocked T6 (Apple Guideline 1.2 chat
+  safety requirement). New `Block` model (account-wide, checked in both
+  directions by the matching engine) + 4 new chat-abuse `Report`
+  categories + a nullable per-message FK on `Report`, `BlockCounterpartView`
+  (terminal-job-only, target always server-derived from the job), and a
+  `ReportChatScreen` + header overflow menu + per-message long-press in
+  both apps. All 5 tickets (T1–T5) done and committed; backend 131/131,
+  worker 58/58, customer 42/42 at the time.
 
 This also completes build-order step 9 itself:
 `docs/prds/chat.md` / `docs/tickets/chat.md` — per-job chat thread, both
@@ -217,6 +227,56 @@ worker, most-recently-active first, last-message preview, tap into the
 thread. 4-tab bar (Home/Jobs/Messages/Profile). **Profile has been
 live-tested and iterated on a physical phone through several rounds**,
 same as the worker app's — see git log for specifics.
+
+**Customer Home screen realigned with the approved hi-fi (2026-08-30)** —
+live-tested on both a physical iPhone and the Android emulator. Browse
+Services now sits in its own subtly-tinted rounded section (`colors.
+surfaceMuted`), distinct from the greeting/search area above and
+whatever's below; real spacing between the greeting/subtitle/search bar
+(was fighting itself with a negative margin). The category grid is now
+the approved 4-across compact circular thumbnail row instead of 2-column
+rectangular image cards — the initial cut had a `Math.round` sizing bug
+that wrapped the 4th tile to its own row, fixed via `Math.floor`. A
+stray `ServiceCategory` row ("Category 0", id 6, not seeded by any
+migration, zero real dependents) was leftover local-dev DB junk, not a
+code bug — deleted directly. **Search bar is now real**: a live
+client-side filter (`apps/customer/src/home/filterCategories.ts`, unit
+tested) against category names — no backend endpoint, deliberately,
+since the catalog is a handful of static categories; shows a "No
+services match" empty state rather than going blank. Also fixed: the
+search field had no way to blur/dismiss the keyboard on this
+non-scrolling screen (confirmed live — cursor stayed put indefinitely)
+— tapping anywhere outside the field, or the keyboard's return key, now
+calls `Keyboard.dismiss()`. Bottom-nav mismatch (wireframe's 3 tabs vs.
+the built 4) flagged by the user as a known, deliberately-untouched
+open item for a future pass.
+
+**Customer `RequestSubmissionScreen` Ticket 1 in progress, awaiting
+live confirmation (2026-08-30)** — realigned with the approved hi-fi:
+added the missing hatched map placeholder + centered orange pin
+(a tiny tileable diagonal-stripe PNG generated locally + `Image
+resizeMode="repeat"`, and a single-`View` CSS-style teardrop pin — no
+new native dependency), bolded the "Request a service" heading, and
+reworked the 5 form sections (category chip/description/location/
+photo/price) into a `flex:1` + `justifyContent:"space-evenly"`
+container so they distribute down the full screen instead of clustering
+near the top with Submit Request stranded below a dead gap. Also added
+a warm orange-tinted shadow/glow to `packages/ui`'s shared `Button`
+primary variant (previously had zero shadow styling anywhere) — fixed
+at the component level, not just this screen, so it's already consistent
+for Ticket 2 (Searching/Matched screens, not yet started). One
+investigation result worth remembering: **the gear/settings icon
+visible top-right on every screen (including the pre-login phone-number
+screen) is the Expo Dev Client menu-launcher overlay** (`expo-dev-
+client` is a real dependency; zero gear/settings code anywhere in
+either app; Android's accessibility tree labels it `content-desc=
+"Tools"`) — it is not part of Prism's own UI, nothing to fix in code,
+and it won't exist in a production/store build. Backend/mobile suites
+all still green after these changes (backend 131/131, worker 58/58,
+customer 48/48) and both bundles compile — **but the visual result
+itself has not yet been confirmed via a live screenshot**, so treat
+Ticket 1 as implemented-but-unverified, and don't start Ticket 2 (the
+PRD explicitly gates it on Ticket 1 confirmation) until that happens.
 
 ## Physical iPhone builds — working
 
@@ -511,12 +571,30 @@ the emulator (request → match → accept → status stepper → propose price
    hook, the device click-test pass) all genuinely need T0 (real device
    push credentials) to build/verify, unlike T4. Come back to T0 once/if
    the Apple ID gets enrolled in the paid Program, then pick up T5–T7.
+4. **In progress (2026-08-30)** — a live design-fidelity pass against a
+   fresh Claude Design hand-off, going screen by screen: customer Home
+   (done, confirmed live on both iPhone and Android emulator — see
+   "What's actually built") → customer `RequestSubmissionScreen` Ticket 1
+   (implemented, **awaiting a live screenshot to confirm** before Ticket 2
+   starts) → Ticket 2 (Searching + Matched screens — not started yet;
+   scoped to compare against the hi-fi and report differences first, then
+   apply the same heading-weight/spacing/button-gradient standards
+   established in Ticket 1). Resume by getting that Ticket 1 screenshot.
+
+**Dev environment was fully stopped at the end of the 2026-08-30
+session** (both Metro/Expo dev servers, the iOS Simulator, the Android
+emulator, and the whole `docker compose` stack) — nothing is running.
+To resume: `docker compose up -d` from the repo root, then `npx expo
+start --dev-client -c` in each of `apps/worker`/`apps/customer` (or just
+reopen the already-installed dev-client app on a booted
+Simulator/`Prizm_Test_Emulator`/physical phone once Metro's back up).
 
 ## Known loose ends / things to revisit
 
 - JWT 30-min expiry / no mid-session refresh — see Environment gotchas.
-- Customer Home's search bar is decorative (`editable={false}`) — no
-  search endpoint exists yet.
+- **Fixed 2026-08-30**: Customer Home's search bar is now a real live
+  client-side filter (see "What's actually built" above) — no longer
+  decorative, this line is now stale/historical.
 - A user reported onboarding's profile-photo step (`packages/auth-flow/
   src/screens/ProfileScreen.tsx`) not persisting a photo at all — traced
   the code and it's identical in structure to the Profile-tab photo-edit
