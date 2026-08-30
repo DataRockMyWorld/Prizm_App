@@ -17,6 +17,7 @@ import { JobCompleteScreen } from "../screens/JobCompleteScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { JobPreviewScreen } from "../screens/JobPreviewScreen";
 import { ProposePriceScreen } from "../screens/ProposePriceScreen";
+import { ReportChatScreen } from "../screens/ReportChatScreen";
 import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
 import { TermsLiabilityScreen } from "../screens/TermsLiabilityScreen";
 import { WaitingForConfirmationScreen } from "../screens/WaitingForConfirmationScreen";
@@ -104,6 +105,7 @@ export function RootNavigator() {
         <Stack.Screen name="JobDetail" component={JobDetailScreen} />
         <Stack.Screen name="JobPreview" component={JobPreviewScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
+        <Stack.Screen name="ReportChat" component={ReportChatScreen} />
         <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
         <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
         <Stack.Screen name="SafetyTips" component={SafetyTipsScreen} />

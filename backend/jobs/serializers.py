@@ -187,6 +187,10 @@ class WorkerCancelSerializer(serializers.Serializer):
 class ReportCreateSerializer(serializers.Serializer):
     category = serializers.ChoiceField(choices=Report.Category.choices)
     details = serializers.CharField(required=False, allow_blank=True, default="")
+    # Set to report one specific chat message rather than the other party
+    # generally — scoping to the job it belongs to is enforced by the view,
+    # not here (see ReportJobView.post).
+    message_id = serializers.IntegerField(required=False, allow_null=True)
 
 
 class RatingCreateSerializer(serializers.Serializer):

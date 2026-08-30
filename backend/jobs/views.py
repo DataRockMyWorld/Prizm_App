@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.models import User, WorkerProfile
+from accounts.models import Block, User, WorkerProfile
 from notifications.tasks import send_push_notification
 
 from .matching import MATCHING_RADIUS_KM, refresh_job_matching, rematch_nearby_jobs_for_worker, try_match
@@ -264,10 +264,47 @@ class ReportJobView(APIView):
 
         serializer = ReportCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        message_id = data.pop("message_id", None)
+        message = None
+        if message_id is not None:
+            # Scoped to this job — a message_id belonging to a different
+            # job is treated as not-found here, matching this file's
+            # existing get_object_or_404 idiom for job-scoped lookups.
+            message = get_object_or_404(Message, pk=message_id, job=job)
         report = Report.objects.create(
-            job=job, reporter=request.user, **serializer.validated_data
+            job=job, reporter=request.user, message=message, **data
         )
         return Response({"id": report.id, "status": report.status}, status=201)
+
+
+class BlockCounterpartView(APIView):
+    """Blocks the other party of `job`, account-wide, once the job is
+    terminal (see docs/prds/chat-safety.md §7). Target is always derived
+    from the job, never client-supplied — no way to block a user id you
+    don't share a terminal job with."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        job = get_object_or_404(JobRequest, pk=pk)
+        if request.user.id not in (job.customer_id, job.worker_id):
+            return Response({"detail": "Not your job."}, status=403)
+        if job.status not in JobRequest.TERMINAL_STATUSES:
+            return Response({"detail": "This job is still active."}, status=400)
+
+        other_party = job.worker if request.user.id == job.customer_id else job.customer
+        if other_party is None:
+            # A customer-cancelled job from before any worker was ever
+            # assigned (e.g. cancelled while still SEARCHING) — nothing to
+            # block. Not reachable via the chat UI, which requires
+            # job.worker to exist, but guarded here since this endpoint is
+            # a plain job-scoped POST.
+            return Response({"detail": "This job has no other party to block."}, status=400)
+        Block.objects.get_or_create(
+            blocker=request.user, blocked=other_party, defaults={"job": job}
+        )
+        return Response(status=201)
 
 
 class MessageListCreateView(APIView):

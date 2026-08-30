@@ -199,6 +199,36 @@ class Certification(models.Model):
         return f"{self.worker} — {self.category} ({self.status})"
 
 
+class Block(models.Model):
+    """An account-wide, persistent block between two users, created from a
+    job's chat once that job is terminal (see jobs.views.BlockCounterpartView
+    and docs/prds/chat-safety.md). Lives here rather than in the jobs app
+    because it's fundamentally a User<->User relationship the matching
+    engine (jobs.matching) needs to consult independent of any one job.
+
+    Only one row is ever created per pair, regardless of who initiated the
+    block — jobs.matching checks both directions (blocker and blocked) when
+    excluding candidates, so the block is effectively bidirectional for
+    matching purposes without needing a second row.
+    """
+
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocks_made")
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocks_received")
+    # Audit pointer only — which job's chat triggered this block. Never read
+    # by matching logic. SET_NULL so a JobRequest deletion can never be
+    # blocked by an old Block row referencing it.
+    job = models.ForeignKey(
+        "jobs.JobRequest", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("blocker", "blocked")
+
+    def __str__(self):
+        return f"Block({self.blocker_id} -> {self.blocked_id})"
+
+
 class Address(models.Model):
     """A customer's saved address (e.g. "Home", "Work"), freeform and reusable.
 

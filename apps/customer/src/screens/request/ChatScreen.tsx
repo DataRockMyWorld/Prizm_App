@@ -1,8 +1,8 @@
-import { getJob, JobRequest, sendMessage, useAuth } from "@prizm/api";
+import { blockCounterpart, getJob, JobRequest, sendMessage, useAuth } from "@prizm/api";
 import { Avatar, Button, colors, radii, Screen, spacing, TextField, ThemedText } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { useMessagePolling } from "../../request/useMessagePolling";
 import type { RequestStackParamList } from "../../navigation/types";
@@ -67,6 +67,35 @@ export function ChatScreen({ navigation, route }: Props) {
 
   const myUserId = job.customer?.id;
   const isClosed = TERMINAL_STATUSES.has(job.status);
+  const workerName = job.worker?.full_name || "this worker";
+
+  const handleBlock = async () => {
+    if (!accessToken) return;
+    try {
+      await blockCounterpart(accessToken, jobId);
+      Alert.alert("Blocked", "They won't be matched to your requests again.");
+    } catch {
+      Alert.alert("Couldn't block", "Please try again.");
+    }
+  };
+
+  const confirmBlock = () => {
+    Alert.alert(`Block ${workerName}?`, "They won't be matched to your requests again.", [
+      { text: "Block", style: "destructive", onPress: handleBlock },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  const handleOpenMenu = () => {
+    const buttons: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [
+      { text: "Report user", onPress: () => navigation.navigate("ReportChat", { jobId }) },
+    ];
+    if (isClosed) {
+      buttons.push({ text: "Block user", style: "destructive", onPress: confirmBlock });
+    }
+    buttons.push({ text: "Cancel", style: "cancel" });
+    Alert.alert("Chat options", undefined, buttons);
+  };
 
   return (
     <Screen>
@@ -78,6 +107,9 @@ export function ChatScreen({ navigation, route }: Props) {
         <ThemedText variant="subtitle" style={styles.headerName}>
           {job.worker?.full_name || "Your worker"}
         </ThemedText>
+        <Pressable onPress={handleOpenMenu} hitSlop={12} accessibilityLabel="Chat options">
+          <ThemedText variant="title">⋮</ThemedText>
+        </Pressable>
       </View>
 
       <ScrollView
@@ -93,8 +125,15 @@ export function ChatScreen({ navigation, route }: Props) {
         {messages.map((message) => {
           const isMine = message.sender.id === myUserId;
           return (
-            <View
+            <Pressable
               key={message.id}
+              onLongPress={() =>
+                navigation.navigate("ReportChat", {
+                  jobId,
+                  messageId: message.id,
+                  messageText: message.text,
+                })
+              }
               style={[styles.bubbleRow, isMine ? styles.bubbleRowMine : styles.bubbleRowTheirs]}
             >
               <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
@@ -102,7 +141,7 @@ export function ChatScreen({ navigation, route }: Props) {
                   {message.text}
                 </ThemedText>
               </View>
-            </View>
+            </Pressable>
           );
         })}
       </ScrollView>

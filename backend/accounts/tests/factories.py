@@ -2,7 +2,7 @@ import factory
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point
 
-from accounts.models import Address, CustomerProfile, WorkerProfile
+from accounts.models import Address, Block, CustomerProfile, WorkerProfile
 
 User = get_user_model()
 
@@ -46,3 +46,11 @@ class AddressFactory(factory.django.DjangoModelFactory):
     label = factory.Sequence(lambda n: f"Address {n}")
     address_text = "14 Independence Ave, Windhoek"
     location = Point(17.0836, -22.5609, srid=4326)
+
+
+class BlockFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Block
+
+    blocker = factory.SubFactory(UserFactory)
+    blocked = factory.SubFactory(UserFactory)

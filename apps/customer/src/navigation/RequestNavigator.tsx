@@ -17,6 +17,7 @@ import { JobStatusScreen } from "../screens/request/JobStatusScreen";
 import { MatchedScreen } from "../screens/request/MatchedScreen";
 import { PriceAgreementScreen } from "../screens/request/PriceAgreementScreen";
 import { RatingScreen } from "../screens/request/RatingScreen";
+import { ReportChatScreen } from "../screens/request/ReportChatScreen";
 import { ReportProblemScreen } from "../screens/request/ReportProblemScreen";
 import { RequestSubmissionScreen } from "../screens/request/RequestSubmissionScreen";
 import { SearchingScreen } from "../screens/request/SearchingScreen";
@@ -43,6 +44,11 @@ export function RequestNavigator() {
       <Stack.Screen
         name="ReportProblem"
         component={ReportProblemScreen}
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="ReportChat"
+        component={ReportChatScreen}
         options={{ presentation: "modal" }}
       />
       <Stack.Screen name="PriceAgreement" component={PriceAgreementScreen} />

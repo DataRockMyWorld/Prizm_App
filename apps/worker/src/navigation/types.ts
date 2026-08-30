@@ -41,6 +41,10 @@ export type WorkerRootStackParamList = {
   JobComplete: { jobId: number };
   JobDetail: { jobId: number };
   Chat: { jobId: number };
+  /** messageId + messageText set only when reporting one specific chat
+   * message (long-press) — omitted for the header menu's general "Report
+   * user" (see docs/prds/chat-safety.md §6a/§6b). */
+  ReportChat: { jobId: number; messageId?: number; messageText?: string };
   ComingSoon: { title: string };
   HelpSupport: undefined;
   SafetyTips: undefined;

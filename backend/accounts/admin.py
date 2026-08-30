@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import Certification, CustomerProfile, PhoneOTP, User, WorkerProfile
+from .models import Block, Certification, CustomerProfile, PhoneOTP, User, WorkerProfile
 
 
 def _document_link(file_field):
@@ -201,6 +201,12 @@ class CertificationAdmin(admin.ModelAdmin):
             obj.reviewed_at = timezone.now()
             obj.reviewed_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Block)
+class BlockAdmin(admin.ModelAdmin):
+    list_display = ("blocker", "blocked", "job", "created_at")
+    search_fields = ("blocker__phone_number", "blocked__phone_number")
 
 
 @admin.register(PhoneOTP)

@@ -1,8 +1,8 @@
-import { getJob, JobRequest, sendMessage, useAuth } from "@prizm/api";
+import { blockCounterpart, getJob, JobRequest, sendMessage, useAuth } from "@prizm/api";
 import { Avatar, Button, colors, radii, Screen, spacing, TextField, ThemedText } from "@prizm/ui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { useMessagePolling } from "../chat/useMessagePolling";
 
@@ -66,6 +66,37 @@ export function ChatScreen() {
 
   const myUserId = job.worker?.id;
   const isClosed = TERMINAL_STATUSES.has(job.status);
+  const customerName = job.customer?.full_name || "this customer";
+
+  const handleBlock = () => {
+    Alert.alert(`Block ${customerName}?`, "You won't be offered jobs with them again.", [
+      {
+        text: "Block",
+        style: "destructive",
+        onPress: async () => {
+          if (!accessToken) return;
+          try {
+            await blockCounterpart(accessToken, jobId);
+            Alert.alert("Blocked", "You won't be offered jobs with them again.");
+          } catch {
+            Alert.alert("Couldn't block", "Please try again.");
+          }
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  const handleOpenMenu = () => {
+    const buttons: Array<{ text: string; style?: "default" | "cancel" | "destructive"; onPress?: () => void }> = [
+      { text: "Report user", onPress: () => navigation.navigate("ReportChat", { jobId }) },
+    ];
+    if (isClosed) {
+      buttons.push({ text: "Block user", style: "destructive", onPress: handleBlock });
+    }
+    buttons.push({ text: "Cancel", style: "cancel" });
+    Alert.alert("Chat options", undefined, buttons);
+  };
 
   return (
     <Screen>
@@ -77,6 +108,9 @@ export function ChatScreen() {
         <ThemedText variant="subtitle" style={styles.headerName}>
           {job.customer?.full_name || "Customer"}
         </ThemedText>
+        <Pressable onPress={handleOpenMenu} hitSlop={12}>
+          <ThemedText variant="title">⋮</ThemedText>
+        </Pressable>
       </View>
 
       <ScrollView
@@ -92,8 +126,15 @@ export function ChatScreen() {
         {messages.map((message) => {
           const isMine = message.sender.id === myUserId;
           return (
-            <View
+            <Pressable
               key={message.id}
+              onLongPress={() =>
+                navigation.navigate("ReportChat", {
+                  jobId,
+                  messageId: message.id,
+                  messageText: message.text,
+                })
+              }
               style={[styles.bubbleRow, isMine ? styles.bubbleRowMine : styles.bubbleRowTheirs]}
             >
               <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
@@ -101,7 +142,7 @@ export function ChatScreen() {
                   {message.text}
                 </ThemedText>
               </View>
-            </View>
+            </Pressable>
           );
         })}
       </ScrollView>

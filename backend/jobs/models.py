@@ -121,6 +121,14 @@ class Report(models.Model):
         SAFETY_CONCERN = "safety_concern", "Safety concern"
         QUALITY_OF_WORK = "quality_of_work", "Quality of work"
         PRICING_DISAGREEMENT = "pricing_disagreement", "Pricing disagreement"
+        # Chat-safety categories (docs/prds/chat-safety.md) — same enum as
+        # the job-outcome categories above; ReportAdmin's existing
+        # list_filter on category already separates the two "kinds" in the
+        # review queue, so no separate source/kind field was added.
+        HARASSMENT = "harassment", "Harassment or abusive language"
+        INAPPROPRIATE_CONTENT = "inappropriate_content", "Inappropriate content"
+        SPAM = "spam", "Spam or scam"
+        OTHER = "other", "Other"
 
     class Status(models.TextChoices):
         OPEN = "open", "Open"
@@ -132,6 +140,12 @@ class Report(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="reports_filed",
+    )
+    # Set only when reporting one specific chat message rather than the
+    # other party generally — null for every job-outcome report and for a
+    # general "report this user" chat report.
+    message = models.ForeignKey(
+        Message, on_delete=models.CASCADE, null=True, blank=True, related_name="reports"
     )
     category = models.CharField(max_length=30, choices=Category.choices)
     details = models.TextField(blank=True)

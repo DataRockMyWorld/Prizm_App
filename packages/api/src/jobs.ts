@@ -171,14 +171,38 @@ export function disputePrice(token: string, jobId: number, details?: string) {
   });
 }
 
-export type ReportCategory = "no_show" | "safety_concern" | "quality_of_work" | "pricing_disagreement";
+export type ReportCategory =
+  | "no_show"
+  | "safety_concern"
+  | "quality_of_work"
+  | "pricing_disagreement"
+  | "harassment"
+  | "inappropriate_content"
+  | "spam"
+  | "other";
 
-export function reportJob(token: string, jobId: number, category: ReportCategory, details?: string) {
+/** `messageId` scopes the report to one specific chat message rather than
+ * the other party generally — omit it for a general report (see
+ * docs/prds/chat-safety.md). Backend scopes/validates it against `jobId`. */
+export function reportJob(
+  token: string,
+  jobId: number,
+  category: ReportCategory,
+  details?: string,
+  messageId?: number
+) {
   return apiRequest<{ id: number; status: string }>(`/api/jobs/${jobId}/report/`, {
     method: "POST",
     token,
-    body: { category, details: details || "" },
+    body: { category, details: details || "", message_id: messageId },
   });
+}
+
+/** Blocks the other party of `jobId`, account-wide — only succeeds once
+ * that job is terminal (completed/cancelled/disputed); see
+ * docs/prds/chat-safety.md. */
+export function blockCounterpart(token: string, jobId: number) {
+  return apiRequest<void>(`/api/jobs/${jobId}/block/`, { method: "POST", token });
 }
 
 export function rateJob(token: string, jobId: number, stars: number, comment?: string) {

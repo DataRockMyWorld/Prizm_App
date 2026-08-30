@@ -13,7 +13,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.utils import timezone
 
-from accounts.models import Certification, User
+from accounts.models import Block, Certification, User
 from notifications.tasks import send_push_notification
 
 from .models import JobOffer, JobRequest
@@ -24,6 +24,14 @@ MATCHING_RADIUS_KM = 25
 
 def _best_candidate(job):
     already_offered = job.offers.values_list("worker_id", flat=True)
+    # Checking both directions is what makes a single Block row
+    # bidirectional for matching purposes — whichever side initiated it,
+    # neither is offered the other again (see accounts.models.Block).
+    blocked_worker_ids = set(
+        Block.objects.filter(blocker=job.customer).values_list("blocked_id", flat=True)
+    ) | set(
+        Block.objects.filter(blocked=job.customer).values_list("blocker_id", flat=True)
+    )
     candidates = list(
         User.objects.filter(
             role=User.Role.WORKER,
@@ -32,6 +40,7 @@ def _best_candidate(job):
             worker_profile__last_location__isnull=False,
         )
         .exclude(id__in=list(already_offered))
+        .exclude(id__in=blocked_worker_ids)
         .annotate(distance=Distance("worker_profile__last_location", job.location))
         .filter(distance__lte=D(km=MATCHING_RADIUS_KM))
         .select_related("worker_profile")

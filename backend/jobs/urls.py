@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     AcceptOfferView,
     ArrivedView,
+    BlockCounterpartView,
     CompleteJobView,
     ConfirmPriceView,
     DeclineOfferView,
@@ -37,5 +38,6 @@ urlpatterns = [
     path("<int:pk>/dispute-price/", DisputePriceView.as_view(), name="job-dispute-price"),
     path("<int:pk>/rate/", RateJobView.as_view(), name="job-rate"),
     path("<int:pk>/report/", ReportJobView.as_view(), name="job-report"),
+    path("<int:pk>/block/", BlockCounterpartView.as_view(), name="job-block"),
     path("<int:pk>/messages/", MessageListCreateView.as_view(), name="job-messages"),
 ]
