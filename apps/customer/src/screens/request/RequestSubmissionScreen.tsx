@@ -4,7 +4,15 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+
+// A tiny (16x16) seamless diagonal-hatch tile, tiled via Image's
+// resizeMode="repeat" — stands in for the map behind the location pin
+// (approved hi-fi) without pulling in a mapping SDK or react-native-svg
+// (neither is a dependency of this app) for what's explicitly a
+// placeholder, not a real map.
+const HATCH_PATTERN_URI =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAY0lEQVR4nKXOuw3AMAhFUYep0rnNVCk8VVp3b6yIFJEs/4BHAdW5IiViUJ8iuqJY78FgHWHwma9bGOz6AANsDmCCTQEs8DaADV4GYMDTAIx4GIADdwE4cROI4D8QxV+AwVp4AbZ8PyrX/2YzAAAAAElFTkSuQmCC";
 
 import type { RequestStackParamList } from "../../navigation/types";
 import { applySavedAddress } from "../../request/applySavedAddress";
@@ -117,7 +125,9 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
           <ThemedText variant="title">‹</ThemedText>
         </Pressable>
-        <ThemedText variant="subtitle">Request a service</ThemedText>
+        <ThemedText variant="subtitle" style={styles.headingBold}>
+          Request a service
+        </ThemedText>
         <View style={{ width: 24 }} />
       </View>
 
@@ -140,97 +150,123 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
         </View>
       ) : (
         <>
-          <Card style={styles.categoryChip}>
-            <View style={styles.categoryIcon} />
-            <ThemedText variant="subtitle" style={styles.chipLabel}>
-              {category.name}
-            </ThemedText>
-            <Pressable onPress={() => setCategory(null)}>
-              <ThemedText variant="caption" style={styles.link}>
-                Change
+          {/* flex:1 + justifyContent:"space-evenly" — rather than fixed
+           * per-section margins — is what actually distributes these 5
+           * sections down the full screen instead of clustering near the
+           * top with a dead gap below Submit (confirmed live: that's
+           * exactly what the old fixed-margin layout produced). Submit
+           * itself sits outside this container, immediately below it, so
+           * it lands near the bottom as a natural consequence of this
+           * flex filling the available height — not via its own spacer. */}
+          <View style={styles.formBody}>
+            <Card style={styles.categoryChip}>
+              <View style={styles.categoryIcon} />
+              <ThemedText variant="subtitle" style={styles.chipLabel}>
+                {category.name}
               </ThemedText>
-            </Pressable>
-          </Card>
+              <Pressable onPress={() => setCategory(null)}>
+                <ThemedText variant="caption" style={styles.link}>
+                  Change
+                </ThemedText>
+              </Pressable>
+            </Card>
 
-          <ThemedText variant="caption" style={styles.label}>
-            What do you need done?
-          </ThemedText>
-          <TextField
-            placeholder="e.g. 2-bedroom flat, deep clean, kitchen and bathroom focus"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            style={styles.descriptionField}
-          />
-
-          <ThemedText variant="caption" style={styles.label}>
-            Location
-          </ThemedText>
-          {savedAddresses.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.savedAddressRow}
-            >
-              {savedAddresses.map((saved) => (
-                <Pressable
-                  key={saved.id}
-                  onPress={() => selectSavedAddress(saved)}
-                  style={styles.savedAddressChip}
-                >
-                  <ThemedText variant="caption">{saved.label}</ThemedText>
-                </Pressable>
-              ))}
-            </ScrollView>
-          )}
-          {!coords && !locationError ? (
-            <ActivityIndicator color={colors.primary} style={styles.locationLoading} />
-          ) : (
-            <View style={styles.locationRow}>
-              {isEditingAddress ? (
-                <TextField
-                  placeholder="Enter your address"
-                  value={address}
-                  onChangeText={setAddress}
-                  style={styles.addressField}
-                  autoFocus
-                  onBlur={() => setIsEditingAddress(false)}
-                />
-              ) : (
-                <>
-                  <ThemedText variant="body" style={{ flex: 1 }}>
-                    {address || "Current location"}
-                  </ThemedText>
-                  <Pressable onPress={() => setIsEditingAddress(true)}>
-                    <ThemedText variant="caption" style={styles.link}>
-                      Edit
-                    </ThemedText>
-                  </Pressable>
-                </>
-              )}
+            <View>
+              <ThemedText variant="caption" style={styles.label}>
+                What do you need done?
+              </ThemedText>
+              <TextField
+                placeholder="e.g. 2-bedroom flat, deep clean, kitchen and bathroom focus"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                style={styles.descriptionField}
+              />
             </View>
-          )}
-          {locationError && <ThemedText variant="caption">{locationError}</ThemedText>}
 
-          <UploadTile
-            label="Add a photo (optional)"
-            uri={photoUri}
-            onPress={pickPhoto}
-            onRemove={() => setPhotoUri(undefined)}
-          />
+            <View>
+              <ThemedText variant="caption" style={styles.label}>
+                Location
+              </ThemedText>
+              {savedAddresses.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.savedAddressRow}
+                >
+                  {savedAddresses.map((saved) => (
+                    <Pressable
+                      key={saved.id}
+                      onPress={() => selectSavedAddress(saved)}
+                      style={styles.savedAddressChip}
+                    >
+                      <ThemedText variant="caption">{saved.label}</ThemedText>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )}
+              {/* Map/location placeholder (approved hi-fi) — a hatched
+               * tile background behind a centered pin, sitting between
+               * the Location label/quick-picks and the resolved address
+               * row below. Purely decorative (no map SDK), matching the
+               * hi-fi's own "placeholder" framing. */}
+              <View style={styles.mapPlaceholder}>
+                <Image
+                  source={{ uri: HATCH_PATTERN_URI }}
+                  resizeMode="repeat"
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.mapPin} />
+              </View>
+              {!coords && !locationError ? (
+                <ActivityIndicator color={colors.primary} style={styles.locationLoading} />
+              ) : (
+                <View style={styles.locationRow}>
+                  {isEditingAddress ? (
+                    <TextField
+                      placeholder="Enter your address"
+                      value={address}
+                      onChangeText={setAddress}
+                      style={styles.addressField}
+                      autoFocus
+                      onBlur={() => setIsEditingAddress(false)}
+                    />
+                  ) : (
+                    <>
+                      <ThemedText variant="body" style={{ flex: 1 }}>
+                        {address || "Current location"}
+                      </ThemedText>
+                      <Pressable onPress={() => setIsEditingAddress(true)}>
+                        <ThemedText variant="caption" style={styles.link}>
+                          Edit
+                        </ThemedText>
+                      </Pressable>
+                    </>
+                  )}
+                </View>
+              )}
+              {locationError && <ThemedText variant="caption">{locationError}</ThemedText>}
+            </View>
 
-          <Card style={styles.priceCard}>
-            <ThemedText variant="caption" style={styles.priceTitle}>
-              Typical price range
-            </ThemedText>
-            <ThemedText variant="caption">
-              Most {category.name} jobs: N${category.estimate_min}–{category.estimate_max} ·
-              estimate only, final price is agreed with your worker
-            </ThemedText>
-          </Card>
+            <UploadTile
+              label="Add a photo (optional)"
+              uri={photoUri}
+              onPress={pickPhoto}
+              onRemove={() => setPhotoUri(undefined)}
+            />
+
+            <Card style={styles.priceCard}>
+              <ThemedText variant="caption" style={styles.priceTitle}>
+                Typical price range
+              </ThemedText>
+              <ThemedText variant="caption">
+                Most {category.name} jobs: N${category.estimate_min}–{category.estimate_max} ·
+                estimate only, final price is agreed with your worker
+              </ThemedText>
+            </Card>
+          </View>
 
           {error && <ThemedText style={styles.error}>{error}</ThemedText>}
-          <View style={styles.spacer} />
           <Button
             label="Submit Request"
             onPress={handleSubmit}
@@ -251,6 +287,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: spacing.md,
     marginBottom: spacing.sm,
+  },
+  headingBold: {
+    fontFamily: fontFamily.bold,
+  },
+  // The 5 sections below (category chip, description, location, photo,
+  // price) are spaced by this flex container alone, not per-section
+  // margins — see the inline comment at its usage site.
+  formBody: {
+    flex: 1,
+    justifyContent: "space-evenly",
   },
   pickerList: {
     marginTop: spacing.sm,
@@ -278,7 +324,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm,
     backgroundColor: "#FDE3D5",
-    marginBottom: spacing.sm,
   },
   categoryIcon: {
     width: 22,
@@ -292,8 +337,9 @@ const styles = StyleSheet.create({
   link: {
     color: colors.primary,
   },
+  // No marginTop here — that's now formBody's space-evenly gap between
+  // sections; this stays tight (label hugging its own field/content).
   label: {
-    marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   descriptionField: {
@@ -315,6 +361,35 @@ const styles = StyleSheet.create({
   locationLoading: {
     marginVertical: spacing.sm,
   },
+  mapPlaceholder: {
+    height: 140,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+  },
+  // Single-view "map pin" (a common cross-platform CSS/RN trick): a
+  // square with 3 rounded corners and 1 sharp corner, rotated -45° so
+  // the sharp corner points straight down — a teardrop shape with no
+  // icon asset or SVG dependency needed.
+  mapPin: {
+    width: 28,
+    height: 28,
+    backgroundColor: colors.primary,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+    borderBottomRightRadius: 14,
+    borderBottomLeftRadius: 0,
+    transform: [{ rotate: "-45deg" }],
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -330,7 +405,6 @@ const styles = StyleSheet.create({
   },
   priceCard: {
     backgroundColor: colors.surfaceMuted,
-    marginTop: spacing.sm,
     gap: 2,
   },
   priceTitle: {
@@ -339,9 +413,6 @@ const styles = StyleSheet.create({
   error: {
     color: colors.danger,
     marginTop: spacing.sm,
-  },
-  spacer: {
-    height: spacing.md,
   },
   submitButton: {
     marginBottom: spacing.md,

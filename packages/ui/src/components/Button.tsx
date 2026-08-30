@@ -4,6 +4,7 @@ import {
   Pressable,
   StyleProp,
   StyleSheet,
+  View,
   ViewStyle,
 } from "react-native";
 
@@ -51,19 +52,24 @@ export function Button({
   );
 
   if (variant === "primary") {
+    // The warm shadow/glow has to live on a wrapper OUTSIDE the
+    // gradient's own Pressable, not on that Pressable itself — that inner
+    // one needs overflow:"hidden" to clip the gradient to the pill's
+    // rounded corners, and overflow:"hidden" silently clips away any
+    // shadow applied to the same view. `disabled` is applied here too
+    // (not just on the inner Pressable) so the glow dims along with the
+    // gradient instead of staying at full strength under a greyed-out
+    // button.
     return (
-      <Pressable
-        onPress={onPress}
-        disabled={isDisabled}
-        style={({ pressed }) => [
-          styles.pressableWrapper,
-          isDisabled && styles.disabled,
-          pressed && styles.pressed,
-          style,
-        ]}
-      >
-        <GradientBackground style={styles.base}>{content}</GradientBackground>
-      </Pressable>
+      <View style={[styles.shadowWrapper, isDisabled && styles.disabled, style]}>
+        <Pressable
+          onPress={onPress}
+          disabled={isDisabled}
+          style={({ pressed }) => [styles.pressableWrapper, pressed && styles.pressed]}
+        >
+          <GradientBackground style={styles.base}>{content}</GradientBackground>
+        </Pressable>
+      </View>
     );
   }
 
@@ -88,6 +94,20 @@ export function Button({
 }
 
 const styles = StyleSheet.create({
+  // Warm-tinted glow beneath the primary CTA (approved hi-fi) —
+  // shadowColor uses the brand orange, not black, for a "glow" rather
+  // than a generic drop shadow. Android's `elevation` can't be tinted
+  // the same way pre-API-28, so Android gets a plain grey shadow at this
+  // elevation — an accepted platform gap, not something worth a bespoke
+  // colored-shadow workaround for.
+  shadowWrapper: {
+    borderRadius: radii.pill,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
   pressableWrapper: {
     borderRadius: radii.pill,
     overflow: "hidden",
