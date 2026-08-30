@@ -17,12 +17,25 @@ import { Dimensions, Image, Pressable, StyleSheet, View } from "react-native";
 
 import { SERVICE_IMAGES } from "../serviceImages";
 
+// 4-across compact circular thumbnail row (approved hi-fi, "Tiles ·
+// Option 3") — replaces the earlier 2-column rectangular image cards.
 // `aspectRatio` combined with a percentage `flexBasis` collapses tiles to
-// zero size on this RN/Yoga version (verified live on device) — compute
-// explicit pixel sizes instead of relying on that combination.
-const GRID_GAP = spacing.md;
-const CARD_WIDTH = (Dimensions.get("window").width - spacing.md * 2 - GRID_GAP) / 2;
-const CARD_IMAGE_HEIGHT = Math.round(CARD_WIDTH * 0.75); // matches the 4:3 source photos
+// zero size on this RN/Yoga version (verified live on device), so this
+// computes explicit pixel sizes instead — subtracting both the Screen's
+// own horizontal padding AND browseSection's padding, since the grid is
+// nested inside that tinted container, not directly against the screen
+// edge.
+const THUMBNAIL_COLUMNS = 4;
+const THUMBNAIL_GAP = spacing.sm;
+// Math.floor, not Math.round — rounding up here can overflow the row's
+// available width by a pixel or two (4 items + 3 gaps), which is enough
+// for RN's flexbox to wrap the 4th item to a second row instead of
+// fitting all 4 across (confirmed live: Plumbing was dropping to its own
+// row). Flooring guarantees the row always fits with room to spare.
+const THUMBNAIL_SIZE = Math.floor(
+  (Dimensions.get("window").width - spacing.md * 4 - THUMBNAIL_GAP * (THUMBNAIL_COLUMNS - 1)) /
+    THUMBNAIL_COLUMNS
+);
 
 export function HomeScreen() {
   const { accessToken, profile } = useAuth();
@@ -58,37 +71,37 @@ export function HomeScreen() {
 
       <TextField placeholder="Search for a service..." editable={false} style={styles.search} />
 
-      <View style={styles.divider} />
+      <View style={styles.browseSection}>
+        <View style={styles.sectionHeader}>
+          <ThemedText variant="caption" style={styles.sectionLabel}>
+            BROWSE SERVICES
+          </ThemedText>
+          <ThemedText variant="caption" style={styles.seeAll}>
+            See all
+          </ThemedText>
+        </View>
 
-      <View style={styles.sectionHeader}>
-        <ThemedText variant="caption" style={styles.sectionLabel}>
-          BROWSE SERVICES
-        </ThemedText>
-        <ThemedText variant="caption" style={styles.seeAll}>
-          See all
-        </ThemedText>
-      </View>
-
-      <View style={styles.grid}>
-        {categories.map((category) => {
-          const image = SERVICE_IMAGES[category.slug];
-          return (
-            <Pressable
-              key={category.id}
-              style={styles.card}
-              onPress={() => navigation.navigate("RequestSubmission", { categoryId: category.id })}
-            >
-              {image ? (
-                <Image source={image} style={styles.cardImage} resizeMode="cover" />
-              ) : (
-                <View style={[styles.cardImage, styles.cardImageFallback]} />
-              )}
-              <View style={styles.cardBody}>
-                <ThemedText style={styles.cardLabel}>{category.name}</ThemedText>
-              </View>
-            </Pressable>
-          );
-        })}
+        <View style={styles.grid}>
+          {categories.map((category) => {
+            const image = SERVICE_IMAGES[category.slug];
+            return (
+              <Pressable
+                key={category.id}
+                style={styles.thumbnailItem}
+                onPress={() => navigation.navigate("RequestSubmission", { categoryId: category.id })}
+              >
+                {image ? (
+                  <Image source={image} style={styles.thumbnailImage} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.thumbnailImage, styles.thumbnailFallback]} />
+                )}
+                <ThemedText style={styles.thumbnailLabel} numberOfLines={2}>
+                  {category.name}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <View style={styles.spacer} />
@@ -128,20 +141,23 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   subtitle: {
-    marginTop: -spacing.xs,
-    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
   },
   search: {},
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
-    marginTop: spacing.md,
+  // Gives the Browse Services section its own visually distinct band
+  // (subtle tint, not a hard divider line) — separates it from the
+  // greeting/search section above and whatever sits below (see hi-fi).
+  browseSection: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginTop: spacing.lg,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   sectionLabel: {
@@ -155,36 +171,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
-    gap: GRID_GAP,
+    gap: THUMBNAIL_GAP,
   },
-  card: {
-    width: CARD_WIDTH,
-    borderRadius: radii.md,
-    overflow: "hidden",
-    backgroundColor: colors.surface,
+  thumbnailItem: {
+    width: THUMBNAIL_SIZE,
+    alignItems: "center",
+  },
+  thumbnailImage: {
+    width: THUMBNAIL_SIZE,
+    height: THUMBNAIL_SIZE,
+    borderRadius: THUMBNAIL_SIZE / 2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
   },
-  cardImage: {
-    width: CARD_WIDTH,
-    height: CARD_IMAGE_HEIGHT,
-  },
-  cardImageFallback: {
+  thumbnailFallback: {
     backgroundColor: "#FDE3D5",
   },
-  cardBody: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  cardLabel: {
+  thumbnailLabel: {
+    marginTop: spacing.xs,
     fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     color: colors.textPrimary,
+    textAlign: "center",
   },
   spacer: {
     flex: 1,
