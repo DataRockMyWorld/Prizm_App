@@ -13,8 +13,9 @@ import {
 } from "@prizm/ui";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { Dimensions, Image, Pressable, StyleSheet, View } from "react-native";
+import { Dimensions, Image, Keyboard, Pressable, StyleSheet, View } from "react-native";
 
+import { filterCategoriesByQuery } from "../home/filterCategories";
 import { SERVICE_IMAGES } from "../serviceImages";
 
 // 4-across compact circular thumbnail row (approved hi-fi, "Tiles ·
@@ -41,6 +42,7 @@ export function HomeScreen() {
   const { accessToken, profile } = useAuth();
   const navigation = useNavigation<any>();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!accessToken) return;
@@ -50,72 +52,100 @@ export function HomeScreen() {
   }, [accessToken]);
 
   const firstName = profile?.full_name?.split(" ")[0] || "there";
+  const visibleCategories = filterCategoriesByQuery(categories, searchQuery);
 
   return (
     <Screen>
-      <BrandHeader
-        rightAccessory={
-          <View style={styles.avatarWrap}>
-            <View style={styles.avatarPlaceholder} />
-            <View style={styles.notificationDot} />
+      {/* Tapping anywhere outside the search field dismisses the keyboard
+       * — otherwise nothing on this non-scrolling screen ever blurs the
+       * TextField once it's focused (confirmed live: the cursor stayed
+       * put with no way to leave it). A nested Pressable (thumbnails, the
+       * Request a Service button) still gets its own tap first — RN's
+       * responder system resolves to the innermost touchable, so this
+       * outer one only fires on genuinely "empty" taps. */}
+      <Pressable style={styles.body} onPress={Keyboard.dismiss}>
+        <BrandHeader
+          rightAccessory={
+            <View style={styles.avatarWrap}>
+              <View style={styles.avatarPlaceholder} />
+              <View style={styles.notificationDot} />
+            </View>
+          }
+        />
+
+        <ThemedText variant="title" style={styles.greeting}>
+          Hello, {firstName} 👋
+        </ThemedText>
+        <ThemedText variant="caption" style={styles.subtitle}>
+          What service do you need today?
+        </ThemedText>
+
+        <TextField
+          placeholder="Search for a service..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+          onSubmitEditing={Keyboard.dismiss}
+          style={styles.search}
+        />
+
+        <View style={styles.browseSection}>
+          <View style={styles.sectionHeader}>
+            <ThemedText variant="caption" style={styles.sectionLabel}>
+              BROWSE SERVICES
+            </ThemedText>
+            <ThemedText variant="caption" style={styles.seeAll}>
+              See all
+            </ThemedText>
           </View>
-        }
-      />
 
-      <ThemedText variant="title" style={styles.greeting}>
-        Hello, {firstName} 👋
-      </ThemedText>
-      <ThemedText variant="caption" style={styles.subtitle}>
-        What service do you need today?
-      </ThemedText>
-
-      <TextField placeholder="Search for a service..." editable={false} style={styles.search} />
-
-      <View style={styles.browseSection}>
-        <View style={styles.sectionHeader}>
-          <ThemedText variant="caption" style={styles.sectionLabel}>
-            BROWSE SERVICES
-          </ThemedText>
-          <ThemedText variant="caption" style={styles.seeAll}>
-            See all
-          </ThemedText>
+          {searchQuery.trim() && visibleCategories.length === 0 ? (
+            <ThemedText variant="caption" style={styles.noResults}>
+              No services match "{searchQuery.trim()}"
+            </ThemedText>
+          ) : (
+            <View style={styles.grid}>
+              {visibleCategories.map((category) => {
+                const image = SERVICE_IMAGES[category.slug];
+                return (
+                  <Pressable
+                    key={category.id}
+                    style={styles.thumbnailItem}
+                    onPress={() => navigation.navigate("RequestSubmission", { categoryId: category.id })}
+                  >
+                    {image ? (
+                      <Image source={image} style={styles.thumbnailImage} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.thumbnailImage, styles.thumbnailFallback]} />
+                    )}
+                    <ThemedText style={styles.thumbnailLabel} numberOfLines={2}>
+                      {category.name}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
         </View>
 
-        <View style={styles.grid}>
-          {categories.map((category) => {
-            const image = SERVICE_IMAGES[category.slug];
-            return (
-              <Pressable
-                key={category.id}
-                style={styles.thumbnailItem}
-                onPress={() => navigation.navigate("RequestSubmission", { categoryId: category.id })}
-              >
-                {image ? (
-                  <Image source={image} style={styles.thumbnailImage} resizeMode="cover" />
-                ) : (
-                  <View style={[styles.thumbnailImage, styles.thumbnailFallback]} />
-                )}
-                <ThemedText style={styles.thumbnailLabel} numberOfLines={2}>
-                  {category.name}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+        <View style={styles.spacer} />
 
-      <View style={styles.spacer} />
-
-      <Button
-        label="Request a Service"
-        onPress={() => navigation.navigate("RequestSubmission", {})}
-        style={styles.requestButton}
-      />
+        <Button
+          label="Request a Service"
+          onPress={() => navigation.navigate("RequestSubmission", {})}
+          style={styles.requestButton}
+        />
+      </Pressable>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  body: {
+    flex: 1,
+  },
   avatarWrap: {
     width: 26,
     height: 26,
@@ -166,6 +196,10 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     color: colors.primary,
+  },
+  noResults: {
+    paddingVertical: spacing.md,
+    textAlign: "center",
   },
   grid: {
     flexDirection: "row",
