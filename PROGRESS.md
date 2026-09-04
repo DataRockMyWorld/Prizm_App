@@ -608,6 +608,15 @@ the emulator (request → match → accept → status stepper → propose price
 
 ## Environment gotchas (read before resuming)
 
+- **Development happens from Ghana, not Namibia** — the pilot's real
+  target market is still Namibia only (per CLAUDE.md; this hasn't
+  changed), but the developer is physically in Ghana. Anything that
+  depends on real device GPS will naturally produce Ghana coordinates,
+  not Namibia ones — this already caused one real bug (see the
+  android-bugfixes ticket's T1 follow-up) where manual-address geocoding
+  had no country-scoping and silently matched a wrong-country place. If
+  a similar "assume Namibia" assumption ever breaks local testing again,
+  check for this same mismatch before assuming it's a code bug.
 - **Node isn't on the system PATH** — installed via `nvm`. Fresh terminal:
   `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh"` if `node -v` fails.
 - **Backend**: `docker compose up -d` from the repo root. Check
@@ -792,7 +801,25 @@ the emulator (request → match → accept → status stepper → propose price
    the error state and a working Retry) — that repro surfaced and fixed
    one more small gap, a Retry button with no loading feedback while
    still failing. See the ticket file's own implementation notes for
-   detail. Customer suite 54/54.
+   detail.
+
+   **Live-testing T1 surfaced a second, worse bug**: `Location.
+   geocodeAsync` has no country-scoping, so a short/ambiguous address
+   ("Ho Ahoe") silently resolved to a real place in Ghana instead of
+   failing — the job would have sat in `searching` forever with zero
+   eligible workers and no error at all. Fixed with a region name/
+   bounding-box check in `geocodeAddress.ts` (`REGIONS` map, currently
+   Namibia + Ghana, selected via `EXPO_PUBLIC_GEOCODE_REGION`, defaulting
+   to Namibia) — added as an env var specifically because **this project
+   is being built and tested from Ghana, not Namibia**, so a hardcoded
+   Namibia-only bounds check would have broken the developer's own
+   ability to test manual-address entry at all. Confirmed live both
+   directions on a physical phone: Namibia-mode correctly rejects the
+   Ghana address that broke things originally; Ghana-mode resolves a real
+   Accra address to real coordinates and correctly matches a real nearby
+   test worker (a pre-existing test account with a genuine Ghana GPS
+   location — this project's dev/test data has apparently always been a
+   mix of Namibia- and Ghana-based accounts). Customer suite 57/57.
 6. **Not yet visually confirmed**: Jobs-tab pagination (both apps, see
    "What's actually built") works and is tested, but this project's test
    accounts only ever have 2–3 completed jobs, so infinite scroll has

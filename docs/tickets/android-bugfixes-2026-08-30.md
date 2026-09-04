@@ -31,6 +31,29 @@ lookup, empty-array result, thrown/rejected call, and blank input never
 even calling the geocoder. Customer suite 54/54 (was 50), typecheck
 clean.
 
+**Live-testing this surfaced a real second bug**, worse than the one
+this ticket set out to fix: `Location.geocodeAsync` has no country-
+scoping, so a short/ambiguous typed address ("Ho Ahoe") silently resolved
+to a real, unrelated place in Ghana instead of failing — the resulting
+job would have sat in `searching` forever with zero eligible workers (all
+real ones >25km away in Namibia) and no error, no explanation, which is
+arguably a worse outcome than the original stuck-Submit-button bug. Fixed
+by (1) appending the pilot region's name to the query to bias the match,
+and (2) rejecting any result that still lands outside that region's rough
+bounding box, treating it the same as "not found." The region itself is
+now a small named lookup (`REGIONS` in `geocodeAddress.ts`, currently
+Namibia + Ghana) selected via `EXPO_PUBLIC_GEOCODE_REGION`, defaulting to
+Namibia — added specifically because this project is being built and
+tested from Ghana, not Namibia, so a hardcoded Namibia-only bounds check
+would have silently broken the developer's own ability to test manual-
+address entry at all. 3 more tests added (7 total): the qualifier gets
+appended, doesn't duplicate if already present, and the exact live-found
+Ghana mismatch is now correctly rejected. Live-confirmed both directions
+on a physical device: with the region set to Namibia, a Ghana address
+("Ho Ahoe") is rejected; with it set to Ghana, a real Accra address
+resolved to real coordinates and correctly matched a real nearby test
+worker. Customer suite 57/57.
+
 
 
 **Problem:** `RequestSubmissionScreen.tsx` and `AddressFormScreen.tsx`
