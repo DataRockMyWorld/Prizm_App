@@ -54,6 +54,7 @@ export function ProfileHero({
       onSaveName={onSaveName}
       isUploadingPhoto={isUploadingPhoto}
       inverse={isWorker}
+      showEditBadge={isWorker}
     />
   );
 
@@ -114,11 +115,22 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     marginTop: spacing.sm,
   },
+  // Approved hi-fi gives this hero its own card-colored (white) block,
+  // distinct from the page background the StatCard etc. sit on below —
+  // a subtle bottom divider marks where one ends and the other begins.
+  // A small top margin keeps it off the status bar — flush against it
+  // reads as overlapping the clock/battery even though the safe-area
+  // inset is respected underneath (confirmed live: nothing actually
+  // overlaps, it's a hard color edge with zero breathing room).
   calmContainer: {
     width: "100%",
     alignItems: "center",
+    marginTop: spacing.sm,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   glowWrapper: {
     position: "absolute",

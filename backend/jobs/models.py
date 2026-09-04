@@ -62,6 +62,13 @@ class JobRequest(models.Model):
     )
     worker_note = models.TextField(blank=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    # Per-stage timestamps for the customer's live job-status timeline —
+    # accepted_at already existed; these three cover the rest of the
+    # granular stepper (on_my_way/arrived/in_progress) so each reached
+    # step can show when it actually happened, not just that it happened.
+    on_my_way_at = models.DateTimeField(null=True, blank=True)
+    arrived_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,5 +1,5 @@
 import { Address, deleteAddress, getCustomerProfileStats, listAddresses, listMyJobs, updateProfile, useAuth } from "@prizm/api";
-import { Card, fontFamily, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
+import { Button, Card, fontFamily, ProfileHero, Screen, SettingsRow, spacing, StatCard, ThemedText, colors } from "@prizm/ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
@@ -108,6 +108,7 @@ export function ProfileScreen() {
 
         <View style={styles.content}>
           <StatCard
+            style={styles.definedCard}
             items={[
               { value: String(requestsCompleted), label: "Requests completed" },
               { value: formatMemberSince(profile?.date_joined), label: "Member since" },
@@ -117,7 +118,7 @@ export function ProfileScreen() {
           <ThemedText variant="caption" style={styles.sectionLabel}>
             SAVED ADDRESSES
           </ThemedText>
-          <Card>
+          <Card style={[styles.definedCard, styles.addressesCard]}>
             {addresses.length === 0 && (
               <ThemedText variant="caption" style={styles.emptyText}>
                 No saved addresses yet.
@@ -139,21 +140,21 @@ export function ProfileScreen() {
                 </Pressable>
               </Pressable>
             ))}
-            <Pressable
-              onPress={() => navigation.navigate("AddressForm", {})}
-              style={styles.addAddressLink}
-              hitSlop={8}
-            >
-              <ThemedText variant="body" style={styles.addAddressText}>
-                + Add address
-              </ThemedText>
-            </Pressable>
           </Card>
+          <Pressable
+            onPress={() => navigation.navigate("AddressForm", {})}
+            style={styles.addAddressPill}
+            hitSlop={8}
+          >
+            <ThemedText variant="body" style={styles.addAddressText}>
+              + Add address
+            </ThemedText>
+          </Pressable>
 
           <ThemedText variant="caption" style={styles.sectionLabel}>
             ACCOUNT
           </ThemedText>
-          <Card>
+          <Card style={styles.definedCard}>
             <SettingsRow
               label="Payment method"
               onPress={() => navigation.navigate("ComingSoon", { title: "Payment method" })}
@@ -171,17 +172,14 @@ export function ProfileScreen() {
               onPress={() => navigation.navigate("TermsLiability")}
             />
           </Card>
-          <Card style={styles.logoutCard}>
-            <Pressable onPress={clearSession} style={styles.logoutRow}>
-              <ThemedText variant="subtitle" style={styles.logoutText}>
-                Log out
-              </ThemedText>
-            </Pressable>
-          </Card>
-          <Card style={styles.logoutCard}>
-            <Pressable onPress={handleDeleteAccountPress} style={styles.logoutRow}>
+          <Button label="Log out" variant="primary" onPress={clearSession} />
+          <Card style={[styles.definedCard, styles.deleteCard]}>
+            <Pressable onPress={handleDeleteAccountPress} style={styles.deleteRow}>
               <ThemedText variant="subtitle" style={styles.deleteText}>
                 Delete account
+              </ThemedText>
+              <ThemedText variant="caption" style={styles.deleteSubtitle}>
+                Permanently removes your profile and personal information
               </ThemedText>
             </Pressable>
           </Card>
@@ -199,22 +197,42 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   content: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     gap: spacing.md,
     // The calm hero has no hard-edged background to visually justify an
-    // overlap (unlike the worker variant's gradient) — just a small gap,
-    // not a negative margin, or the StatCard covers the subtitle text.
-    marginTop: spacing.sm,
+    // overlap (unlike the worker variant's gradient) — a real gap, not a
+    // negative margin, or the StatCard covers the subtitle text. Bumped
+    // from spacing.sm — that read as too tight against the hero below it.
+    marginTop: spacing.lg,
+  },
+  // Card's own default border/shadow (packages/ui/src/components/Card.tsx)
+  // is too close in tone to this screen's pageBackground to read as
+  // separation (border #ECE7E2 against page #F1ECE7 is barely
+  // distinguishable) — this screen-local override gives every card here a
+  // slightly darker, still-subtle border plus a bit more shadow, matching
+  // the approved hi-fi's visible-but-faint card definition. Deliberately
+  // not changed at the shared Card level — that would touch every card in
+  // both apps, well beyond this screen's scope.
+  definedCard: {
+    borderWidth: 1.5,
+    borderColor: "#D9CEC0",
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  addressesCard: {
+    padding: spacing.lg,
   },
   emptyText: {},
   addressRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: colors.textSecondary,
   },
   addressRowFirst: {
     marginTop: 0,
@@ -225,9 +243,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  addAddressLink: {
-    marginTop: spacing.md,
+  // "+ Add address" is its own dashed-pill element below the addresses
+  // card (approved hi-fi), not a plain text link inside it.
+  addAddressPill: {
+    paddingVertical: spacing.md,
     alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#D8D0C4",
   },
   addAddressText: {
     color: colors.primary,
@@ -237,18 +262,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontFamily: fontFamily.bold,
   },
-  logoutCard: {
+  deleteCard: {
     padding: 0,
     overflow: "hidden",
   },
-  logoutRow: {
-    paddingVertical: spacing.md,
+  deleteRow: {
+    paddingVertical: spacing.sm,
     alignItems: "center",
-  },
-  logoutText: {
-    color: colors.primary,
   },
   deleteText: {
     color: colors.danger,
+    fontFamily: fontFamily.bold,
+  },
+  deleteSubtitle: {
+    textAlign: "center",
+    marginTop: 2,
   },
 });

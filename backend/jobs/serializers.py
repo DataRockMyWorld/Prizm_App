@@ -19,14 +19,18 @@ class CategoryMiniSerializer(serializers.ModelSerializer):
 class WorkerPublicSerializer(serializers.ModelSerializer):
     verified = serializers.BooleanField(source="worker_profile.verified", read_only=True)
     rating_average = serializers.SerializerMethodField()
+    jobs_completed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "full_name", "photo", "verified", "rating_average"]
+        fields = ["id", "full_name", "photo", "verified", "rating_average", "jobs_completed"]
 
     def get_rating_average(self, obj):
         result = Rating.objects.filter(job__worker=obj).aggregate(avg=Avg("stars"))
         return round(result["avg"], 1) if result["avg"] is not None else None
+
+    def get_jobs_completed(self, obj):
+        return JobRequest.objects.filter(worker=obj, status=JobRequest.Status.COMPLETED).count()
 
 
 class CustomerPublicSerializer(serializers.ModelSerializer):
@@ -96,6 +100,9 @@ class JobRequestSerializer(serializers.ModelSerializer):
             "worker",
             "current_offer_responds_by",
             "accepted_at",
+            "on_my_way_at",
+            "arrived_at",
+            "started_at",
             "rating",
             "last_message",
             "created_at",

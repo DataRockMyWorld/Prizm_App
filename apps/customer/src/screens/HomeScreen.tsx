@@ -56,14 +56,9 @@ export function HomeScreen() {
 
   return (
     <Screen>
-      {/* Tapping anywhere outside the search field dismisses the keyboard
-       * — otherwise nothing on this non-scrolling screen ever blurs the
-       * TextField once it's focused (confirmed live: the cursor stayed
-       * put with no way to leave it). A nested Pressable (thumbnails, the
-       * Request a Service button) still gets its own tap first — RN's
-       * responder system resolves to the innermost touchable, so this
-       * outer one only fires on genuinely "empty" taps. */}
-      <Pressable style={styles.body} onPress={Keyboard.dismiss}>
+      {/* Tap-outside-to-dismiss is now handled globally by Screen itself —
+       * see packages/ui/src/components/Screen.tsx. */}
+      <View style={styles.body}>
         <BrandHeader
           rightAccessory={
             <View style={styles.avatarWrap}>
@@ -137,7 +132,7 @@ export function HomeScreen() {
           onPress={() => navigation.navigate("RequestSubmission", {})}
           style={styles.requestButton}
         />
-      </Pressable>
+      </View>
     </Screen>
   );
 }

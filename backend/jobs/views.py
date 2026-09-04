@@ -4,6 +4,7 @@ from django.contrib.gis.measure import D
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -29,8 +30,30 @@ from .serializers import (
 )
 
 
+class JobsPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 50
+
+
 class JobRequestListCreateView(APIView):
     """GET: the caller's own jobs (customer's requests, or worker's assigned jobs).
+
+    Two opt-in query params, both off by default (bare `GET /api/jobs/`
+    returns every job unpaginated, exactly as before — several other call
+    sites, e.g. the account-deletion blocking-job check and the customer
+    Messages tab, need the full history and must keep working unchanged):
+
+    - `status_group=active|completed` filters server-side using the same
+      TERMINAL_STATUSES split the Jobs tab already draws client-side —
+      "completed" here also covers cancelled/disputed, matching that tab's
+      own definition.
+    - `page=<n>` switches the response to DRF's standard paginated shape
+      (`count`/`next`/`previous`/`results`). Meant for `status_group=
+      completed`: a customer/worker's completed history has no natural
+      upper bound and grows for as long as they use the app, unlike
+      "active" (in practice always a small working set) which the Jobs
+      tab still fetches in one unpaginated call.
 
     POST: a customer submits a new service request. Estimate range is
     snapshotted from the category, and matching is attempted immediately.
@@ -44,6 +67,18 @@ class JobRequestListCreateView(APIView):
         else:
             qs = JobRequest.objects.filter(customer=request.user)
         qs = qs.select_related("category", "worker").order_by("-created_at")
+
+        status_group = request.query_params.get("status_group")
+        if status_group == "completed":
+            qs = qs.filter(status__in=JobRequest.TERMINAL_STATUSES)
+        elif status_group == "active":
+            qs = qs.exclude(status__in=JobRequest.TERMINAL_STATUSES)
+
+        if request.query_params.get("page") is not None:
+            paginator = JobsPagination()
+            page = paginator.paginate_queryset(qs, request, view=self)
+            return paginator.get_paginated_response(JobRequestSerializer(page, many=True).data)
+
         return Response(JobRequestSerializer(qs, many=True).data)
 
     def post(self, request):
@@ -146,6 +181,10 @@ class _WorkerJobTransitionView(APIView):
     permission_classes = [IsAuthenticated, IsWorkerRole]
     required_current = None
     target_status = None
+    # Model field to stamp with the current time on this transition — the
+    # customer's live job-status timeline (see JobRequestSerializer) shows
+    # this alongside the step it reached, e.g. "Arrived · 9:24 AM".
+    timestamp_field = None
     error_detail = "This job isn't in the right state for that."
 
     def post(self, request, pk):
@@ -155,25 +194,32 @@ class _WorkerJobTransitionView(APIView):
         if job.status != self.required_current:
             return Response({"detail": self.error_detail}, status=400)
         job.status = self.target_status
-        job.save(update_fields=["status", "updated_at"])
+        update_fields = ["status", "updated_at"]
+        if self.timestamp_field:
+            setattr(job, self.timestamp_field, timezone.now())
+            update_fields.append(self.timestamp_field)
+        job.save(update_fields=update_fields)
         return Response(JobRequestSerializer(job).data)
 
 
 class OnMyWayView(_WorkerJobTransitionView):
     required_current = JobRequest.Status.ACCEPTED
     target_status = JobRequest.Status.ON_MY_WAY
+    timestamp_field = "on_my_way_at"
     error_detail = "Job must be accepted before you're on your way."
 
 
 class ArrivedView(_WorkerJobTransitionView):
     required_current = JobRequest.Status.ON_MY_WAY
     target_status = JobRequest.Status.ARRIVED
+    timestamp_field = "arrived_at"
     error_detail = "You need to be on your way before marking arrived."
 
 
 class StartJobView(_WorkerJobTransitionView):
     required_current = JobRequest.Status.ARRIVED
     target_status = JobRequest.Status.IN_PROGRESS
+    timestamp_field = "started_at"
     error_detail = "You need to have arrived before starting the job."
 
 

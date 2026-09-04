@@ -8,18 +8,28 @@ export interface AvatarProps {
   uri?: string | null;
   size?: number;
   onPress?: () => void;
+  /** Shows the small brand-gradient "edit" badge when `onPress` is set.
+   * Defaults to true (existing behavior). The customer Profile hero turns
+   * this off to match the approved hi-fi's plain circular photo — tapping
+   * the photo itself still opens the picker either way, this only hides
+   * the extra dot. */
+  showEditBadge?: boolean;
 }
 
-/** Circular profile photo with a small brand-gradient "edit" badge. */
-export function Avatar({ uri, size = 96, onPress }: AvatarProps) {
+/** Circular profile photo with an optional small brand-gradient "edit" badge. */
+export function Avatar({ uri, size = 96, onPress, showEditBadge = true }: AvatarProps) {
   return (
     <Pressable onPress={onPress} style={styles.wrapper}>
       {uri ? (
-        <Image source={{ uri }} style={[styles.circle, { width: size, height: size }]} />
+        <Image
+          source={{ uri }}
+          style={[styles.circle, { width: size, height: size }]}
+          resizeMode="cover"
+        />
       ) : (
         <View style={[styles.circle, styles.placeholder, { width: size, height: size }]} />
       )}
-      {onPress && (
+      {onPress && showEditBadge && (
         <LinearGradient
           colors={colors.gradient}
           start={{ x: 0, y: 0 }}

@@ -1,6 +1,6 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-08-30. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-09-04. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
 
@@ -277,6 +277,203 @@ customer 48/48) and both bundles compile — **but the visual result
 itself has not yet been confirmed via a live screenshot**, so treat
 Ticket 1 as implemented-but-unverified, and don't start Ticket 2 (the
 PRD explicitly gates it on Ticket 1 confirmation) until that happens.
+**Ticket 1 was later confirmed live** (2026-09-03) — Ticket 2 (Searching
++ Matched screens vs. hi-fi) is still not started, see "Immediate next
+steps" below.
+
+**Global keyboard-dismiss fix (2026-09-03)** — the shared `Screen`
+component (`packages/ui/src/components/Screen.tsx`) now wraps its
+content in a `Pressable` that calls `Keyboard.dismiss()` on any tap not
+already claimed by a nested touchable (RN's responder system resolves to
+the innermost touchable first, so this only fires on genuinely "empty"
+taps). Before this, tapping outside a focused text field did nothing on
+*any* screen in either app — first found on the customer
+`RequestSubmissionScreen`'s description field, but it was a systemic gap
+in the shared component, not a per-screen bug, so the fix went in once at
+that level instead of per-screen. `HomeScreen`'s prior one-off local
+version of the same fix (a `Pressable` wrapper it had grown for its
+search bar) was removed as redundant.
+
+**A real end-to-end run through the entire app, registration to a closed
+job, on both apps at once (2026-09-03/04)** — worker on the iOS
+Simulator (iPhone 17 Pro), customer on the physical iPhone, with Claude
+driving the worker side via direct REST calls (registered, ID-approved,
+and put a test worker online via the API, then accepted/progressed/
+completed jobs with `curl` — no XCUITest/Appium automation exists in this
+environment, so this was the only way to keep pace with the 60-second
+offer-response window from outside the UI). This surfaced and fixed
+several real, previously-latent bugs:
+- **PIN/OTP entry was effectively unusable on a full-size Simulator
+  screen** — `PinEntry` (`packages/auth-flow/src/components/PinEntry.tsx`)
+  and `OtpInput` (`packages/ui/src/components/OtpInput.tsx`) both drive a
+  hidden 1×1/opacity-0 `TextInput` from a `Pressable` wrapping just the
+  visible dots/boxes — a small target (~150×32px) on a screen with a lot
+  of empty space around it, so a tap landing even slightly outside it
+  silently did nothing (no error, no keyboard). Confirmed by direct
+  `cliclick` automation (macOS Accessibility permission granted
+  mid-session) that a precisely-aimed click worked fine — the code was
+  never actually broken, the hit target just needed to be more forgiving.
+  Fixed with a generous `hitSlop` on both (`{top:24, bottom:24, left:40,
+  right:40}`). `PinEntry` also had `secureTextEntry` removed — harmless
+  either way since the field is already invisible and `PinDots` is the
+  only thing that ever renders the digits, but not the actual fix.
+- **The customer Matched screen's "Confirm & Continue" button did
+  nothing except navigate locally** — no server call, and if a customer
+  never tapped it, they'd stay stuck on "You've been matched!" forever
+  even as the job progressed in the background (the screen's own poll
+  only ever redirected away for a job *disappearing* — searching/
+  cancelled — never for one moving forward). Per user decision, this is
+  now a transient beat: auto-advances to `JobStatus` after 3s
+  (`AUTO_ADVANCE_MS`), no button, with a small "Taking you to your job…"
+  spinner instead.
+- **Rating stars were invisible** (`apps/customer/src/screens/request/
+  RatingScreen.tsx`) — the unfilled-star color was `colors.border`
+  (`#ECE7E2`) against `colors.pageBackground` (`#F1ECE7`), the same
+  near-zero-contrast bug already fixed once for `PinDots` back on
+  2026-08-26. Changed to `colors.textSecondary`, plus a bigger `hitSlop`
+  on each star. This exact bug (an icon/border colored `colors.border`
+  against `colors.pageBackground`) turned out to be **systemic** — also
+  found and fixed the same way in the job-status timeline's pending-step
+  dots, and in `StatCard`'s/`SettingsRow`'s/the Profile address-row's
+  divider lines (see below). Worth grepping for `colors.border` used as a
+  `borderColor`/`backgroundColor` directly on a screen if this pattern
+  turns up again.
+- **Stale/abandoned test jobs got resurrected mid-session** — setting a
+  worker online + located (`WorkerStatusView`'s PATCH) triggers
+  `rematch_nearby_jobs_for_worker`, which sweeps *all* still-`searching`/
+  `matched` jobs in range, including weeks-old abandoned test jobs from
+  earlier sessions. Not a bug — `try_match`/`refresh_job_matching` working
+  exactly as designed — but worth knowing this can happen again in this
+  same dev database; the fix each time was just cancelling the stale jobs
+  and setting old leftover test-worker accounts offline.
+
+Both a **dispute-path job** (customer disputed the worker's proposed
+price via "Report a problem → Pricing disagreement" — confirmed it
+correctly creates a `Report(category=pricing_disagreement)` and flips the
+job to `disputed`, a real terminal state routed to manual admin review,
+not an automated bot, matching CLAUDE.md) and a **full happy-path job**
+(price confirmed → completed → 5-star rating) were run end-to-end and
+confirmed working.
+
+**Job status screen redesign, against a Claude Design hi-fi
+(2026-09-04)** — `apps/customer/src/screens/request/JobStatusScreen.tsx`
+rebuilt from a plain 4-step stepper into the approved design: a full
+brand-gradient hero with a dynamic headline (`"<worker's first name> is
+on the way"` etc., one string per status), a status pill, and an "N OF 6"
+step-count circle; a worker card floating over the hero's rounded bottom
+edge (photo, name, category, rating, jobs-completed count); an expanded
+6-row vertical timeline (Requested/Accepted/On my way/Arrived/Job
+started/Complete — previously on_my_way/arrived/in_progress collapsed
+into one vague "In progress" row) where each reached step shows its own
+timestamp and the most-recently-reached one gets a glowing accent ring;
+and an Estimate + Address card. The hi-fi's "Cancel job" footer link was
+deliberately dropped — customer-side cancellation is only ever valid
+while a job is still `searching`/`matched` (`JobCancelView`,
+`backend/jobs/views.py`), so on this screen (reached only once a job is
+already accepted) it would 400 every time; "Report a problem" is the only
+real action left there, matching what the app already did before this
+redesign.
+
+Needed one real backend change, not just a frontend reskin: `JobRequest`
+gained `on_my_way_at`/`arrived_at`/`started_at` (`accepted_at` already
+existed) so each timeline step can show *when* it happened, not just
+that it happened — the three worker-transition views
+(`_WorkerJobTransitionView` and its `OnMyWayView`/`ArrivedView`/
+`StartJobView` subclasses in `backend/jobs/views.py`) now stamp the
+matching field via a new `timestamp_field` class attribute. Also added
+`jobs_completed` to `WorkerPublicSerializer` for the worker card's "· N
+jobs" caption. Migration
+`backend/jobs/migrations/0007_jobrequest_arrived_at_jobrequest_on_my_way_at_and_more.py`.
+5 new backend tests (`jobs/tests/test_active_job_transitions.py`); new
+`apps/customer/src/request/formatClockTime.ts` (+ test) for the
+"2:08 PM"-style timestamps.
+
+Live-testing this surfaced one more real bug, the same class as the
+Matched-screen one: the step-highlighting logic originally lit up the
+*next expected* step rather than the one that had actually happened (an
+old holdover from the previous 4-step design, where that read fine for a
+vague "In progress" bucket but is actively misleading for a literal
+action label — "On my way" glowing while the worker was still just
+sitting on `accepted`, before they'd moved at all). Fixed by rewriting
+`reachedStepIndex` to mark the *most recently reached* step instead —
+confirmed correct against all 6 states with a real device retest.
+
+**Customer Messages tab now uses a middle ground, not "every job with a
+worker" (2026-09-04)** — per user decision after noticing a message
+"card" for every single job regardless of whether any conversation ever
+happened: `apps/customer/src/screens/MessagesScreen.tsx` now always shows
+active jobs (so there's a predictable way to reach a worker you're
+currently mid-job with, even before either party has said anything) but
+only shows a *completed* job's thread if it actually has message history
+(`job.last_message !== null`), reusing the existing `isActiveJobStatus`
+helper. Deliberately not "only jobs with real messages" outright — that
+would make the tab undiscoverable for an active job with nothing said
+yet.
+
+**Jobs tab pagination, both apps (2026-09-04)** — prompted by a "how do
+we control the Completed list as it grows" discussion (conclusion: no
+delete button — a completed job is a transaction/audit record, matching
+the same retention principle CLAUDE.md's account-deletion section
+already establishes for financial records; This-week/Earlier grouping
+already existed; the real gap was that `GET /api/jobs/` had **no
+pagination at all**, ever returning a caller's entire job history in one
+response). `JobRequestListCreateView.get()`
+(`backend/jobs/views.py`) gained two opt-in, fully-backward-compatible
+query params — a bare `GET /api/jobs/` with no params is byte-for-byte
+unchanged, since several other call sites (the account-deletion
+blocking-job check, the Messages tab above) need the complete
+unfiltered history and must keep working exactly as before:
+- `status_group=active|completed` — server-side filter reusing the
+  existing `JobRequest.TERMINAL_STATUSES` constant.
+- `page=<n>` (+ optional `page_size`) — switches to DRF's standard
+  paginated response shape via a new `JobsPagination` class
+  (`page_size=20, max=50`).
+
+Both apps' `JobsScreen.tsx` rewritten: Active tab now fetches via the new
+`listActiveJobs()` (still one unpaginated call — active jobs are always a
+small working set in practice) rendered in a plain `ScrollView`;
+Completed tab fetches via new `listCompletedJobsPage()` a page at a time
+through a real `SectionList` with `onEndReached` infinite scroll,
+re-grouped into This-week/Earlier as pages accumulate. **Drive-by fix**:
+neither Jobs tab had a scroll container at all before this — jobs were
+just `.map()`'d into plain `View`s directly inside `Screen`'s content, so
+a list longer than one screen would have been silently clipped with no
+way to reach the rest; not something the small amount of test data in
+this project had ever surfaced before. The worker Jobs tab's "N$X agreed
+this month" header stat deliberately still sources from a full
+unpaginated `listMyJobs()` call, kept separate from the paginated
+rendered list — that total needs the *whole* month's data to stay
+correct, and would have silently undercounted once history exceeds one
+page. 6 new backend tests
+(`jobs/tests/test_job_list_pagination.py`). Not yet visually confirmed
+with a long list (this project's test accounts only have 2–3 completed
+jobs total, so infinite scroll never actually triggers) — the plumbing
+is real and tested, but nobody has watched it fire live yet.
+
+**Customer Profile screen — a second, more detailed hi-fi-matching pass
+(2026-09-04)**, on top of the redesign described earlier in this file:
+narrower cards/buttons (screen's own horizontal padding `spacing.md` →
+`spacing.lg`, local to this screen only); a real bug in `StatCard`
+(`packages/ui/src/components/StatCard.tsx`) where centering each stat
+cell as a whole block meant a cell whose label wrapped to two lines
+(`"Requests completed"`, at the new narrower width) came out taller, and
+block-centering that taller cell pushed its value up relative to the
+other cell's — fixed by anchoring both cells to `flex-start` instead, so
+values always land at the same height regardless of label length; a
+second `StatCard` bug where a wrapped label had no `textAlign: "center"`,
+so React Native left-aligned each wrapped line individually even inside
+a centered container; a bigger gap between the hero and the stats card
+(`marginTop: spacing.sm` → `spacing.lg`); stronger card borders/shadows
+(`definedCard`: width 1→1.5, a darker `#D9CEC0`, more shadow); and — the
+same low-contrast-divider bug found earlier this session — three
+separator lines (`StatCard`'s internal vertical divider, the saved-
+address row dividers, `SettingsRow`'s account-row dividers) recolored
+from `colors.border` to `colors.textSecondary`. `StatCard` and
+`SettingsRow` are shared components, so the alignment/divider fixes also
+reach the worker Profile screen's equivalent elements.
+
+Test counts after all of the above: backend 142/142, worker 58/58,
+customer 50/50. Both apps typecheck clean throughout.
 
 ## Physical iPhone builds — working
 
@@ -427,10 +624,13 @@ the emulator (request → match → accept → status stepper → propose price
 - **LAN IP drift**: this Wi-Fi network reassigns DHCP addresses often —
   four times in one Simulator session on 2026-08-26, then **three more
   times in a single afternoon on 2026-08-27** while debugging physical-
-  device connectivity (don't assume you've caught the last drift; always
-  re-check `ipconfig getifaddr en0` if anything network-shaped breaks
-  again, even minutes after last fixing it). Separate places reference
-  the Mac's LAN IP and all need to stay in sync:
+  device connectivity, then **three separate times across the
+  2026-09-03/04 session** (once overnight between sessions, twice more
+  mid-session) — this is a near-certainty every time you resume work, not
+  an occasional annoyance; always re-check `ipconfig getifaddr en0` first,
+  don't assume you've caught the last drift even minutes after last fixing
+  it. Separate places reference the Mac's LAN IP and all need to stay in
+  sync:
   1. `EXPO_PUBLIC_API_URL` in both apps' `.env` (see USB gotcha above).
   2. The dev-client's manual "Enter URL manually" host, if Bonjour
      auto-discovery doesn't find Metro on its own (`<ip>:8081`) — now
@@ -571,23 +771,39 @@ the emulator (request → match → accept → status stepper → propose price
    hook, the device click-test pass) all genuinely need T0 (real device
    push credentials) to build/verify, unlike T4. Come back to T0 once/if
    the Apple ID gets enrolled in the paid Program, then pick up T5–T7.
-4. **In progress (2026-08-30)** — a live design-fidelity pass against a
-   fresh Claude Design hand-off, going screen by screen: customer Home
-   (done, confirmed live on both iPhone and Android emulator — see
-   "What's actually built") → customer `RequestSubmissionScreen` Ticket 1
-   (implemented, **awaiting a live screenshot to confirm** before Ticket 2
-   starts) → Ticket 2 (Searching + Matched screens — not started yet;
-   scoped to compare against the hi-fi and report differences first, then
-   apply the same heading-weight/spacing/button-gradient standards
-   established in Ticket 1). Resume by getting that Ticket 1 screenshot.
+4. **In progress since 2026-08-30** — a live design-fidelity pass against
+   a Claude Design hand-off, going screen by screen: customer Home (done)
+   → customer `RequestSubmissionScreen` Ticket 1 (done, confirmed live) →
+   **Ticket 2 (Searching + Matched screens vs. hi-fi) — still not
+   started.** Note the Matched screen *did* get a real behavior change
+   this session (the auto-advance/transient-toast fix, see "What's
+   actually built") — that was a functional bug fix driven by live
+   testing, not the Ticket 2 visual-fidelity pass itself; Ticket 2's own
+   comparison against the hi-fi (spacing/heading-weight/button-gradient,
+   matching Ticket 1's standard) hasn't been done yet.
+5. **Two written-but-not-yet-implemented tickets**:
+   `docs/tickets/android-bugfixes-2026-08-30.md` — T1 (geocode a
+   manually-typed address when GPS fails/is denied, both apps'
+   `RequestSubmissionScreen`/`AddressFormScreen`) and T2 (customer
+   `JobsScreen` real error state instead of a silent false-empty one).
+   Both fully scoped with concrete diffs, sitting ready to pick up.
+6. **Not yet visually confirmed**: Jobs-tab pagination (both apps, see
+   "What's actually built") works and is tested, but this project's test
+   accounts only ever have 2–3 completed jobs, so infinite scroll has
+   never actually fired live. Worth seeding a batch of dummy completed
+   jobs and scrolling through it once, next time either app is open.
 
-**Dev environment was fully stopped at the end of the 2026-08-30
-session** (both Metro/Expo dev servers, the iOS Simulator, the Android
-emulator, and the whole `docker compose` stack) — nothing is running.
-To resume: `docker compose up -d` from the repo root, then `npx expo
-start --dev-client -c` in each of `apps/worker`/`apps/customer` (or just
-reopen the already-installed dev-client app on a booted
-Simulator/`Prizm_Test_Emulator`/physical phone once Metro's back up).
+**Dev environment status as of the end of the 2026-09-04 session**:
+everything is still up and running — `docker compose` stack, both Metro
+servers (worker `:8081`, customer `:8082`), the iOS Simulator (worker
+app installed) and a physical iPhone (customer app installed). If
+picking this up after time has passed, check the LAN IP first (see
+"LAN IP drift" above — a near-certainty by now) before assuming
+anything's broken. If everything was stopped in the meantime: `docker
+compose up -d` from the repo root, then `npx expo start --dev-client -c`
+in each of `apps/worker`/`apps/customer` (or just reopen the
+already-installed dev-client app on a booted Simulator/physical phone
+once Metro's back up).
 
 ## Known loose ends / things to revisit
 

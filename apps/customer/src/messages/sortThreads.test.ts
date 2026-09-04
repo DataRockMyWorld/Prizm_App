@@ -21,9 +21,12 @@ function makeJob(
     agreed_price: null,
     worker_note: "",
     customer: null,
-    worker: { id: 9, full_name: "Alex", photo: null, verified: true, rating_average: null },
+    worker: { id: 9, full_name: "Alex", photo: null, verified: true, rating_average: null, jobs_completed: 0 },
     current_offer_responds_by: null,
     accepted_at: null,
+    on_my_way_at: null,
+    arrived_at: null,
+    started_at: null,
     rating: null,
     last_message: lastMessageAt
       ? { text: "hi", created_at: lastMessageAt, sender_id: 9 }

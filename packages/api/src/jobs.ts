@@ -20,6 +20,7 @@ export interface JobWorker {
   photo: string | null;
   verified: boolean;
   rating_average: number | null;
+  jobs_completed: number;
 }
 
 export interface JobCustomer {
@@ -56,6 +57,9 @@ export interface JobRequest {
   worker: JobWorker | null;
   current_offer_responds_by: string | null;
   accepted_at: string | null;
+  on_my_way_at: string | null;
+  arrived_at: string | null;
+  started_at: string | null;
   rating: JobRating | null;
   last_message: JobLastMessage | null;
   created_at: string;
@@ -91,6 +95,33 @@ export function createJobRequest(token: string, input: CreateJobRequestInput) {
 
 export function listMyJobs(token: string) {
   return apiRequest<JobRequest[]>("/api/jobs/", { token });
+}
+
+/** Active jobs only, filtered server-side — in practice always a small
+ * working set, so this stays a plain unpaginated array (unlike
+ * completed history, which has no natural upper bound — see
+ * listCompletedJobsPage). */
+export function listActiveJobs(token: string) {
+  return apiRequest<JobRequest[]>("/api/jobs/?status_group=active", { token });
+}
+
+export interface PaginatedJobs {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: JobRequest[];
+}
+
+/** Completed/cancelled/disputed jobs, paginated — a customer or worker's
+ * terminal-job history grows for as long as they use the app, so the
+ * Jobs tab's Completed segment loads this a page at a time (infinite
+ * scroll) instead of the whole history at once. `page` is 1-indexed,
+ * matching DRF's PageNumberPagination. */
+export function listCompletedJobsPage(token: string, page: number, pageSize = 20) {
+  return apiRequest<PaginatedJobs>(
+    `/api/jobs/?status_group=completed&page=${page}&page_size=${pageSize}`,
+    { token }
+  );
 }
 
 export function getJob(token: string, jobId: number) {

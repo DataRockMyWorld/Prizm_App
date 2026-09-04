@@ -1,5 +1,5 @@
 import { JobRequest, getJob, useAuth } from "@prizm/api";
-import { Avatar, Badge, Button, Card, Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
+import { Avatar, Badge, Card, Screen, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -7,6 +7,16 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import type { RequestStackParamList } from "../../navigation/types";
 
 type Props = NativeStackScreenProps<RequestStackParamList, "Matched">;
+
+// How long this transient "you've been matched" beat stays up before
+// auto-advancing to the live JobStatus tracking screen. Previously this
+// screen only advanced when the customer tapped a "Confirm & Continue"
+// button that didn't actually confirm anything server-side — if they
+// never tapped it, they'd stay stuck here indefinitely even as the job
+// progressed in the background (the poll below only ever redirected away
+// for a job disappearing, never for one moving forward). Auto-advancing
+// makes this a real toast instead of a dead end.
+const AUTO_ADVANCE_MS = 3000;
 
 export function MatchedScreen({ navigation, route }: Props) {
   const { accessToken } = useAuth();
@@ -36,6 +46,15 @@ export function MatchedScreen({ navigation, route }: Props) {
     const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
   }, [accessToken, jobId, navigation]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (navigatedRef.current) return;
+      navigatedRef.current = true;
+      navigation.replace("JobStatus", { jobId });
+    }, AUTO_ADVANCE_MS);
+    return () => clearTimeout(timer);
+  }, [navigation, jobId]);
 
   if (!job) {
     return (
@@ -81,10 +100,10 @@ export function MatchedScreen({ navigation, route }: Props) {
         </Card>
 
         <View style={styles.spacer} />
-        <Button
-          label="Confirm & Continue"
-          onPress={() => navigation.replace("JobStatus", { jobId })}
-        />
+        <View style={styles.continuingRow}>
+          <ActivityIndicator color={colors.textSecondary} size="small" />
+          <ThemedText variant="caption">Taking you to your job…</ThemedText>
+        </View>
       </View>
     </Screen>
   );
@@ -123,5 +142,12 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  continuingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    marginBottom: spacing.md,
   },
 });

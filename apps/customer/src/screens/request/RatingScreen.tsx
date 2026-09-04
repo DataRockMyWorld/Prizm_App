@@ -60,11 +60,15 @@ export function RatingScreen({ navigation, route }: Props) {
 
         <View style={styles.starRow}>
           {[1, 2, 3, 4, 5].map((value) => (
-            <Pressable key={value} onPress={() => setStars(value)} hitSlop={4}>
+            <Pressable key={value} onPress={() => setStars(value)} hitSlop={12}>
               <Ionicons
                 name={value <= stars ? "star" : "star-outline"}
                 size={34}
-                color={value <= stars ? colors.gold : colors.border}
+                // colors.border (#ECE7E2) against colors.pageBackground
+                // (#F1ECE7) is nearly indistinguishable — same contrast bug
+                // already fixed once for PinDots' empty-dot outline.
+                // colors.textSecondary matches that established fix.
+                color={value <= stars ? colors.gold : colors.textSecondary}
               />
             </Pressable>
           ))}

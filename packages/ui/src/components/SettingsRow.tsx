@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
-import { colors, spacing } from "../tokens";
+import { colors, fontFamily, spacing } from "../tokens";
 import { ThemedText } from "./ThemedText";
 
 export interface SettingsRowProps {
@@ -22,7 +22,9 @@ export interface SettingsRowProps {
 export function SettingsRow({ label, detail, onPress, isFirst }: SettingsRowProps) {
   return (
     <Pressable onPress={onPress} style={[styles.row, !isFirst && styles.divider]}>
-      <ThemedText variant="body">{label}</ThemedText>
+      <ThemedText variant="body" style={styles.label}>
+        {label}
+      </ThemedText>
       <View style={styles.trailing}>
         {detail ? (
           <ThemedText variant="caption" style={styles.detail}>
@@ -40,11 +42,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
   },
   divider: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    // colors.border barely registers against a white Card — same
+    // low-contrast issue already fixed elsewhere this session.
+    borderTopColor: colors.textSecondary,
+  },
+  label: {
+    fontFamily: fontFamily.bold,
   },
   trailing: {
     flexDirection: "row",

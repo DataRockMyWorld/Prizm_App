@@ -4,13 +4,17 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
+import { isActiveJobStatus } from "../jobsTab/jobsTabGrouping";
 import { formatRelativeTime } from "../messages/formatRelativeTime";
 import { sortThreadsByRecency } from "../messages/sortThreads";
 
-/** Real inbox — every job with an assigned worker (any status, including
- * terminal ones, so chat history isn't dropped once a job closes), sorted
- * by most recent activity. Refetches on focus, same as the Jobs tab,
- * since a message can arrive while this tab isn't visible. */
+/** Real inbox — always shows every *active* job with an assigned worker
+ * (so there's a predictable way to reach whoever you're currently mid-job
+ * with, even before either of you has said anything), plus any completed
+ * job that actually has message history (so a finished job with zero
+ * conversation doesn't linger here forever). Sorted by most recent
+ * activity. Refetches on focus, same as the Jobs tab, since a message can
+ * arrive while this tab isn't visible. */
 export function MessagesScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
@@ -20,7 +24,10 @@ export function MessagesScreen() {
     if (!accessToken) return;
     try {
       const allJobs = await listMyJobs(accessToken);
-      setJobs(sortThreadsByRecency(allJobs.filter((job) => job.worker !== null)));
+      const threads = allJobs.filter(
+        (job) => job.worker !== null && (isActiveJobStatus(job.status) || job.last_message !== null)
+      );
+      setJobs(sortThreadsByRecency(threads));
     } catch {
       setJobs([]);
     }

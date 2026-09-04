@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 import { colors, fontFamily, fontSize, spacing } from "../tokens";
 import { Card } from "./Card";
@@ -12,15 +12,16 @@ export interface StatCardItem {
 
 export interface StatCardProps {
   items: StatCardItem[];
+  style?: StyleProp<ViewStyle>;
 }
 
 /** A row of stat cells inside a Card — worker Profile's "Jobs / Member
  * since", customer Profile's "Requests completed / Member since". Not
  * hardcoded to exactly two cells, so a third stat later doesn't require
  * touching this component again. */
-export function StatCard({ items }: StatCardProps) {
+export function StatCard({ items, style }: StatCardProps) {
   return (
-    <Card style={styles.card}>
+    <Card style={[styles.card, style]}>
       {items.map((item, index) => (
         <React.Fragment key={item.label}>
           <View style={styles.cell}>
@@ -41,7 +42,12 @@ export function StatCard({ items }: StatCardProps) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    alignItems: "center",
+    // flex-start, not center: centering each cell as a whole block means a
+    // cell whose label wraps to two lines (e.g. "Requests completed" at a
+    // narrow width) ends up taller, and centering that taller block pushes
+    // its value up relative to a cell with a one-line label — flex-start
+    // anchors every value to the same top regardless of label length.
+    alignItems: "flex-start",
     paddingVertical: spacing.lg,
   },
   cell: {
@@ -56,11 +62,19 @@ const styles = StyleSheet.create({
   },
   label: {
     letterSpacing: 0.4,
+    // A longer label ("Requests completed") wraps to two lines at
+    // narrower widths — without an explicit textAlign, RN left-aligns
+    // each wrapped line individually even inside a centered container,
+    // so it reads off-center under the value above it.
+    textAlign: "center",
   },
   divider: {
     width: StyleSheet.hairlineWidth,
     alignSelf: "stretch",
     marginVertical: spacing.xs,
-    backgroundColor: colors.border,
+    // colors.border (#ECE7E2) barely registers against a white Card —
+    // same low-contrast issue already fixed elsewhere this session
+    // (PinDots, rating stars, the job-status timeline dots).
+    backgroundColor: colors.textSecondary,
   },
 });

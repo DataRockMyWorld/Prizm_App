@@ -1,11 +1,11 @@
-import { JobRequest, listMyJobs, useAuth } from "@prizm/api";
+import { JobRequest, listActiveJobs, listCompletedJobsPage, useAuth } from "@prizm/api";
 import { Avatar, Button, Card, colors, fontFamily, radii, Screen, spacing, ThemedText } from "@prizm/ui";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import React, { useCallback, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, SectionList, StyleSheet, View } from "react-native";
 
 import { formatJobStatusLabel, getStatusTone, StatusTone } from "../jobsTab/formatJobStatus";
-import { formatJobCardDate, groupByRecency, isActiveJobStatus } from "../jobsTab/jobsTabGrouping";
+import { formatJobCardDate, groupByRecency } from "../jobsTab/jobsTabGrouping";
 import { getJobsTabRoute } from "../jobsTab/jobsTabRouting";
 import { sortJobsNewestFirst } from "../jobsTab/sortJobs";
 
@@ -19,45 +19,98 @@ const TONE_COLORS: Record<StatusTone, string> = {
   neutral: colors.textSecondary,
 };
 
+const PAGE_SIZE = 20;
+
 /** Job history — refetches whenever the tab regains focus, since a job's
  * status can change elsewhere (worker accepts, progresses, completes)
  * while this tab isn't visible. Tapping a still-open job routes into the
  * real live tracking screen rather than a static summary — see
- * getJobsTabRoute. Replaces the old Requests/Bookings placeholder tabs. */
+ * getJobsTabRoute.
+ *
+ * Active and Completed are fetched separately now (see
+ * listActiveJobs/listCompletedJobsPage): active jobs are always a small
+ * working set so they're still one plain unpaginated call, but a
+ * customer's completed history has no natural ceiling — it grows for as
+ * long as they use the app — so Completed loads a page at a time via
+ * infinite scroll instead of pulling the whole history on every visit. */
 export function JobsScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
-  const [jobs, setJobs] = useState<JobRequest[] | null>(null);
   const [tab, setTab] = useState<Tab>("active");
 
-  const loadJobs = useCallback(async () => {
+  const [activeJobs, setActiveJobs] = useState<JobRequest[] | null>(null);
+
+  const [completedJobs, setCompletedJobs] = useState<JobRequest[]>([]);
+  const [completedLoaded, setCompletedLoaded] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const nextPageRef = useRef(1);
+
+  const loadActive = useCallback(async () => {
     if (!accessToken) return;
     try {
-      setJobs(sortJobsNewestFirst(await listMyJobs(accessToken)));
+      setActiveJobs(sortJobsNewestFirst(await listActiveJobs(accessToken)));
     } catch {
-      setJobs([]);
+      setActiveJobs([]);
     }
   }, [accessToken]);
 
+  const loadFirstCompletedPage = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const page = await listCompletedJobsPage(accessToken, 1, PAGE_SIZE);
+      setCompletedJobs(page.results);
+      setHasMore(page.next !== null);
+      nextPageRef.current = 2;
+    } catch {
+      setCompletedJobs([]);
+      setHasMore(false);
+    } finally {
+      setCompletedLoaded(true);
+    }
+  }, [accessToken]);
+
+  const loadMoreCompleted = useCallback(async () => {
+    if (!accessToken || !hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const page = await listCompletedJobsPage(accessToken, nextPageRef.current, PAGE_SIZE);
+      setCompletedJobs((current) => [...current, ...page.results]);
+      setHasMore(page.next !== null);
+      nextPageRef.current += 1;
+    } catch {
+      // leave hasMore as-is — a transient failure shouldn't permanently stop pagination;
+      // the next scroll-triggered attempt will just retry the same page.
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [accessToken, hasMore, isLoadingMore]);
+
   useFocusEffect(
     useCallback(() => {
-      loadJobs();
-    }, [loadJobs])
+      loadActive();
+      setCompletedLoaded(false);
+      setHasMore(true);
+      nextPageRef.current = 1;
+      loadFirstCompletedPage();
+    }, [loadActive, loadFirstCompletedPage])
   );
 
   const handlePress = (job: JobRequest) => {
     navigation.navigate(getJobsTabRoute(job.status), { jobId: job.id });
   };
 
-  const activeJobs = jobs?.filter((job) => isActiveJobStatus(job.status)) ?? [];
-  const completedJobs = jobs?.filter((job) => !isActiveJobStatus(job.status)) ?? [];
   const { thisWeek, earlier } = groupByRecency(completedJobs);
+  const sections = [
+    ...(thisWeek.length > 0 ? [{ title: "THIS WEEK", data: thisWeek }] : []),
+    ...(earlier.length > 0 ? [{ title: "EARLIER", data: earlier }] : []),
+  ];
 
   return (
     <Screen>
       <View style={styles.headerRow}>
         <ThemedText variant="title">Jobs</ThemedText>
-        {tab === "active" && (
+        {tab === "active" && activeJobs !== null && (
           <ThemedText variant="caption">{`${activeJobs.length} active`}</ThemedText>
         )}
       </View>
@@ -84,10 +137,10 @@ export function JobsScreen() {
         </Pressable>
       </View>
 
-      {jobs === null ? (
-        <ActivityIndicator color={colors.primary} style={styles.loading} />
-      ) : tab === "active" ? (
-        activeJobs.length === 0 ? (
+      {tab === "active" ? (
+        activeJobs === null ? (
+          <ActivityIndicator color={colors.primary} style={styles.loading} />
+        ) : activeJobs.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconCircle}>
               <ThemedText style={styles.emptyIcon}>🧰</ThemedText>
@@ -107,36 +160,37 @@ export function JobsScreen() {
             />
           </View>
         ) : (
-          activeJobs.map((job) => <JobCard key={job.id} job={job} onPress={handlePress} />)
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.list}>
+            {activeJobs.map((job) => (
+              <JobCard key={job.id} job={job} onPress={handlePress} />
+            ))}
+          </ScrollView>
         )
+      ) : !completedLoaded ? (
+        <ActivityIndicator color={colors.primary} style={styles.loading} />
       ) : completedJobs.length === 0 ? (
         <Card>
           <ThemedText variant="subtitle">No completed jobs yet</ThemedText>
           <ThemedText variant="caption">Jobs you complete will show up here.</ThemedText>
         </Card>
       ) : (
-        <>
-          {thisWeek.length > 0 && (
-            <>
-              <ThemedText variant="caption" style={styles.sectionLabel}>
-                THIS WEEK
-              </ThemedText>
-              {thisWeek.map((job) => (
-                <JobCard key={job.id} job={job} onPress={handlePress} />
-              ))}
-            </>
+        <SectionList
+          style={styles.list}
+          showsVerticalScrollIndicator={false}
+          sections={sections}
+          keyExtractor={(job) => String(job.id)}
+          renderItem={({ item }) => <JobCard job={item} onPress={handlePress} />}
+          renderSectionHeader={({ section }) => (
+            <ThemedText variant="caption" style={styles.sectionLabel}>
+              {section.title}
+            </ThemedText>
           )}
-          {earlier.length > 0 && (
-            <>
-              <ThemedText variant="caption" style={styles.sectionLabel}>
-                EARLIER
-              </ThemedText>
-              {earlier.map((job) => (
-                <JobCard key={job.id} job={job} onPress={handlePress} />
-              ))}
-            </>
-          )}
-        </>
+          onEndReachedThreshold={0.4}
+          onEndReached={loadMoreCompleted}
+          ListFooterComponent={
+            isLoadingMore ? <ActivityIndicator color={colors.primary} style={styles.loadingMore} /> : null
+          }
+        />
       )}
     </Screen>
   );
@@ -214,6 +268,12 @@ const styles = StyleSheet.create({
   },
   loading: {
     marginTop: spacing.xl,
+  },
+  loadingMore: {
+    marginVertical: spacing.md,
+  },
+  list: {
+    flex: 1,
   },
   sectionLabel: {
     marginTop: spacing.sm,

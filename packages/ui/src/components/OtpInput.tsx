@@ -18,7 +18,13 @@ export function OtpInput({ length = 6, value, onChangeText, autoFocus }: OtpInpu
   const digits = value.split("");
 
   return (
-    <Pressable style={styles.row} onPress={() => inputRef.current?.focus()}>
+    // Same generous hitSlop as PinEntry — this box row is a small target
+    // on a full-size screen, and a near-miss tap silently does nothing.
+    <Pressable
+      style={styles.row}
+      onPress={() => inputRef.current?.focus()}
+      hitSlop={{ top: 24, bottom: 24, left: 40, right: 40 }}
+    >
       {Array.from({ length }).map((_, index) => {
         const digit = digits[index];
         const isFilled = digit !== undefined;

@@ -22,6 +22,8 @@ export interface ProfileHeaderProps {
    * The inline TextField keeps its own light input box either way, so it
    * stays legible without any change. */
   inverse?: boolean;
+  /** Forwarded to Avatar — see AvatarProps.showEditBadge. Defaults to true. */
+  showEditBadge?: boolean;
 }
 
 /** Avatar + editable name, shared by both apps' Profile screens — the
@@ -35,6 +37,7 @@ export function ProfileHeader({
   onSaveName,
   isUploadingPhoto,
   inverse,
+  showEditBadge = true,
 }: ProfileHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(fullName);
@@ -68,7 +71,7 @@ export function ProfileHeader({
   return (
     <View style={styles.container}>
       <View style={styles.avatarWrapper}>
-        <Avatar uri={photo} onPress={onPickPhoto} size={88} />
+        <Avatar uri={photo} onPress={onPickPhoto} size={88} showEditBadge={showEditBadge} />
         {isUploadingPhoto && (
           <View style={styles.avatarOverlay}>
             <ActivityIndicator color={colors.textInverse} />
@@ -100,7 +103,7 @@ export function ProfileHeader({
         </View>
       ) : (
         <Pressable onPress={startEditing} style={styles.nameRow} hitSlop={8}>
-          <ThemedText variant="subtitle" style={inverse && styles.nameInverse}>
+          <ThemedText variant="subtitle" style={[styles.name, inverse && styles.nameInverse]}>
             {fullName || "—"}
           </ThemedText>
           <ThemedText variant="caption" style={[styles.editLink, inverse && styles.editLinkInverse]}>
@@ -139,6 +142,9 @@ const styles = StyleSheet.create({
   },
   editLink: {
     color: colors.primary,
+    fontFamily: fontFamily.bold,
+  },
+  name: {
     fontFamily: fontFamily.bold,
   },
   nameInverse: {
