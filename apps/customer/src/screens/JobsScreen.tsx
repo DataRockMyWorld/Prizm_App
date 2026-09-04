@@ -39,19 +39,32 @@ export function JobsScreen() {
   const [tab, setTab] = useState<Tab>("active");
 
   const [activeJobs, setActiveJobs] = useState<JobRequest[] | null>(null);
+  const [activeError, setActiveError] = useState(false);
 
   const [completedJobs, setCompletedJobs] = useState<JobRequest[]>([]);
   const [completedLoaded, setCompletedLoaded] = useState(false);
+  const [completedError, setCompletedError] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const nextPageRef = useRef(1);
 
+  // Both loaders used to collapse any failure (most concretely: an
+  // expired 30-min access token with no mid-session refresh — see
+  // PROGRESS.md's Environment gotchas) into an empty array, which then
+  // rendered as a genuine "you have no jobs" empty state — indistinguishable
+  // from actually having none. Confirmed live on Android: 6 real jobs
+  // existed server-side while the tab showed 0, and a plain relaunch (which
+  // re-triggers the refresh-token flow) fixed it instantly with no other
+  // change. Tracking failure as its own flag instead lets the UI show an
+  // honest error + retry rather than a misleading empty list.
   const loadActive = useCallback(async () => {
     if (!accessToken) return;
     try {
       setActiveJobs(sortJobsNewestFirst(await listActiveJobs(accessToken)));
+      setActiveError(false);
     } catch {
       setActiveJobs([]);
+      setActiveError(true);
     }
   }, [accessToken]);
 
@@ -61,10 +74,12 @@ export function JobsScreen() {
       const page = await listCompletedJobsPage(accessToken, 1, PAGE_SIZE);
       setCompletedJobs(page.results);
       setHasMore(page.next !== null);
+      setCompletedError(false);
       nextPageRef.current = 2;
     } catch {
       setCompletedJobs([]);
       setHasMore(false);
+      setCompletedError(true);
     } finally {
       setCompletedLoaded(true);
     }
@@ -140,6 +155,8 @@ export function JobsScreen() {
       {tab === "active" ? (
         activeJobs === null ? (
           <ActivityIndicator color={colors.primary} style={styles.loading} />
+        ) : activeError ? (
+          <ErrorState onRetry={loadActive} />
         ) : activeJobs.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconCircle}>
@@ -168,6 +185,8 @@ export function JobsScreen() {
         )
       ) : !completedLoaded ? (
         <ActivityIndicator color={colors.primary} style={styles.loading} />
+      ) : completedError ? (
+        <ErrorState onRetry={loadFirstCompletedPage} />
       ) : completedJobs.length === 0 ? (
         <Card>
           <ThemedText variant="subtitle">No completed jobs yet</ThemedText>
@@ -193,6 +212,48 @@ export function JobsScreen() {
         />
       )}
     </Screen>
+  );
+}
+
+/** Same visual language as the genuine "no jobs" empty state (icon
+ * circle + heading + caption), but honest about a fetch failure and
+ * offering a way out — a retry, not "Request a service", which would be
+ * the wrong CTA when the real problem is a network/auth hiccup, not an
+ * empty account. Tracks its own loading state around the retry call —
+ * without it, tapping Retry while the underlying problem is still there
+ * re-fails with zero visible feedback, which reads as "the button is
+ * broken" rather than "still failing" (confirmed live). */
+function ErrorState({ onRetry }: { onRetry: () => Promise<void> }) {
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await onRetry();
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  return (
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIconCircle}>
+        <ThemedText style={styles.emptyIcon}>⚠️</ThemedText>
+      </View>
+      <ThemedText variant="subtitle" style={styles.centered}>
+        Couldn't load your jobs
+      </ThemedText>
+      <ThemedText variant="caption" style={styles.centered}>
+        Check your connection and try again.
+      </ThemedText>
+      <Button
+        label="Retry"
+        variant="secondary"
+        onPress={handleRetry}
+        loading={isRetrying}
+        style={styles.emptyButton}
+      />
+    </View>
   );
 }
 

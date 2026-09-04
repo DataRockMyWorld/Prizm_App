@@ -473,7 +473,8 @@ from `colors.border` to `colors.textSecondary`. `StatCard` and
 reach the worker Profile screen's equivalent elements.
 
 Test counts after all of the above: backend 142/142, worker 58/58,
-customer 50/50. Both apps typecheck clean throughout.
+customer 50/50 (later 54/54 once the android-bugfixes tickets below were
+implemented). Both apps typecheck clean throughout.
 
 ## Physical iPhone builds — working
 
@@ -781,12 +782,17 @@ the emulator (request → match → accept → status stepper → propose price
    testing, not the Ticket 2 visual-fidelity pass itself; Ticket 2's own
    comparison against the hi-fi (spacing/heading-weight/button-gradient,
    matching Ticket 1's standard) hasn't been done yet.
-5. **Two written-but-not-yet-implemented tickets**:
-   `docs/tickets/android-bugfixes-2026-08-30.md` — T1 (geocode a
-   manually-typed address when GPS fails/is denied, both apps'
-   `RequestSubmissionScreen`/`AddressFormScreen`) and T2 (customer
-   `JobsScreen` real error state instead of a silent false-empty one).
-   Both fully scoped with concrete diffs, sitting ready to pick up.
+5. ✅ **Done (2026-09-04)** — both `docs/tickets/android-bugfixes-2026-08-30.md`
+   tickets: T1 (geocode a manually-typed address when GPS fails/is
+   denied, new shared `apps/customer/src/request/geocodeAddress.ts`,
+   wired into both `RequestSubmissionScreen`/`AddressFormScreen`) and T2
+   (customer `JobsScreen` real error + Retry state instead of a silent
+   false-empty one, adapted to the since-rewritten pagination version of
+   that screen). Live-repro'd (stopped/restarted the backend, confirmed
+   the error state and a working Retry) — that repro surfaced and fixed
+   one more small gap, a Retry button with no loading feedback while
+   still failing. See the ticket file's own implementation notes for
+   detail. Customer suite 54/54.
 6. **Not yet visually confirmed**: Jobs-tab pagination (both apps, see
    "What's actually built") works and is tested, but this project's test
    accounts only ever have 2–3 completed jobs, so infinite scroll has

@@ -8,7 +8,30 @@ ticket below already has a concrete fix; skipping the PRD stage per
 
 ---
 
-### T1 — Customer: geocode manually-typed addresses instead of requiring GPS
+### T1 — Customer: geocode manually-typed addresses instead of requiring GPS ✅ Done
+
+**Implementation notes:** built as planned. New shared
+`apps/customer/src/request/geocodeAddress.ts` — a single `geocodeAddress
+(address): Promise<GeocodeResult | null>` wrapping `Location.geocodeAsync`,
+never throwing (empty result, permission failure, network error all
+collapse to `null`) so both screens can treat it as a plain lookup rather
+than handling a rejection. Confirmed the exact v57 signature against the
+versioned docs before writing code, per `AGENTS.md`'s standing
+instruction — matched what was assumed (`Promise<LocationGeocodedLocation[]>`
+with `{latitude, longitude, ...}`).
+`RequestSubmissionScreen.tsx`: geocodes on the manual address field's
+`onBlur`, showing "Looking up that address…" while in flight and a
+"Couldn't find that address — try adding more detail" caption on
+failure; success sets `coords` and returns to display mode, same as the
+GPS-success path. `AddressFormScreen.tsx`: same helper, but only fires
+when `locationError` is already set (GPS already failed) — the happy
+path is untouched, matching the screen's existing "GPS coords win by
+default" design. 4 new tests (`geocodeAddress.test.ts`): successful
+lookup, empty-array result, thrown/rejected call, and blank input never
+even calling the geocoder. Customer suite 54/54 (was 50), typecheck
+clean.
+
+
 
 **Problem:** `RequestSubmissionScreen.tsx` and `AddressFormScreen.tsx`
 both gate their submit button on `coords` being a real `{latitude,
@@ -90,7 +113,32 @@ the more likely home — implementer's call).
 
 ---
 
-### T2 — Customer: `JobsScreen` shows a real error state instead of a false-empty one on fetch failure
+### T2 — Customer: `JobsScreen` shows a real error state instead of a false-empty one on fetch failure ✅ Done
+
+**Implementation notes:** built as planned, adapted to the fact that
+`JobsScreen.tsx` had since been rewritten for pagination (2026-09-04,
+see `PROGRESS.md`) into two separate loaders (`loadActive`/
+`loadFirstCompletedPage`) rather than the single `loadJobs()` this
+ticket was originally scoped against — both had the identical silent-
+catch bug, so both got the fix: an `activeError`/`completedError` flag
+each, rendering a shared `ErrorState` component (icon + honest copy +
+Retry button) instead of the genuine empty state when set. Deliberately
+left `loadMoreCompleted` (the infinite-scroll continuation, not the
+initial load) swallowing failures as before, per the same reasoning
+`ProfileScreen.tsx`'s silent catch got left alone — a transient failure
+there shouldn't blow away already-loaded content, only the two
+initial-load call sites needed the stricter contract.
+Live-repro'd exactly as the ticket's Tests section describes: stopped
+the backend, confirmed both tabs showed the new error state instead of
+"No jobs", restarted it, confirmed Retry recovers. That repro surfaced
+one more real gap not in the original ticket text: tapping Retry while
+still failing gave zero visual feedback (no spinner), reading as "the
+button is broken" rather than "still failing" — fixed by having
+`ErrorState` track its own `isRetrying` state around the retry call,
+wired to the existing `Button`'s `loading` prop. Customer suite 54/54,
+typecheck clean.
+
+
 
 **Problem:** `JobsScreen.tsx`'s `loadJobs()` does
 `catch { setJobs([]); }` — any failure (most concretely, an expired

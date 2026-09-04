@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
 import type { RequestStackParamList } from "../navigation/types";
+import { geocodeAddress } from "../request/geocodeAddress";
 
 type Props = NativeStackScreenProps<RequestStackParamList, "AddressForm">;
 
@@ -23,6 +24,8 @@ export function AddressFormScreen({ navigation, route }: Props) {
   const [addressText, setAddressText] = useState(editingAddress?.address_text ?? "");
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +54,26 @@ export function AddressFormScreen({ navigation, route }: Props) {
     // lifetime of this screen — route.params doesn't change mid-session).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fallback for when GPS already failed above — this field otherwise
+  // just sits there as descriptive text with no way to actually produce
+  // the coordinates Save needs. Only geocodes once GPS has already given
+  // up (locationError set); the happy path leaves this alone entirely,
+  // matching this screen's existing "GPS coords win by default" design.
+  const handleAddressTextBlur = async () => {
+    const trimmed = addressText.trim();
+    if (!locationError || !trimmed) return;
+    setIsGeocoding(true);
+    setGeocodeError(null);
+    const result = await geocodeAddress(trimmed);
+    setIsGeocoding(false);
+    if (result) {
+      setCoords(result);
+      setLocationError(null);
+    } else {
+      setGeocodeError("Couldn't find that address — try adding more detail");
+    }
+  };
 
   const canSubmit = Boolean(label.trim() && addressText.trim() && coords);
 
@@ -99,7 +122,11 @@ export function AddressFormScreen({ navigation, route }: Props) {
       <TextField
         placeholder="Enter your address"
         value={addressText}
-        onChangeText={setAddressText}
+        onChangeText={(text) => {
+          setAddressText(text);
+          setGeocodeError(null);
+        }}
+        onBlur={handleAddressTextBlur}
         multiline
         style={styles.addressField}
       />
@@ -110,6 +137,12 @@ export function AddressFormScreen({ navigation, route }: Props) {
       {locationError && (
         <ThemedText variant="caption" style={styles.error}>
           {locationError}
+        </ThemedText>
+      )}
+      {isGeocoding && <ThemedText variant="caption">Looking up that address…</ThemedText>}
+      {geocodeError && (
+        <ThemedText variant="caption" style={styles.error}>
+          {geocodeError}
         </ThemedText>
       )}
       {error && <ThemedText style={styles.error}>{error}</ThemedText>}

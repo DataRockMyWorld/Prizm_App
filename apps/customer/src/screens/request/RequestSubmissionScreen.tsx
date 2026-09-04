@@ -16,6 +16,7 @@ const HATCH_PATTERN_URI =
 
 import type { RequestStackParamList } from "../../navigation/types";
 import { applySavedAddress } from "../../request/applySavedAddress";
+import { geocodeAddress } from "../../request/geocodeAddress";
 
 type Props = NativeStackScreenProps<RequestStackParamList, "RequestSubmission">;
 
@@ -28,6 +29,8 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [photoUri, setPhotoUri] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,6 +65,27 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
     setAddress(applied.address);
     setCoords(applied.coords);
     setIsEditingAddress(false);
+  };
+
+  // Fallback for when GPS failed/was denied (or the customer just wants
+  // to override a resolved address): a manually-typed address is only
+  // useful once it's actually resolved to real coordinates — Submit
+  // needs a real lat/long for the matching-radius query regardless of
+  // where it came from. Runs on blur rather than on every keystroke.
+  const handleAddressBlur = async () => {
+    const trimmed = address.trim();
+    if (!trimmed) return;
+    setIsGeocoding(true);
+    setGeocodeError(null);
+    const result = await geocodeAddress(trimmed);
+    setIsGeocoding(false);
+    if (result) {
+      setCoords(result);
+      setLocationError(null);
+      setIsEditingAddress(false);
+    } else {
+      setGeocodeError("Couldn't find that address — try adding more detail");
+    }
   };
 
   useEffect(() => {
@@ -226,10 +250,13 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
                     <TextField
                       placeholder="Enter your address"
                       value={address}
-                      onChangeText={setAddress}
+                      onChangeText={(text) => {
+                        setAddress(text);
+                        setGeocodeError(null);
+                      }}
                       style={styles.addressField}
                       autoFocus
-                      onBlur={() => setIsEditingAddress(false)}
+                      onBlur={handleAddressBlur}
                     />
                   ) : (
                     <>
@@ -246,6 +273,14 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
                 </View>
               )}
               {locationError && <ThemedText variant="caption">{locationError}</ThemedText>}
+              {isGeocoding && (
+                <ThemedText variant="caption">Looking up that address…</ThemedText>
+              )}
+              {geocodeError && (
+                <ThemedText variant="caption" style={styles.geocodeError}>
+                  {geocodeError}
+                </ThemedText>
+              )}
             </View>
 
             <UploadTile
@@ -402,6 +437,9 @@ const styles = StyleSheet.create({
   },
   addressField: {
     flex: 1,
+  },
+  geocodeError: {
+    color: colors.danger,
   },
   priceCard: {
     backgroundColor: colors.surfaceMuted,
