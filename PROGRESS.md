@@ -1,6 +1,6 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-09-04. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-09-05. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
 
@@ -826,17 +826,17 @@ the emulator (request → match → accept → status stepper → propose price
    never actually fired live. Worth seeding a batch of dummy completed
    jobs and scrolling through it once, next time either app is open.
 
-**Dev environment status as of the end of the 2026-09-04 session**:
-everything is still up and running — `docker compose` stack, both Metro
-servers (worker `:8081`, customer `:8082`), the iOS Simulator (worker
-app installed) and a physical iPhone (customer app installed). If
-picking this up after time has passed, check the LAN IP first (see
-"LAN IP drift" above — a near-certainty by now) before assuming
-anything's broken. If everything was stopped in the meantime: `docker
-compose up -d` from the repo root, then `npx expo start --dev-client -c`
-in each of `apps/worker`/`apps/customer` (or just reopen the
-already-installed dev-client app on a booted Simulator/physical phone
-once Metro's back up).
+**Dev environment was fully stopped at the end of the 2026-09-05
+session** (both Metro/Expo dev servers, the iOS Simulator, and the whole
+`docker compose` stack via `docker compose down` — the named Postgres
+and MinIO volumes were left intact, confirmed via `docker volume ls`, so
+no data was lost). The physical iPhone still has both apps installed
+from earlier, just disconnected from Metro. To resume: `docker compose
+up -d` from the repo root, then `npx expo start --dev-client -c` in each
+of `apps/worker`/`apps/customer` — see `docs/setup-guide.md` for the
+full walkthrough if picking this up fresh. **Check the LAN IP first**
+(`ipconfig getifaddr en0` — see "LAN IP drift" above, a near-certainty
+by now) before assuming anything's broken.
 
 ## Known loose ends / things to revisit
 
