@@ -1,15 +1,28 @@
 import type { Address, JobRequest } from "@prizm/api";
 
+/** Pre-filled fields carried from a declined job into a fresh request
+ * (C-declined → "Request again"). */
+export interface RequestPrefill {
+  description: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
 export type RequestStackParamList = {
   Tabs: undefined;
-  RequestSubmission: { categoryId?: number };
+  RequestSubmission: { categoryId?: number; prefill?: RequestPrefill } | undefined;
   Searching: { jobId: number };
   Matched: { jobId: number };
   JobStatus: { jobId: number };
   Chat: { jobId: number };
   ReportProblem: { jobId: number };
   ReportChat: { jobId: number; messageId?: number; messageText?: string };
-  PriceAgreement: { jobId: number };
+  /** C-quote — customer confirms the worker's on-site quote before work
+   * starts (was PriceAgreement; the confirm/dispute-after-work screen). */
+  ConfirmQuote: { jobId: number };
+  /** C-declined — terminal, after a worker declines on site. */
+  WorkerDeclined: { jobId: number };
   Rating: { jobId: number };
   JobDetail: { jobId: number };
   /** Omit `address` to add a new one; pass it to edit an existing one. */

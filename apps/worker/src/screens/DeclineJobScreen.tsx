@@ -1,4 +1,4 @@
-import { ApiError, CancellationReason, cancelJobAsWorker, useAuth } from "@prizm/api";
+import { ApiError, CancellationReason, declineJob, useAuth } from "@prizm/api";
 import { Button, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
@@ -13,9 +13,9 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** W3 — free cancellation within the 10-minute window, with a required
- * reason and optional note. */
-export function CancelJobScreen() {
+/** W2-decline — worker declines the job after evaluating it on site. Closes
+ * the job (terminal); the customer is told and can request again. */
+export function DeclineJobScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -31,10 +31,10 @@ export function CancelJobScreen() {
     setIsSubmitting(true);
     setError(null);
     try {
-      await cancelJobAsWorker(accessToken, jobId, selected, note.trim());
+      await declineJob(accessToken, jobId, selected, note.trim());
       navigation.navigate("Tabs");
     } catch (err) {
-      setError(apiErrorMessage(err, "Couldn't cancel this job. Please try again."));
+      setError(apiErrorMessage(err, "Couldn't decline this job. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -46,19 +46,12 @@ export function CancelJobScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
           <ThemedText variant="title">‹</ThemedText>
         </Pressable>
-        <ThemedText variant="subtitle">Cancel job</ThemedText>
+        <ThemedText variant="subtitle">Decline job</ThemedText>
         <View style={{ width: 24 }} />
       </View>
 
-      <View style={styles.warningBanner}>
-        <ThemedText style={styles.warningText}>
-          You can cancel free of charge within 10 minutes of accepting. This option disappears
-          after that — cancelling later goes through Report a Problem.
-        </ThemedText>
-      </View>
-
       <ThemedText variant="caption" style={styles.prompt}>
-        Why are you cancelling?
+        Why are you declining?
       </ThemedText>
 
       <ReasonPicker selected={selected} onSelect={setSelected} />
@@ -71,10 +64,15 @@ export function CancelJobScreen() {
         style={styles.noteField}
       />
 
+      <ThemedText variant="caption" style={styles.warning}>
+        This closes the job — the customer will be asked to request again.
+      </ThemedText>
+
       {error && <ThemedText style={styles.error}>{error}</ThemedText>}
       <View style={styles.spacer} />
       <Button
-        label="Confirm Cancellation"
+        label="Decline job"
+        variant="danger"
         onPress={handleConfirm}
         disabled={!selected}
         loading={isSubmitting}
@@ -90,17 +88,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  warningBanner: {
-    backgroundColor: "#FFF3EA",
-    borderRadius: 12,
-    padding: spacing.sm,
     marginBottom: spacing.md,
-  },
-  warningText: {
-    color: "#9A5A2A",
-    fontSize: 11,
   },
   prompt: {
     marginBottom: spacing.sm,
@@ -110,6 +98,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingVertical: spacing.sm,
     marginTop: spacing.md,
+  },
+  warning: {
+    marginTop: spacing.sm,
+    color: colors.textSecondary,
   },
   error: {
     color: colors.danger,

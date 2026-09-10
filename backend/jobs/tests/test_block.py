@@ -68,7 +68,7 @@ def test_worker_can_block_customer_once_job_is_terminal(api_client):
         JobRequest.Status.MATCHED,
         JobRequest.Status.ACCEPTED,
         JobRequest.Status.IN_PROGRESS,
-        JobRequest.Status.AWAITING_PRICE_CONFIRMATION,
+        JobRequest.Status.QUOTE_PENDING,
     ],
 )
 @pytest.mark.django_db

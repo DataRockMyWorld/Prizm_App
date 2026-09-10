@@ -1,13 +1,13 @@
 import { useAuth } from "@prizm/api";
-import { colors, spacing, ThemedText } from "@prizm/ui";
+import { Button, colors, fontFamily, radii, spacing, ThemedText } from "@prizm/ui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect } from "react";
-import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { useJobStatusPolling } from "../waitingForConfirmation/useJobStatusPolling";
 
-/** W5 — full-screen wait state while the customer confirms or disputes the
- * worker's proposed price. */
+/** W-quote-wait — full-screen wait while the customer confirms (or rejects)
+ * the worker's on-site quote. This is *before* the work in the v2 flow. */
 export function WaitingForConfirmationScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
@@ -16,12 +16,12 @@ export function WaitingForConfirmationScreen() {
   const { job, branch } = useJobStatusPolling({ accessToken, jobId });
 
   useEffect(() => {
-    if (branch === "completed") {
-      navigation.replace("JobComplete", { jobId });
-    } else if (branch === "disputed") {
+    if (branch === "quote_accepted") {
+      navigation.replace("ActiveJob", { jobId });
+    } else if (branch === "rejected") {
       Alert.alert(
-        "Pricing flagged",
-        "The customer flagged a pricing issue — this has been sent for review.",
+        "Quote not accepted",
+        "The customer didn't accept your quote, so the job has closed.",
         [{ text: "OK", onPress: () => navigation.navigate("Tabs") }]
       );
     } else if (branch === "other") {
@@ -48,18 +48,40 @@ export function WaitingForConfirmationScreen() {
       <ActivityIndicator color={colors.primary} size="large" />
       <View style={styles.textBlock}>
         <ThemedText variant="title" style={styles.centered}>
-          Waiting for {firstName} to confirm
+          Waiting for {firstName} to confirm your quote
         </ThemedText>
         <ThemedText variant="caption" style={styles.centered}>
-          You proposed N${job.agreed_price} for this job. We'll notify you once they confirm or
-          dispute it.
+          We'll let you know as soon as they do. You can start once the quote is confirmed.
         </ThemedText>
       </View>
       <View style={styles.summaryChip}>
-        <ThemedText variant="caption" style={styles.summaryText}>
-          N${job.agreed_price} · {job.category.name}
-          {job.description ? ` · ${job.description}` : ""}
+        <ThemedText variant="caption" style={styles.summaryLabel}>
+          QUOTED
         </ThemedText>
+        <ThemedText variant="subtitle">N${job.agreed_price}</ThemedText>
+      </View>
+      <Button
+        label={`Message ${firstName}`}
+        variant="secondary"
+        onPress={() => navigation.navigate("Chat", { jobId })}
+      />
+
+      {/* Escape hatches — the job keeps polling and stays reachable from
+          the Jobs tab, so leaving here isn't a dead end. */}
+      <View style={styles.linkRow}>
+        <Pressable onPress={() => navigation.navigate("Tabs")} hitSlop={8}>
+          <ThemedText variant="caption" style={styles.link}>
+            Back to Jobs
+          </ThemedText>
+        </Pressable>
+        <ThemedText variant="caption" style={styles.linkDivider}>
+          ·
+        </ThemedText>
+        <Pressable onPress={() => navigation.navigate("DeclineJob", { jobId })} hitSlop={8}>
+          <ThemedText variant="caption" style={styles.linkDanger}>
+            Decline this job
+          </ThemedText>
+        </Pressable>
       </View>
     </View>
   );
@@ -81,13 +103,35 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   summaryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.surfaceMuted,
-    borderRadius: 14,
+    borderRadius: radii.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     width: "100%",
   },
-  summaryText: {
-    textAlign: "center",
+  summaryLabel: {
+    color: colors.textSecondary,
+    fontFamily: fontFamily.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  link: {
+    color: colors.textSecondary,
+    fontFamily: fontFamily.bold,
+  },
+  linkDivider: {
+    color: colors.textSecondary,
+  },
+  linkDanger: {
+    color: colors.primary,
+    fontFamily: fontFamily.bold,
   },
 });

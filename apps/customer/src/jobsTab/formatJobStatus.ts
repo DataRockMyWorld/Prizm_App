@@ -5,12 +5,13 @@ const LABELS: Record<JobStatus, string> = {
   searching: "Searching",
   matched: "Matched",
   accepted: "Accepted",
-  on_my_way: "On my way",
-  arrived: "Arrived",
+  arrived: "Assessing the job",
+  quote_pending: "Confirm the price",
+  quote_accepted: "About to start",
   in_progress: "In progress",
-  awaiting_price_confirmation: "Awaiting confirmation",
   completed: "Completed",
   cancelled: "Cancelled",
+  declined: "Declined by worker",
   disputed: "Disputed",
 };
 
@@ -25,12 +26,13 @@ const TONES: Record<JobStatus, StatusTone> = {
   searching: "neutral",
   matched: "neutral",
   accepted: "active",
-  on_my_way: "active",
   arrived: "active",
+  quote_pending: "waiting",
+  quote_accepted: "active",
   in_progress: "active",
-  awaiting_price_confirmation: "waiting",
   completed: "success",
   cancelled: "neutral",
+  declined: "neutral",
   disputed: "danger",
 };
 

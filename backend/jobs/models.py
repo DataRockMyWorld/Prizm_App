@@ -13,20 +13,30 @@ class JobRequest(models.Model):
         SEARCHING = "searching", "Searching"
         MATCHED = "matched", "Matched"
         ACCEPTED = "accepted", "Accepted"
-        ON_MY_WAY = "on_my_way", "On my way"
         ARRIVED = "arrived", "Arrived"
+        # On-site: worker has sent a quote, waiting for the customer to
+        # confirm it. Price is agreed BEFORE work starts (redesigned
+        # 2026-09-08 — see docs/prds/active-job-flow-v2.md). Replaces the
+        # old on_my_way + awaiting_price_confirmation steps.
+        QUOTE_PENDING = "quote_pending", "Quote pending"
+        QUOTE_ACCEPTED = "quote_accepted", "Quote accepted"
         IN_PROGRESS = "in_progress", "In progress"
-        AWAITING_PRICE_CONFIRMATION = (
-            "awaiting_price_confirmation",
-            "Awaiting price confirmation",
-        )
         COMPLETED = "completed", "Completed"
         CANCELLED = "cancelled", "Cancelled"
+        # Worker declined the job after arriving and evaluating it — a
+        # sanctioned exit distinct from a pre-arrival cancellation or a
+        # dispute. Terminal; the customer re-requests.
+        DECLINED = "declined", "Declined"
         DISPUTED = "disputed", "Disputed"
 
     # Shared with DeleteAccountView's active-job guard rail — a job in any
     # other status is still "in flight" and blocks account deletion.
-    TERMINAL_STATUSES = (Status.COMPLETED, Status.CANCELLED, Status.DISPUTED)
+    TERMINAL_STATUSES = (
+        Status.COMPLETED,
+        Status.CANCELLED,
+        Status.DECLINED,
+        Status.DISPUTED,
+    )
 
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -62,12 +72,14 @@ class JobRequest(models.Model):
     )
     worker_note = models.TextField(blank=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
-    # Per-stage timestamps for the customer's live job-status timeline —
-    # accepted_at already existed; these three cover the rest of the
-    # granular stepper (on_my_way/arrived/in_progress) so each reached
-    # step can show when it actually happened, not just that it happened.
-    on_my_way_at = models.DateTimeField(null=True, blank=True)
+    # Per-stage timestamps for the customer's live job-status timeline, so
+    # each reached step can show when it actually happened. accepted_at
+    # already existed; the rest cover arrived → quote → quote accepted →
+    # work started. (on_my_way_at was dropped with the "on my way" step,
+    # 2026-09-08 — see docs/prds/active-job-flow-v2.md.)
     arrived_at = models.DateTimeField(null=True, blank=True)
+    quoted_at = models.DateTimeField(null=True, blank=True)
+    quote_accepted_at = models.DateTimeField(null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -183,15 +195,24 @@ class CancellationLog(models.Model):
         JOB_DETAILS_UNCLEAR = "job_details_unclear", "Job details unclear"
         OTHER = "other", "Other"
 
+    class Kind(models.TextChoices):
+        # Free cancellation within 10 minutes of accepting, before arrival.
+        CANCELLATION = "cancellation", "Cancellation"
+        # Worker arrived, evaluated the job, and declined it (terminal).
+        ON_SITE_DECLINE = "on_site_decline", "On-site decline"
+
     job = models.ForeignKey(
         JobRequest, on_delete=models.CASCADE, related_name="cancellation_logs"
     )
     worker = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cancellations"
     )
+    kind = models.CharField(
+        max_length=20, choices=Kind.choices, default=Kind.CANCELLATION
+    )
     reason = models.CharField(max_length=30, choices=Reason.choices)
     note = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Cancellation of job #{self.job_id} by {self.worker_id}"
+        return f"{self.get_kind_display()} of job #{self.job_id} by {self.worker_id}"

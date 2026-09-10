@@ -80,6 +80,92 @@ def test_message_from_worker_enqueues_push_to_the_customer(api_client):
     assert kwargs["data"] == {"type": "chat_message", "job_id": job.id}
 
 
+# --- v2 active-job flow (docs/prds/active-job-flow-v2.md T3) -------------
+
+
+@pytest.mark.django_db
+def test_first_quote_enqueues_push_to_the_customer(api_client):
+    from django.utils import timezone
+
+    job = _live_job(status=JobRequest.Status.ARRIVED, arrived_at=timezone.now())
+    api_client.force_authenticate(user=User.objects.get(pk=job.worker_id))
+
+    with mock.patch("jobs.views.send_push_notification") as mock_task:
+        response = api_client.post(
+            f"/api/jobs/{job.pk}/quote/", {"agreed_price": "250.00"}, format="json"
+        )
+
+    assert response.status_code == 200
+    mock_task.delay.assert_called_once()
+    args, kwargs = mock_task.delay.call_args
+    assert args[0] == job.customer_id
+    assert kwargs["data"] == {"type": "quote_pending", "job_id": job.id}
+
+
+@pytest.mark.django_db
+def test_quote_overwrite_does_not_enqueue_a_second_push(api_client):
+    from django.utils import timezone
+
+    job = _live_job(status=JobRequest.Status.ARRIVED, arrived_at=timezone.now())
+    api_client.force_authenticate(user=User.objects.get(pk=job.worker_id))
+    api_client.post(f"/api/jobs/{job.pk}/quote/", {"agreed_price": "250.00"}, format="json")
+
+    with mock.patch("jobs.views.send_push_notification") as mock_task:
+        response = api_client.post(
+            f"/api/jobs/{job.pk}/quote/", {"agreed_price": "280.00"}, format="json"
+        )
+
+    assert response.status_code == 200
+    mock_task.delay.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_confirm_quote_enqueues_push_to_the_worker(api_client):
+    job = _live_job(status=JobRequest.Status.QUOTE_PENDING, agreed_price="250.00")
+    api_client.force_authenticate(user=job.customer)
+
+    with mock.patch("jobs.views.send_push_notification") as mock_task:
+        response = api_client.post(f"/api/jobs/{job.pk}/confirm-quote/")
+
+    assert response.status_code == 200
+    mock_task.delay.assert_called_once()
+    args, kwargs = mock_task.delay.call_args
+    assert args[0] == job.worker_id
+    assert kwargs["data"] == {"type": "quote_accepted", "job_id": job.id}
+
+
+@pytest.mark.django_db
+def test_reject_quote_enqueues_push_to_the_worker(api_client):
+    job = _live_job(status=JobRequest.Status.QUOTE_PENDING, agreed_price="250.00")
+    api_client.force_authenticate(user=job.customer)
+
+    with mock.patch("jobs.views.send_push_notification") as mock_task:
+        response = api_client.post(f"/api/jobs/{job.pk}/reject-quote/")
+
+    assert response.status_code == 200
+    args, kwargs = mock_task.delay.call_args
+    assert args[0] == job.worker_id
+    assert kwargs["data"] == {"type": "quote_rejected", "job_id": job.id}
+
+
+@pytest.mark.django_db
+def test_decline_enqueues_push_to_the_customer(api_client):
+    from django.utils import timezone
+
+    job = _live_job(status=JobRequest.Status.ARRIVED, arrived_at=timezone.now())
+    api_client.force_authenticate(user=User.objects.get(pk=job.worker_id))
+
+    with mock.patch("jobs.views.send_push_notification") as mock_task:
+        response = api_client.post(
+            f"/api/jobs/{job.pk}/decline/", {"reason": "other"}, format="json"
+        )
+
+    assert response.status_code == 200
+    args, kwargs = mock_task.delay.call_args
+    assert args[0] == job.customer_id
+    assert kwargs["data"] == {"type": "job_declined", "job_id": job.id}
+
+
 @pytest.fixture
 def worker_profile_factory():
     from django.contrib.gis.geos import Point

@@ -22,12 +22,17 @@ type Props = NativeStackScreenProps<RequestStackParamList, "RequestSubmission">;
 
 export function RequestSubmissionScreen({ navigation, route }: Props) {
   const { accessToken } = useAuth();
+  const prefill = route.params?.prefill;
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [category, setCategory] = useState<ServiceCategory | null>(null);
-  const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
+  const [description, setDescription] = useState(prefill?.description ?? "");
+  const [address, setAddress] = useState(prefill?.address ?? "");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    prefill && prefill.latitude != null && prefill.longitude != null
+      ? { latitude: prefill.latitude, longitude: prefill.longitude }
+      : null
+  );
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
@@ -45,9 +50,8 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
         // below and goes straight to the form. Arriving with no category
         // (the generic "Request a Service" button) shows the picker
         // instead of silently defaulting to the first one alphabetically.
-        const match = route.params?.categoryId
-          ? data.find((c) => c.id === route.params.categoryId)
-          : undefined;
+        const categoryId = route.params?.categoryId;
+        const match = categoryId ? data.find((c) => c.id === categoryId) : undefined;
         setCategory(match || null);
       })
       .catch(() => {});
@@ -89,6 +93,9 @@ export function RequestSubmissionScreen({ navigation, route }: Props) {
   };
 
   useEffect(() => {
+    // "Request again" after a decline carries the previous job's location —
+    // don't stomp it with a fresh GPS lookup.
+    if (prefill && prefill.latitude != null && prefill.longitude != null) return;
     (async () => {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (permission.status !== "granted") {

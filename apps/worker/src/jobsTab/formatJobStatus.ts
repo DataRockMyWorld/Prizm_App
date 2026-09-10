@@ -4,13 +4,14 @@ const LABELS: Record<JobStatus, string> = {
   requested: "Requested",
   searching: "Searching",
   matched: "Matched",
-  accepted: "Accepted",
-  on_my_way: "On my way",
-  arrived: "Arrived",
+  accepted: "Heading over",
+  arrived: "Evaluating",
+  quote_pending: "Quote sent",
+  quote_accepted: "Ready to start",
   in_progress: "In progress",
-  awaiting_price_confirmation: "Awaiting confirmation",
   completed: "Completed",
   cancelled: "Cancelled",
+  declined: "Declined",
   disputed: "Disputed",
 };
 
@@ -25,12 +26,15 @@ const TONES: Record<JobStatus, StatusTone> = {
   searching: "neutral",
   matched: "neutral",
   accepted: "active",
-  on_my_way: "active",
   arrived: "active",
+  quote_pending: "waiting",
+  quote_accepted: "active",
   in_progress: "active",
-  awaiting_price_confirmation: "waiting",
   completed: "success",
   cancelled: "neutral",
+  // Neutral, not danger — a worker declining after evaluating is a
+  // sanctioned outcome, not an alarm (see the design brief).
+  declined: "neutral",
   disputed: "danger",
 };
 
@@ -39,10 +43,11 @@ export function getStatusTone(status: JobStatus): StatusTone {
 }
 
 /** Caption shown under the price on a job card. Deliberately not "Paid" —
- * mobile money isn't wired up yet, so "Confirmed" is what's actually true
- * (the customer confirmed the proposed amount, not that money moved). */
+ * mobile money isn't wired up yet, so this reflects agreement state, not
+ * that money moved. */
 export function getPriceCaption(status: JobStatus): string | null {
-  if (status === "awaiting_price_confirmation") return "Proposed";
-  if (status === "completed") return "Confirmed";
+  if (status === "quote_pending") return "quoted";
+  if (status === "quote_accepted" || status === "in_progress") return "agreed";
+  if (status === "completed") return "confirmed";
   return null;
 }

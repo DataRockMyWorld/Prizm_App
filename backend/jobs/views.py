@@ -16,18 +16,23 @@ from .matching import MATCHING_RADIUS_KM, refresh_job_matching, rematch_nearby_j
 from .models import CancellationLog, JobOffer, JobRequest, Message, Rating, Report
 from .permissions import IsCustomerRole, IsWorkerRole
 from .serializers import (
-    CompleteJobSerializer,
     JobOfferSerializer,
     JobRequestCreateSerializer,
     JobRequestSerializer,
     MessageSerializer,
     NearbyJobSerializer,
+    QuoteSerializer,
     RatingCreateSerializer,
     ReportCreateSerializer,
     WorkerCancelSerializer,
     WorkerStatusSerializer,
     WorkerStatusUpdateSerializer,
 )
+
+
+def _first_name(user):
+    """First name for notification copy, with a neutral fallback."""
+    return (user.full_name or "").split(" ")[0] or "The customer"
 
 
 class JobsPagination(PageNumberPagination):
@@ -176,7 +181,11 @@ class JobCancelView(APIView):
 
 
 class _WorkerJobTransitionView(APIView):
-    """Simple worker-side status transitions with no extra input (on-my-way/arrived/start)."""
+    """Simple worker-side status transitions with no extra input (arrived/start).
+
+    The v2 flow (docs/prds/active-job-flow-v2.md) is:
+    accepted → arrived → quote_pending → quote_accepted → in_progress → completed.
+    """
 
     permission_classes = [IsAuthenticated, IsWorkerRole]
     required_current = None
@@ -202,29 +211,106 @@ class _WorkerJobTransitionView(APIView):
         return Response(JobRequestSerializer(job).data)
 
 
-class OnMyWayView(_WorkerJobTransitionView):
-    required_current = JobRequest.Status.ACCEPTED
-    target_status = JobRequest.Status.ON_MY_WAY
-    timestamp_field = "on_my_way_at"
-    error_detail = "Job must be accepted before you're on your way."
-
-
 class ArrivedView(_WorkerJobTransitionView):
-    required_current = JobRequest.Status.ON_MY_WAY
+    required_current = JobRequest.Status.ACCEPTED
     target_status = JobRequest.Status.ARRIVED
     timestamp_field = "arrived_at"
-    error_detail = "You need to be on your way before marking arrived."
+    error_detail = "You need to have accepted the job before marking arrived."
 
 
 class StartJobView(_WorkerJobTransitionView):
-    required_current = JobRequest.Status.ARRIVED
+    required_current = JobRequest.Status.QUOTE_ACCEPTED
     target_status = JobRequest.Status.IN_PROGRESS
     timestamp_field = "started_at"
-    error_detail = "You need to have arrived before starting the job."
+    error_detail = "The customer needs to confirm your quote before you start."
+
+
+class QuoteView(APIView):
+    """Worker submits (or re-submits) an on-site quote for the customer to confirm.
+
+    Valid from `arrived` (first quote) or `quote_pending` (overwrite a quote
+    the customer hasn't acted on yet). Sets the price before any work — see
+    docs/prds/active-job-flow-v2.md.
+    """
+
+    permission_classes = [IsAuthenticated, IsWorkerRole]
+
+    def post(self, request, pk):
+        job = get_object_or_404(JobRequest, pk=pk)
+        if job.worker_id != request.user.id:
+            return Response({"detail": "Not your job."}, status=403)
+        if job.status not in (
+            JobRequest.Status.ARRIVED,
+            JobRequest.Status.QUOTE_PENDING,
+        ):
+            return Response(
+                {"detail": "You can only send a quote once you've arrived."},
+                status=400,
+            )
+
+        serializer = QuoteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        first_quote = job.status == JobRequest.Status.ARRIVED
+        job.agreed_price = serializer.validated_data["agreed_price"]
+        job.worker_note = serializer.validated_data.get("note", "")
+        job.status = JobRequest.Status.QUOTE_PENDING
+        update_fields = ["agreed_price", "worker_note", "status", "updated_at"]
+        if first_quote:
+            job.quoted_at = timezone.now()
+            update_fields.append("quoted_at")
+        job.save(update_fields=update_fields)
+
+        if first_quote:
+            send_push_notification.delay(
+                job.customer_id,
+                title="New price to review",
+                body=f"Your {job.category.name} worker sent a price — tap to review",
+                data={"type": "quote_pending", "job_id": job.id},
+            )
+        return Response(JobRequestSerializer(job).data)
+
+
+class DeclineJobView(APIView):
+    """Worker declines the job after arriving and evaluating it (terminal)."""
+
+    permission_classes = [IsAuthenticated, IsWorkerRole]
+
+    def post(self, request, pk):
+        job = get_object_or_404(JobRequest, pk=pk)
+        if job.worker_id != request.user.id:
+            return Response({"detail": "Not your job."}, status=403)
+        if job.status not in (
+            JobRequest.Status.ARRIVED,
+            JobRequest.Status.QUOTE_PENDING,
+        ):
+            return Response(
+                {"detail": "You can only decline after arriving, before work starts."},
+                status=400,
+            )
+
+        serializer = WorkerCancelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        CancellationLog.objects.create(
+            job=job,
+            worker=request.user,
+            kind=CancellationLog.Kind.ON_SITE_DECLINE,
+            reason=serializer.validated_data["reason"],
+            note=serializer.validated_data["note"],
+        )
+        job.status = JobRequest.Status.DECLINED
+        job.save(update_fields=["status", "updated_at"])
+        send_push_notification.delay(
+            job.customer_id,
+            title="Job could not be taken",
+            body=f"Your {job.category.name} worker couldn't take the job — you can request again",
+            data={"type": "job_declined", "job_id": job.id},
+        )
+        return Response(JobRequestSerializer(job).data)
 
 
 class CompleteJobView(APIView):
-    """Worker marks the job complete and proposes a price."""
+    """Worker marks the job complete. No price step — it was agreed at the quote."""
 
     permission_classes = [IsAuthenticated, IsWorkerRole]
 
@@ -235,38 +321,70 @@ class CompleteJobView(APIView):
         if job.status != JobRequest.Status.IN_PROGRESS:
             return Response({"detail": "Job must be in progress to mark complete."}, status=400)
 
-        serializer = CompleteJobSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        job.agreed_price = serializer.validated_data["agreed_price"]
-        job.worker_note = serializer.validated_data.get("note", "")
-        job.status = JobRequest.Status.AWAITING_PRICE_CONFIRMATION
-        job.save(update_fields=["agreed_price", "worker_note", "status", "updated_at"])
-        return Response(JobRequestSerializer(job).data)
-
-
-class ConfirmPriceView(APIView):
-    permission_classes = [IsAuthenticated, IsCustomerRole]
-
-    def post(self, request, pk):
-        job = get_object_or_404(JobRequest, pk=pk)
-        if job.customer_id != request.user.id:
-            return Response({"detail": "Not your job."}, status=403)
-        if job.status != JobRequest.Status.AWAITING_PRICE_CONFIRMATION:
-            return Response({"detail": "No price is awaiting confirmation."}, status=400)
         job.status = JobRequest.Status.COMPLETED
         job.save(update_fields=["status", "updated_at"])
         return Response(JobRequestSerializer(job).data)
 
 
-class DisputePriceView(APIView):
+class ConfirmQuoteView(APIView):
+    """Customer confirms the worker's on-site quote — unlocks 'Start work'."""
+
     permission_classes = [IsAuthenticated, IsCustomerRole]
 
     def post(self, request, pk):
         job = get_object_or_404(JobRequest, pk=pk)
         if job.customer_id != request.user.id:
             return Response({"detail": "Not your job."}, status=403)
-        if job.status != JobRequest.Status.AWAITING_PRICE_CONFIRMATION:
-            return Response({"detail": "No price is awaiting confirmation."}, status=400)
+        if job.status != JobRequest.Status.QUOTE_PENDING:
+            return Response({"detail": "No quote is awaiting confirmation."}, status=400)
+        job.status = JobRequest.Status.QUOTE_ACCEPTED
+        job.quote_accepted_at = timezone.now()
+        job.save(update_fields=["status", "quote_accepted_at", "updated_at"])
+        send_push_notification.delay(
+            job.worker_id,
+            title="Quote accepted",
+            body=f"{_first_name(job.customer)} accepted your quote — you can start",
+            data={"type": "quote_accepted", "job_id": job.id},
+        )
+        return Response(JobRequestSerializer(job).data)
+
+
+class RejectQuoteView(APIView):
+    """Customer rejects the worker's quote — closes the job (they can re-request)."""
+
+    permission_classes = [IsAuthenticated, IsCustomerRole]
+
+    def post(self, request, pk):
+        job = get_object_or_404(JobRequest, pk=pk)
+        if job.customer_id != request.user.id:
+            return Response({"detail": "Not your job."}, status=403)
+        if job.status != JobRequest.Status.QUOTE_PENDING:
+            return Response({"detail": "No quote is awaiting confirmation."}, status=400)
+        job.status = JobRequest.Status.CANCELLED
+        job.save(update_fields=["status", "updated_at"])
+        send_push_notification.delay(
+            job.worker_id,
+            title="Quote not accepted",
+            body=f"{_first_name(job.customer)} didn't accept the quote",
+            data={"type": "quote_rejected", "job_id": job.id},
+        )
+        return Response(JobRequestSerializer(job).data)
+
+
+class DisputePriceView(APIView):
+    """Customer disputes the agreed price after the job is done → manual admin review."""
+
+    permission_classes = [IsAuthenticated, IsCustomerRole]
+
+    def post(self, request, pk):
+        job = get_object_or_404(JobRequest, pk=pk)
+        if job.customer_id != request.user.id:
+            return Response({"detail": "Not your job."}, status=403)
+        if job.status != JobRequest.Status.COMPLETED:
+            return Response(
+                {"detail": "You can only dispute the price of a completed job."},
+                status=400,
+            )
 
         details = request.data.get("details", "")
         Report.objects.create(

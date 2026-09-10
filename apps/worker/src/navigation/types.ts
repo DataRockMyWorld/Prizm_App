@@ -36,7 +36,11 @@ export type WorkerRootStackParamList = {
   };
   ActiveJob: { jobId: number };
   CancelJob: { jobId: number };
-  ProposePrice: { jobId: number };
+  /** W2-eval-b — the worker's on-site quote (was ProposePrice; now sent
+   * before the work, not after — see docs/prds/active-job-flow-v2.md). */
+  SendQuote: { jobId: number };
+  /** W2-decline — worker declines after evaluating on site (terminal). */
+  DeclineJob: { jobId: number };
   WaitingForConfirmation: { jobId: number };
   JobComplete: { jobId: number };
   JobDetail: { jobId: number };

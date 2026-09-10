@@ -4,9 +4,9 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
-/** Simple completion confirmation once the customer has confirmed the
- * price — no earnings ledger since mobile money (step 10) is still
- * stubbed. */
+/** W-done — plain completion confirmation. The price was agreed at the
+ * quote step, so there's nothing to enter here; no earnings ledger since
+ * mobile money (step 10) is still stubbed. */
 export function JobCompleteScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
@@ -34,13 +34,17 @@ export function JobCompleteScreen() {
             N${job.agreed_price}
           </ThemedText>
           <ThemedText variant="caption" style={styles.centered}>
-            {job.customer?.full_name || "Customer"}
+            {job.customer?.full_name || "The customer"} pays via Mobile Money
           </ThemedText>
         </View>
       ) : (
         <ActivityIndicator color={colors.primary} />
       )}
-      <Button label="Done" onPress={() => navigation.navigate("Tabs")} style={styles.doneButton} />
+      <Button
+        label="Back to Jobs"
+        onPress={() => navigation.navigate("Tabs")}
+        style={styles.doneButton}
+      />
     </View>
   );
 }

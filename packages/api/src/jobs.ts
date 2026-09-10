@@ -6,12 +6,13 @@ export type JobStatus =
   | "searching"
   | "matched"
   | "accepted"
-  | "on_my_way"
   | "arrived"
+  | "quote_pending"
+  | "quote_accepted"
   | "in_progress"
-  | "awaiting_price_confirmation"
   | "completed"
   | "cancelled"
+  | "declined"
   | "disputed";
 
 export interface JobWorker {
@@ -57,11 +58,15 @@ export interface JobRequest {
   worker: JobWorker | null;
   current_offer_responds_by: string | null;
   accepted_at: string | null;
-  on_my_way_at: string | null;
   arrived_at: string | null;
+  quoted_at: string | null;
+  quote_accepted_at: string | null;
   started_at: string | null;
   rating: JobRating | null;
   last_message: JobLastMessage | null;
+  /** Human-readable reason for a worker's on-site decline — null unless
+   * `status === "declined"`. */
+  decline_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -170,30 +175,59 @@ export function declineOffer(token: string, offerId: number) {
   });
 }
 
-export function markOnMyWay(token: string, jobId: number) {
-  return apiRequest<JobRequest>(`/api/jobs/${jobId}/on-my-way/`, { method: "POST", token });
-}
-
 export function markArrived(token: string, jobId: number) {
   return apiRequest<JobRequest>(`/api/jobs/${jobId}/arrived/`, { method: "POST", token });
 }
 
-export function markInProgress(token: string, jobId: number) {
-  return apiRequest<JobRequest>(`/api/jobs/${jobId}/start/`, { method: "POST", token });
-}
-
-export function completeJob(token: string, jobId: number, agreedPrice: number, note?: string) {
-  return apiRequest<JobRequest>(`/api/jobs/${jobId}/complete/`, {
+/** Worker's on-site quote — amount + optional "what's included" note. Sets the
+ *  price before any work; valid from `arrived` or (overwrite) `quote_pending`. */
+export function submitQuote(
+  token: string,
+  jobId: number,
+  agreedPrice: number,
+  note?: string
+) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/quote/`, {
     method: "POST",
     token,
     body: { agreed_price: agreedPrice, note: note || "" },
   });
 }
 
-export function confirmPrice(token: string, jobId: number) {
-  return apiRequest<JobRequest>(`/api/jobs/${jobId}/confirm-price/`, { method: "POST", token });
+/** Worker declines the job after arriving and evaluating it (terminal). */
+export function declineJob(
+  token: string,
+  jobId: number,
+  reason: CancellationReason,
+  note?: string
+) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/decline/`, {
+    method: "POST",
+    token,
+    body: { reason, note: note || "" },
+  });
 }
 
+export function markInProgress(token: string, jobId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/start/`, { method: "POST", token });
+}
+
+/** Worker marks the job done. No price step — it was agreed at the quote. */
+export function completeJob(token: string, jobId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/complete/`, { method: "POST", token });
+}
+
+/** Customer confirms the worker's on-site quote — unlocks "Start work". */
+export function confirmQuote(token: string, jobId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/confirm-quote/`, { method: "POST", token });
+}
+
+/** Customer rejects the quote — closes the job (they can re-request). */
+export function rejectQuote(token: string, jobId: number) {
+  return apiRequest<JobRequest>(`/api/jobs/${jobId}/reject-quote/`, { method: "POST", token });
+}
+
+/** Customer disputes the agreed price after completion → manual admin review. */
 export function disputePrice(token: string, jobId: number, details?: string) {
   return apiRequest<JobRequest>(`/api/jobs/${jobId}/dispute-price/`, {
     method: "POST",

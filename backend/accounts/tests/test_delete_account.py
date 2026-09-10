@@ -11,10 +11,17 @@ NON_TERMINAL_STATUSES = [
     JobRequest.Status.SEARCHING,
     JobRequest.Status.MATCHED,
     JobRequest.Status.ACCEPTED,
-    JobRequest.Status.ON_MY_WAY,
     JobRequest.Status.ARRIVED,
+    JobRequest.Status.QUOTE_PENDING,
+    JobRequest.Status.QUOTE_ACCEPTED,
     JobRequest.Status.IN_PROGRESS,
-    JobRequest.Status.AWAITING_PRICE_CONFIRMATION,
+]
+
+TERMINAL_STATUSES = [
+    JobRequest.Status.COMPLETED,
+    JobRequest.Status.CANCELLED,
+    JobRequest.Status.DECLINED,
+    JobRequest.Status.DISPUTED,
 ]
 
 
@@ -64,10 +71,7 @@ def test_guard_rail_blocks_deletion_with_a_non_terminal_job_as_worker(api_client
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "status",
-    [JobRequest.Status.COMPLETED, JobRequest.Status.CANCELLED, JobRequest.Status.DISPUTED],
-)
+@pytest.mark.parametrize("status", TERMINAL_STATUSES)
 def test_guard_rail_allows_deletion_once_the_job_is_terminal(api_client, status):
     user = UserFactory(role=User.Role.CUSTOMER)
     JobRequestFactory(customer=user, status=status)

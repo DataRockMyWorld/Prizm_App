@@ -1,11 +1,10 @@
 import {
   ApiError,
+  completeJob,
   getJob,
   JobRequest,
-  JobStatus,
   markArrived,
   markInProgress,
-  markOnMyWay,
   useAuth,
 } from "@prizm/api";
 import {
@@ -14,25 +13,18 @@ import {
   Card,
   colors,
   fontFamily,
-  GradientBackground,
   radii,
   spacing,
   ThemedText,
 } from "@prizm/ui";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { openDirections } from "../activeJob/directions";
-import { getNextValidStatus, isCancelWindowOpen } from "../activeJob/statusTransitions";
+import { activeJobPhase, isCancelWindowOpen } from "../activeJob/statusTransitions";
 
 const CANCEL_RECHECK_INTERVAL_MS = 15000;
-
-const SEGMENTS: { status: JobStatus; label: string }[] = [
-  { status: "on_my_way", label: "On my way" },
-  { status: "arrived", label: "Arrived" },
-  { status: "in_progress", label: "In progress" },
-];
 
 function apiErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError && error.data && typeof error.data === "object" && "detail" in error.data) {
@@ -41,9 +33,13 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** W2 / W2b — active job: customer card, directions, the on-site status
- * stepper, and entry points to mark-complete (ProposePrice, T5b) and
- * cancel (CancelJob, T5a). */
+/** The worker's active-job screen (v2 flow — docs/prds/active-job-flow-v2.md).
+ * Renders one of four phases by job status:
+ *  - accepted       → heading there ("I've arrived")
+ *  - arrived        → on-site evaluate ("Accept & send quote" / "Decline")
+ *  - quote_accepted → ready to start ("Start work")
+ *  - in_progress    → work in progress ("Complete job")
+ * quote_pending routes to WaitingForConfirmation; terminal → JobDetail. */
 export function ActiveJobScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
@@ -51,29 +47,39 @@ export function ActiveJobScreen() {
   const jobId: number = route.params.jobId;
 
   const [job, setJob] = useState<JobRequest | null>(null);
-  const [transitioningTo, setTransitioningTo] = useState<JobStatus | null>(null);
+  const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   const loadJob = useCallback(async () => {
     if (!accessToken) return;
     try {
-      setJob(await getJob(accessToken, jobId));
+      const data = await getJob(accessToken, jobId);
+      setJob(data);
+      // A job that moved off ActiveJob's phases while the worker was away
+      // (customer confirmed the quote and it's now waiting to start is
+      // still here; but quote_pending / terminal are not).
+      if (data.status === "quote_pending") {
+        navigation.replace("WaitingForConfirmation", { jobId });
+      } else if (activeJobPhase(data.status) === null) {
+        navigation.replace("JobDetail", { jobId });
+      }
     } catch {
       // leave job as-is — screen just won't render until this loads
     }
-  }, [accessToken, jobId]);
+  }, [accessToken, jobId, navigation]);
 
-  useEffect(() => {
-    loadJob();
-  }, [loadJob]);
+  useFocusEffect(
+    useCallback(() => {
+      loadJob();
+    }, [loadJob])
+  );
 
-  // Re-check the cancel window periodically so the "Cancel job" link
-  // disappears on its own once the 10-minute window passes, without
-  // needing a screen refresh.
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), CANCEL_RECHECK_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const interval = setInterval(() => setNow(new Date()), CANCEL_RECHECK_INTERVAL_MS);
+      return () => clearInterval(interval);
+    }, [])
+  );
 
   if (!job || !accessToken) {
     return (
@@ -83,141 +89,239 @@ export function ActiveJobScreen() {
     );
   }
 
-  const nextStatus = getNextValidStatus(job.status);
-  const highlightedStatus = job.status === "accepted" ? "on_my_way" : job.status;
+  const phase = activeJobPhase(job.status);
 
-  const handleTransition = async (status: JobStatus) => {
-    if (status !== nextStatus || transitioningTo) return;
-    setTransitioningTo(status);
+  const run = async (fn: () => Promise<JobRequest>, onDone: (j: JobRequest) => void) => {
+    if (busy) return;
+    setBusy(true);
     try {
-      const transition = status === "on_my_way" ? markOnMyWay : status === "arrived" ? markArrived : markInProgress;
-      setJob(await transition(accessToken, jobId));
+      onDone(await fn());
     } catch (error) {
-      Alert.alert("Couldn't update status", apiErrorMessage(error, "Something went wrong."));
+      Alert.alert("Something went wrong", apiErrorMessage(error, "Please try again."));
     } finally {
-      setTransitioningTo(null);
+      setBusy(false);
     }
   };
 
-  const handleMarkComplete = () => {
-    navigation.navigate("ProposePrice", { jobId });
-  };
+  const customerName = job.customer?.full_name || "Customer";
+  const firstName = customerName.split(" ")[0];
 
-  const handleCancel = () => {
-    navigation.navigate("CancelJob", { jobId });
-  };
+  const customerCard = (
+    <Card style={styles.customerCard}>
+      <Avatar uri={job.customer?.photo} size={38} />
+      <View style={styles.customerInfo}>
+        <ThemedText variant="subtitle">{customerName}</ThemedText>
+        <ThemedText variant="caption">{job.address}</ThemedText>
+      </View>
+      {job.worker?.rating_average != null && (
+        <ThemedText variant="caption">★ {job.worker.rating_average.toFixed(1)}</ThemedText>
+      )}
+    </Card>
+  );
 
-  const showMarkComplete = job.status === "in_progress";
-  const showCancel = isCancelWindowOpen(job.accepted_at, now);
+  const detailsCard = (
+    <Card style={styles.detailsCard}>
+      <ThemedText variant="caption">Job details</ThemedText>
+      <ThemedText variant="body">
+        {job.category.name}
+        {job.description ? ` · ${job.description}` : ""}
+      </ThemedText>
+    </Card>
+  );
 
+  const agreedChip = job.agreed_price ? (
+    <View style={styles.agreedChip}>
+      <ThemedText variant="caption" style={styles.agreedLabel}>
+        Agreed
+      </ThemedText>
+      <ThemedText variant="subtitle">N${job.agreed_price}</ThemedText>
+    </View>
+  ) : null;
+
+  const header = (title: string) => (
+    <View style={styles.header}>
+      <View style={styles.headerLeft}>
+        {/* The job keeps running and is reachable from the Jobs tab, so
+            this isn't a dead end — it's a deliberate "step away" exit. */}
+        <Pressable
+          onPress={() => navigation.navigate("Tabs")}
+          hitSlop={12}
+          accessibilityLabel="Back to Jobs"
+        >
+          <ThemedText variant="title">‹</ThemedText>
+        </Pressable>
+        <ThemedText variant="title">{title}</ThemedText>
+      </View>
+      <Pressable
+        onPress={() => navigation.navigate("Chat", { jobId })}
+        style={styles.chatButton}
+        accessibilityLabel="Chat"
+      >
+        <ThemedText>💬</ThemedText>
+      </Pressable>
+    </View>
+  );
+
+  // --- accepted: heading there -----------------------------------------
+  if (phase === "heading_there") {
+    const showCancel = isCancelWindowOpen(job.accepted_at, now);
+    return (
+      <View style={styles.container}>
+        {header("Active job")}
+        <StatusPill label="HEADING OVER" />
+        {customerCard}
+        <Button
+          label="Get Directions"
+          variant="secondary"
+          onPress={() => openDirections(job.address, job.latitude, job.longitude)}
+        />
+        {detailsCard}
+        <ThemedText variant="caption" style={styles.helperText}>
+          You'll agree the price with {firstName} on site, once you've seen the job.
+        </ThemedText>
+        <View style={styles.spacer} />
+        <Button
+          label="I've arrived"
+          loading={busy}
+          onPress={() =>
+            run(
+              () => markArrived(accessToken, jobId),
+              (j) => setJob(j)
+            )
+          }
+        />
+        {showCancel && (
+          <Pressable onPress={() => navigation.navigate("CancelJob", { jobId })} style={styles.linkRow}>
+            <ThemedText variant="caption" style={styles.dangerLink}>
+              Cancel job
+            </ThemedText>
+          </Pressable>
+        )}
+      </View>
+    );
+  }
+
+  // --- arrived: on-site evaluate --------------------------------------
+  if (phase === "evaluate") {
+    return (
+      <View style={styles.container}>
+        {header("On site")}
+        <StatusPill label="EVALUATING" />
+        <View>
+          <ThemedText variant="title">Assess the job</ThemedText>
+          <ThemedText variant="caption" style={styles.helperText}>
+            Look over the work, agree a price with the customer, then send your quote.
+          </ThemedText>
+        </View>
+        {customerCard}
+        {detailsCard}
+        <Card style={styles.detailsCard}>
+          <ThemedText variant="caption">Customer's estimate</ThemedText>
+          <ThemedText variant="body">
+            N${job.price_range_min}–{job.price_range_max} · guide only
+          </ThemedText>
+        </Card>
+        <View style={styles.spacer} />
+        <Button label="Accept & send quote" onPress={() => navigation.navigate("SendQuote", { jobId })} />
+        <Button
+          label="Decline this job"
+          variant="secondary"
+          onPress={() => navigation.navigate("DeclineJob", { jobId })}
+          style={styles.declineButton}
+        />
+      </View>
+    );
+  }
+
+  // --- quote_accepted: ready to start --------------------------------
+  if (phase === "ready_to_start") {
+    return (
+      <View style={styles.container}>
+        {header("Active job")}
+        <StatusPill label="QUOTE ACCEPTED" />
+        <View>
+          <ThemedText variant="title">{firstName} confirmed your price</ThemedText>
+          <ThemedText variant="caption" style={styles.helperText}>
+            You're clear to begin whenever you're ready.
+          </ThemedText>
+        </View>
+        {customerCard}
+        {agreedChip}
+        {detailsCard}
+        <View style={styles.spacer} />
+        <Button
+          label="Start work"
+          loading={busy}
+          onPress={() =>
+            run(
+              () => markInProgress(accessToken, jobId),
+              (j) => setJob(j)
+            )
+          }
+        />
+      </View>
+    );
+  }
+
+  // --- in_progress: work in progress --------------------------------
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText variant="title">Active job</ThemedText>
-        <Pressable
-          onPress={() => navigation.navigate("Chat", { jobId })}
-          style={styles.chatButton}
-          accessibilityLabel="Chat"
-        >
-          <ThemedText>💬</ThemedText>
-        </Pressable>
-      </View>
-
-      <Card style={styles.customerCard}>
-        <Avatar uri={job.customer?.photo} size={38} />
-        <View style={styles.customerInfo}>
-          <ThemedText variant="subtitle">{job.customer?.full_name || "Customer"}</ThemedText>
-          <ThemedText variant="caption">{job.address}</ThemedText>
-        </View>
-      </Card>
-
+      {header("Job in progress")}
+      {agreedChip}
+      {customerCard}
+      {detailsCard}
+      <View style={styles.spacer} />
       <Button
-        label="Get Directions"
-        variant="secondary"
-        onPress={() => openDirections(job.address, job.latitude, job.longitude)}
+        label="Complete job"
+        loading={busy}
+        onPress={() =>
+          run(
+            () => completeJob(accessToken, jobId),
+            () => navigation.replace("JobComplete", { jobId })
+          )
+        }
       />
-
-      <View>
-        <ThemedText variant="caption" style={styles.sectionLabel}>
-          Update status
+      {/* No worker-side job-outcome report flow exists yet (only the
+          chat-safety ReportChat). "Need to stop" mid-job = talk to the
+          customer; a dedicated worker report flow is out of scope here. */}
+      <Pressable onPress={() => navigation.navigate("Chat", { jobId })} style={styles.linkRow}>
+        <ThemedText variant="caption" style={styles.mutedLink}>
+          Need to stop? Message {firstName}
         </ThemedText>
-        <View style={styles.segmentRow}>
-          {SEGMENTS.map((segment) => {
-            const isPending = segment.status === transitioningTo;
-            // While a transition is in flight, only the pending segment is
-            // "active" — otherwise the old current segment and the new
-            // pending one would both show the gradient at once.
-            const isActive = isPending || (!transitioningTo && segment.status === highlightedStatus);
-            const isTappable = segment.status === nextStatus && !transitioningTo;
-            const content = isPending ? (
-              <ActivityIndicator size="small" color={colors.textInverse} />
-            ) : (
-              <ThemedText
-                variant="caption"
-                style={isActive ? styles.segmentTextActive : styles.segmentText}
-              >
-                {segment.label}
-              </ThemedText>
-            );
-            return (
-              <Pressable
-                key={segment.status}
-                disabled={!isTappable}
-                onPress={() => handleTransition(segment.status)}
-                style={styles.segmentWrapper}
-              >
-                {isActive ? (
-                  <GradientBackground style={styles.segment}>{content}</GradientBackground>
-                ) : (
-                  <View style={styles.segment}>{content}</View>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+      </Pressable>
+    </View>
+  );
+}
 
-      <Card style={styles.detailsCard}>
-        <ThemedText variant="caption">Job details</ThemedText>
-        <ThemedText variant="body">
-          {job.category.name}
-          {job.description ? ` · ${job.description}` : ""}
-        </ThemedText>
-      </Card>
-
-      {showMarkComplete && (
-        <Button label="Mark Job Complete" variant="primary" onPress={handleMarkComplete} />
-      )}
-
-      {showCancel && (
-        <Pressable onPress={handleCancel} style={styles.cancelLink}>
-          <ThemedText variant="caption" style={styles.cancelText}>
-            Cancel job
-          </ThemedText>
-        </Pressable>
-      )}
+function StatusPill({ label }: { label: string }) {
+  return (
+    <View style={styles.pill}>
+      <ThemedText variant="caption" style={styles.pillText}>
+        {label}
+      </ThemedText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  loading: { flex: 1, alignItems: "center", justifyContent: "center" },
   container: {
     flex: 1,
     backgroundColor: colors.pageBackground,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xxl,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
   chatButton: {
     width: 32,
@@ -227,50 +331,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  pill: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.sm,
+    paddingVertical: spacing.xs / 2,
+    paddingHorizontal: spacing.sm,
+  },
+  pillText: {
+    color: colors.textSecondary,
+    fontFamily: fontFamily.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
   customerCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
   },
-  customerInfo: {
-    flex: 1,
-  },
-  sectionLabel: {
-    marginBottom: spacing.xs,
-  },
-  segmentRow: {
+  customerInfo: { flex: 1 },
+  detailsCard: { gap: spacing.xs },
+  agreedChip: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.surfaceMuted,
     borderRadius: radii.md,
-    padding: spacing.xs / 2,
-    gap: spacing.xs / 2,
-  },
-  segmentWrapper: {
-    flex: 1,
-  },
-  segment: {
-    borderRadius: radii.sm,
     paddingVertical: spacing.sm,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: spacing.md,
   },
-  segmentText: {
-    color: colors.textSecondary,
-    fontFamily: fontFamily.bold,
-  },
-  segmentTextActive: {
-    color: colors.textInverse,
-    fontFamily: fontFamily.extraBold,
-  },
-  detailsCard: {
-    gap: spacing.xs,
-  },
-  cancelLink: {
-    alignItems: "center",
-    marginTop: "auto",
-  },
-  cancelText: {
-    color: colors.primary,
-    fontFamily: fontFamily.bold,
-  },
+  agreedLabel: { color: colors.textSecondary },
+  helperText: { marginTop: spacing.xs },
+  spacer: { flex: 1 },
+  linkRow: { alignItems: "center", paddingVertical: spacing.xs },
+  declineButton: { marginTop: spacing.xs },
+  dangerLink: { color: colors.primary, fontFamily: fontFamily.bold },
+  mutedLink: { color: colors.textSecondary, fontFamily: fontFamily.bold },
 });

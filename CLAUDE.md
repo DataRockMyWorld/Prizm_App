@@ -24,8 +24,13 @@ typeface, rounded cards, bottom tab nav.
 ## Core business rules (do not deviate without asking)
 - **No fixed prices.** Category listings show an estimate range only
   (e.g. "Est. N$150–300"). The actual price is proposed by the **worker**
-  after marking a job complete; the **customer** confirms or disputes it
-  via "Report a problem → Pricing disagreement".
+  on site — after arriving and evaluating the job, *before* work starts
+  (changed 2026-09-08, see "Active-job & pricing flow redesign" below;
+  was previously proposed after the work was done). The **customer**
+  confirms it in-app (or rejects it, which closes the job); work can
+  only begin once the quote is confirmed. A later "Report a problem →
+  Pricing disagreement" dispute remains the escape hatch if the agreed
+  price is contested afterwards.
 - **Matching**: sequential single-offer, not browse-and-choose. A job is
   offered to exactly one candidate at a time — the best-ranked eligible
   worker within `MATCHING_RADIUS_KM` (25km), ranked by Certified badge,
@@ -45,7 +50,13 @@ typeface, rounded cards, bottom tab nav.
 - **Worker cancellation**: free within 10 minutes of accepting a job, with
   a required reason (Personal emergency / Vehicle or transport issue /
   Job details unclear / Other). After that window, cancellation goes
-  through the dispute flow instead.
+  through the dispute flow instead — *except* the on-site evaluate step
+  (below), where declining is an explicit sanctioned exit.
+- **On-site decline**: after arriving and evaluating the job, the worker
+  chooses **Accept** (submit a quote) or **Decline**. Declining requires
+  a reason and closes the job (terminal `declined`); the customer is
+  notified and can submit a fresh request — no automatic rematch. Valid
+  even outside the 10-minute cancel window.
 - **Job-request response window**: 60 seconds to accept/decline an
   incoming request before it expires.
 - **Disputes**: an in-app per-job chat thread for coordination, plus a
@@ -67,9 +78,24 @@ reporter, category, details, status) · `Rating` (job, stars, comment) ·
 `CancellationLog` (job, worker, reason)
 
 ## Job lifecycle (status field on JobRequest)
-`requested → searching → matched → accepted → on_my_way → arrived →
-in_progress → awaiting_price_confirmation → completed` (or `cancelled` /
-`disputed` at various points)
+`requested → searching → matched → accepted → arrived → quote_pending →
+quote_accepted → in_progress → completed` (or `cancelled` / `declined` /
+`disputed` at various points). Redesigned 2026-09-08 — see "Active-job &
+pricing flow redesign" below; the old chain had `on_my_way` and
+`awaiting_price_confirmation` and set the price after the work.
+- `accepted → arrived`: worker taps "I've arrived" (no separate "on my
+  way" step). This opens the on-site evaluate screen.
+- `arrived → quote_pending`: worker submits a quote (amount + optional
+  note) via **Accept**. **Decline** instead → `declined` (terminal,
+  reason required).
+- `quote_pending → quote_accepted`: customer confirms the quote in-app.
+  Customer rejects → job closes (`cancelled`).
+- `quote_accepted → in_progress`: worker taps "Start work".
+- `in_progress → completed`: worker taps "Complete". No post-work pricing
+  step — the price was locked at `quote_accepted`.
+- Cancellation before work: customer any time before `quote_accepted`;
+  worker within the 10-min window or via on-site Decline. After
+  `in_progress`, disputes only.
 
 ## Auth flow (both apps, same sequence)
 Phone number → SMS OTP → set PIN → confirm PIN → name + photo +
@@ -85,17 +111,22 @@ Request submission (category, description, GPS + address, optional
 photo, estimate range shown) → searching/matching (auto-match, cancel
 option) → matched confirmation (worker card: photo, rating, distance,
 Verified/Certified badges) → job status tracking (stepper + chat +
-report-a-problem) → price agreement (confirm or dispute worker's
-proposed price) → mobile money payment → payment confirmed → 1–5 star
-rating
+report-a-problem): worker arrives → **review & confirm the worker's
+on-site quote** (single Confirm tap, or Reject → job closes) → work
+happens → job complete → mobile money payment (at the already-agreed
+price) → payment confirmed → 1–5 star rating. A post-agreement "Pricing
+disagreement" report is still available if the final charge is
+contested.
 
 ## Worker flow
 Verified home (online toggle, nearby jobs with estimate ranges) →
 incoming request (60s timer, accept/decline) → active job (get
-directions, status stepper On my way/Arrived/In progress, chat,
-cancel-job link, Mark Complete action once in progress) → cancel job
-(10-min window + reason) → propose price (amount + optional note, shows
-typical range) → waiting for customer confirmation
+directions, chat, cancel-job link) → "I've arrived" → **on-site evaluate
+screen**: assess the job, then **Accept** → enter a quote (amount +
+optional note, shows typical range) or **Decline** → reason → job closes
+→ wait for the customer to confirm the quote → "Start work" → "Complete".
+No pricing step after the work. Cancel job = 10-min window + reason;
+after that, on-site Decline is the only free exit until work starts.
 
 ## Development workflow (PRD → tickets → implement)
 
@@ -251,3 +282,48 @@ surfaced (hard-deleting a `User` row today would cascade-destroy the
   which minors generally can't enter without a guardian. Leaning
   toward raising the effective minimum to 18 for the MVP pending a
   firm decision — do not build age-gating either way until decided.
+
+## Active-job & pricing flow redesign (2026-09-08 design session)
+
+Decision from a design session on 2026-09-08 after live-testing the full
+job flow on the Simulator: **move price agreement to an on-site step
+before work starts**, and simplify the worker's active-job flow. The old
+flow (mark complete → propose price → wait for confirmation, mirrored by
+the customer's confirm/dispute screen) is heavy and backwards from how
+informal-sector trades actually quote — look at the job, quote it,
+agree, *then* work. The redesign is aimed squarely at keeping the app
+usable for informal-sector workers.
+
+**Changes:**
+- **"On my way" step dropped.** After accepting, the worker's next action
+  is "I've arrived", which opens the new evaluate screen.
+- **New on-site evaluate step.** Two actions: **Accept** (submit a quote —
+  amount + optional note, same UI as the old propose-price screen, moved
+  earlier) or **Decline** (reason required → job closes, terminal
+  `declined`; customer notified, can re-request; no auto-rematch). A
+  sanctioned free exit even outside the 10-minute cancel window.
+- **Customer confirms the quote in-app** before work can start (single
+  Confirm tap; Reject closes the job → `cancelled`). "Start work" stays
+  disabled until confirmed.
+- **No post-work pricing step.** "Complete" is now a true finish line.
+  The old `awaiting_price_confirmation` status, the worker's ProposePrice
+  + WaitingForConfirmation screens (the wait is repurposed to the
+  pre-work quote-confirm), and the customer's post-work PriceAgreement
+  screen all move to before `in_progress`.
+- **No re-quoting** if the job turns out bigger than quoted — the
+  evaluate quote is final; the "Pricing disagreement" report → admin
+  review stays as the escape hatch.
+- **New status chain:** `matched → accepted → arrived → quote_pending →
+  quote_accepted → in_progress → completed`, terminal `declined` added.
+  See "Job lifecycle" above.
+
+**Not yet built.** This supersedes the shipped worker-active-job flow
+(`docs/prds/worker-active-job-flow.md` / build-order step 8) and the
+customer price-agreement screen. PRD drafted:
+`docs/prds/active-job-flow-v2.md` (pending the updated hi-fi — brief at
+`docs/design/active-job-flow-v2-brief.md` — then review, then tickets).
+Covers: backend status enum + migration + view/serializer changes (quote
+set at evaluate not complete; customer quote-confirm/reject endpoints;
+`declined` terminal state + reason logged like a cancellation), both
+apps' active-job / status-tracking screens rebuilt, and the `jobs` +
+both mobile test suites updated. `PROGRESS.md` tracks status.

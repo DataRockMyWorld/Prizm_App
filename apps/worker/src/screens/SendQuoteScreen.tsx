@@ -1,8 +1,8 @@
-import { ApiError, completeJob, getJob, JobRequest, useAuth } from "@prizm/api";
+import { ApiError, getJob, JobRequest, submitQuote, useAuth } from "@prizm/api";
 import { Button, Screen, TextField, ThemedText, colors, fontFamily, spacing } from "@prizm/ui";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
 import { validatePriceAmount } from "../activeJob/priceValidation";
 
@@ -13,8 +13,9 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** W4 — worker marks the job complete and proposes a final price. */
-export function ProposePriceScreen() {
+/** W2-eval-b — the worker's on-site quote. Sets the price *before* work; the
+ * customer confirms it next (WaitingForConfirmation → they get C-quote). */
+export function SendQuoteScreen() {
   const { accessToken } = useAuth();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -29,9 +30,14 @@ export function ProposePriceScreen() {
   useEffect(() => {
     if (!accessToken) return;
     getJob(accessToken, jobId)
-      .then(setJob)
+      .then((data) => {
+        setJob(data);
+        // Coming back to re-quote — pre-fill what was sent before.
+        if (data.agreed_price) setAmount(String(data.agreed_price));
+        if (data.worker_note) setNote(data.worker_note);
+      })
       .catch(() => {
-        // leave job null — helper range text just won't render
+        // leave job null — range hint just won't render
       });
   }, [accessToken, jobId]);
 
@@ -42,7 +48,7 @@ export function ProposePriceScreen() {
     setIsSubmitting(true);
     setError(null);
     try {
-      await completeJob(accessToken, jobId, parsedAmount, note.trim());
+      await submitQuote(accessToken, jobId, parsedAmount, note.trim());
       navigation.replace("WaitingForConfirmation", { jobId });
     } catch (err) {
       setError(apiErrorMessage(err, "Couldn't send this to the customer. Please try again."));
@@ -53,18 +59,23 @@ export function ProposePriceScreen() {
 
   return (
     <Screen>
+      <View style={styles.headerRow}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityLabel="Back">
+          <ThemedText variant="title">‹</ThemedText>
+        </Pressable>
+        <ThemedText variant="subtitle">Quote</ThemedText>
+        <View style={{ width: 24 }} />
+      </View>
       <View style={styles.header}>
-        <ThemedText variant="title" style={styles.title}>
-          Job done — propose a price
-        </ThemedText>
+        <ThemedText variant="title">Your quote</ThemedText>
         <ThemedText variant="caption" style={styles.subtitle}>
-          The customer will be asked to confirm this amount
+          The customer confirms this before you start.
         </ThemedText>
       </View>
 
       <View style={styles.field}>
         <ThemedText variant="caption" style={styles.fieldLabel}>
-          Amount requested
+          Amount
         </ThemedText>
         <TextField
           prefix={<ThemedText style={styles.prefix}>N$</ThemedText>}
@@ -76,17 +87,17 @@ export function ProposePriceScreen() {
         />
         {job && (
           <ThemedText variant="caption" style={styles.rangeHint}>
-            Typical range for this job: N${job.price_range_min}–{job.price_range_max}
+            Typical range: N${job.price_range_min}–{job.price_range_max}
           </ThemedText>
         )}
       </View>
 
       <View style={styles.field}>
         <ThemedText variant="caption" style={styles.fieldLabel}>
-          What was done (optional)
+          What's included (optional)
         </ThemedText>
         <TextField
-          placeholder="e.g. Deep cleaned kitchen, bathroom, and living room"
+          placeholder="e.g. Kitchen, bathroom and living room, cleaning products included"
           value={note}
           onChangeText={setNote}
           multiline
@@ -100,7 +111,7 @@ export function ProposePriceScreen() {
         <ActivityIndicator color={colors.primary} />
       ) : (
         <Button
-          label="Send to Customer"
+          label="Send quote"
           onPress={handleSubmit}
           disabled={parsedAmount === null}
           loading={isSubmitting}
@@ -112,16 +123,17 @@ export function ProposePriceScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
+  headerRow: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: spacing.lg,
+    justifyContent: "space-between",
+    marginTop: spacing.md,
+  },
+  header: {
+    marginTop: spacing.md,
     marginBottom: spacing.md,
   },
-  title: {
-    textAlign: "center",
-  },
   subtitle: {
-    textAlign: "center",
     marginTop: spacing.xs,
   },
   field: {

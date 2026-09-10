@@ -3,11 +3,14 @@ import {
   acceptOffer,
   cancelJobAsWorker,
   completeJob,
+  confirmQuote,
+  declineJob,
   declineOffer,
   getIncomingOffers,
   markArrived,
   markInProgress,
-  markOnMyWay,
+  rejectQuote,
+  submitQuote,
 } from "./jobs";
 
 function mockFetchOnce(body: unknown, status = 200) {
@@ -53,14 +56,6 @@ test("declineOffer calls POST /api/jobs/offers/<id>/decline/", async () => {
   expect(method).toBe("POST");
 });
 
-test("markOnMyWay calls POST /api/jobs/<id>/on-my-way/", async () => {
-  mockFetchOnce({});
-  await markOnMyWay("tok", 7);
-  const { url, method } = lastCall();
-  expect(url).toContain("/api/jobs/7/on-my-way/");
-  expect(method).toBe("POST");
-});
-
 test("markArrived calls POST /api/jobs/<id>/arrived/", async () => {
   mockFetchOnce({});
   await markArrived("tok", 7);
@@ -77,20 +72,61 @@ test("markInProgress calls POST /api/jobs/<id>/start/", async () => {
   expect(method).toBe("POST");
 });
 
-test("completeJob sends agreed_price and note", async () => {
+test("submitQuote sends agreed_price and note", async () => {
   mockFetchOnce({});
-  await completeJob("tok", 7, 220, "Deep cleaned kitchen");
+  await submitQuote("tok", 7, 220, "Deep clean kitchen + both bedrooms");
+  const { url, method, body } = lastCall();
+  expect(url).toContain("/api/jobs/7/quote/");
+  expect(method).toBe("POST");
+  expect(body).toEqual({ agreed_price: 220, note: "Deep clean kitchen + both bedrooms" });
+});
+
+test("submitQuote omits note as empty string, not undefined", async () => {
+  mockFetchOnce({});
+  await submitQuote("tok", 7, 220);
+  const { body } = lastCall();
+  expect(body).toEqual({ agreed_price: 220, note: "" });
+});
+
+test("completeJob calls POST /api/jobs/<id>/complete/ with no body", async () => {
+  mockFetchOnce({});
+  await completeJob("tok", 7);
   const { url, method, body } = lastCall();
   expect(url).toContain("/api/jobs/7/complete/");
   expect(method).toBe("POST");
-  expect(body).toEqual({ agreed_price: 220, note: "Deep cleaned kitchen" });
+  expect(body).toBeUndefined();
 });
 
-test("completeJob omits note as empty string, not undefined", async () => {
+test("confirmQuote calls POST /api/jobs/<id>/confirm-quote/", async () => {
   mockFetchOnce({});
-  await completeJob("tok", 7, 220);
+  await confirmQuote("tok", 7);
+  const { url, method } = lastCall();
+  expect(url).toContain("/api/jobs/7/confirm-quote/");
+  expect(method).toBe("POST");
+});
+
+test("rejectQuote calls POST /api/jobs/<id>/reject-quote/", async () => {
+  mockFetchOnce({});
+  await rejectQuote("tok", 7);
+  const { url, method } = lastCall();
+  expect(url).toContain("/api/jobs/7/reject-quote/");
+  expect(method).toBe("POST");
+});
+
+test("declineJob sends reason and note", async () => {
+  mockFetchOnce({});
+  await declineJob("tok", 7, "job_details_unclear", "Not as described");
+  const { url, method, body } = lastCall();
+  expect(url).toContain("/api/jobs/7/decline/");
+  expect(method).toBe("POST");
+  expect(body).toEqual({ reason: "job_details_unclear", note: "Not as described" });
+});
+
+test("declineJob omits note as empty string, not undefined", async () => {
+  mockFetchOnce({});
+  await declineJob("tok", 7, "other");
   const { body } = lastCall();
-  expect(body).toEqual({ agreed_price: 220, note: "" });
+  expect(body).toEqual({ reason: "other", note: "" });
 });
 
 test("cancelJobAsWorker sends reason and note", async () => {
@@ -111,5 +147,5 @@ test("cancelJobAsWorker omits note as empty string, not undefined", async () => 
 
 test("a non-2xx response rejects with ApiError", async () => {
   mockFetchOnce({ detail: "Not your job." }, 403);
-  await expect(markOnMyWay("tok", 7)).rejects.toBeInstanceOf(ApiError);
+  await expect(markArrived("tok", 7)).rejects.toBeInstanceOf(ApiError);
 });
