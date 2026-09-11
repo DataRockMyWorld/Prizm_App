@@ -434,20 +434,13 @@ detail drifted from the design-session note)
 also confirm the work is done, so both parties agree the job is finished
 (symmetry with the pre-work quote confirmation).
 
-Not yet designed. Open questions before it can be ticketed:
-- New status between `in_progress` and `completed` (e.g.
-  `awaiting_completion_confirmation`)? Worker "Complete job" →
-  that state → customer "Confirm job done" → `completed`.
-- What if the customer says the work *isn't* done? A "not finished yet"
-  action that bounces the job back to `in_progress`, vs. routing to the
-  existing "Quality of work" report.
-- Does it gate the Rating screen / payment, or run alongside?
-- Timeout / auto-confirm if the customer is unresponsive (the PRD chose
-  no timer for the quote step — likely consistent here).
-- Worker-side screen while waiting (repurpose the WaitingForConfirmation
-  pattern again).
-
-Needs a short PRD addendum + its own ticket set; treat as a v2.1.
+**Scoped as v2.1** — its own PRD + tickets:
+`docs/prds/active-job-flow-v2.1-completion-confirmation.md` /
+`docs/tickets/active-job-flow-v2.1-completion-confirmation.md`.
+Decisions (2026-09-10): hard gate via a new
+`awaiting_completion_confirmation` status; "not done" sends the job back
+to the worker (no admin); auto-confirm after 24 h (lazy, on read — no
+Celery Beat); rating stays a separate screen after the confirm.
 
 ## Follow-up (raised during T10, 2026-09-08) — job details + photo on the incoming offer  ✅ Done
 
