@@ -7,6 +7,7 @@ import { ActiveJobScreen } from "../screens/ActiveJobScreen";
 import { CancelJobScreen } from "../screens/CancelJobScreen";
 import { ChatScreen } from "../screens/ChatScreen";
 import { ComingSoonScreen } from "../screens/ComingSoonScreen";
+import { DeclineJobScreen } from "../screens/DeclineJobScreen";
 import { DeleteAccountBlockedScreen } from "../screens/DeleteAccountBlockedScreen";
 import { DeleteAccountConfirmScreen } from "../screens/DeleteAccountConfirmScreen";
 import { DeleteAccountPinScreen } from "../screens/DeleteAccountPinScreen";
@@ -16,9 +17,9 @@ import { IncomingOfferScreen } from "../screens/IncomingOfferScreen";
 import { JobCompleteScreen } from "../screens/JobCompleteScreen";
 import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { JobPreviewScreen } from "../screens/JobPreviewScreen";
-import { ProposePriceScreen } from "../screens/ProposePriceScreen";
 import { ReportChatScreen } from "../screens/ReportChatScreen";
 import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
+import { SendQuoteScreen } from "../screens/SendQuoteScreen";
 import { TermsLiabilityScreen } from "../screens/TermsLiabilityScreen";
 import { WaitingForConfirmationScreen } from "../screens/WaitingForConfirmationScreen";
 import { CertificationsInfoScreen } from "../screens/onboarding/CertificationsInfoScreen";
@@ -73,25 +74,29 @@ export function RootNavigator() {
           options={{ presentation: "fullScreenModal", gestureEnabled: false }}
         />
         {/* gestureEnabled: false on ActiveJob/WaitingForConfirmation/JobComplete.
-            Since T7, the Jobs tab can route back into an active job, so this
-            is no longer a hard dead end — but deliberately still disabled:
-            (1) an active job shouldn't be trivially swiped away from
-            mid-task, matching how e.g. Uber's driver app behaves, and
-            (2) swiping back from WaitingForConfirmation/JobComplete would
-            still land on a stale ActiveJob screen with no rendering logic
-            for awaiting_price_confirmation/completed — T7's fix doesn't
-            touch that. Leaving via Cancel/Mark Complete/Done (explicit
-            actions), or the Jobs tab, is always still available. */}
+            The Jobs tab can route back into an active job, so this is no
+            longer a hard dead end — but deliberately still disabled: an
+            active job shouldn't be trivially swiped away mid-task (matching
+            e.g. Uber's driver app), and swiping back from
+            WaitingForConfirmation/JobComplete would land on a stale
+            ActiveJob. ActiveJobScreen self-corrects on focus (redirects
+            quote_pending → WaitingForConfirmation, terminal → JobDetail),
+            but the explicit actions + the Jobs tab are the intended exits. */}
         <Stack.Screen name="ActiveJob" component={ActiveJobScreen} options={{ gestureEnabled: false }} />
         <Stack.Screen
           name="CancelJob"
           component={CancelJobScreen}
           options={{ presentation: "modal" }}
         />
-        {/* Not a "modal" — this is a core forward-flow step (accept → stepper
-            → propose price → waiting → complete), same category as
-            ActiveJob, not a detour like CancelJob. */}
-        <Stack.Screen name="ProposePrice" component={ProposePriceScreen} />
+        <Stack.Screen
+          name="DeclineJob"
+          component={DeclineJobScreen}
+          options={{ presentation: "modal" }}
+        />
+        {/* Not a "modal" — these are core forward-flow steps (arrive →
+            evaluate → send quote → wait → start → complete), same category
+            as ActiveJob, not a detour like CancelJob/DeclineJob. */}
+        <Stack.Screen name="SendQuote" component={SendQuoteScreen} />
         <Stack.Screen
           name="WaitingForConfirmation"
           component={WaitingForConfirmationScreen}

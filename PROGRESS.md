@@ -1,6 +1,6 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-09-05. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-09-08. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
 
@@ -15,7 +15,7 @@ the work back up.
 | 5 | Expo monorepo scaffold | ✅ Done |
 | 6 | Auth screens → wire to API | ✅ Done, both apps — confirmed live on a physical iPhone |
 | 7 | Customer request flow → wire to API | ✅ Done, click-tested end-to-end on a physical iPhone (submission → matched → tracking → price agreement → rating), worker side simulated via Django shell |
-| 8 | Worker active-job flow → wire to API | ✅ Done — see `docs/prds/worker-active-job-flow.md` / `docs/tickets/worker-active-job-flow.md`, all tickets T0a–T7 complete |
+| 8 | Worker active-job flow → wire to API | ✅ Rebuilt to v2 (2026-09-08/10) — price agreed on-site before work, `declined` exit, no post-work price step. `docs/prds/active-job-flow-v2.md` + `docs/tickets/active-job-flow-v2.md` T1–T10 done on branch `active-job-flow-v2` (not merged). One v2.1 follow-up open (customer completion confirmation). |
 | 9 | Chat (polling) | ✅ Done, core send/receive confirmed live on a physical phone (2026-08-24) — see `docs/prds/chat.md` / `docs/tickets/chat.md`, all tickets T1–T5 complete |
 | 10 | Mobile money payment | ⬜ Deliberately skipped for now — revisit later, see below |
 | 11 | Push notifications | ⏸️ Backend + T4 done (T1–T4), paused on an Apple Developer Program blocker — see below |
@@ -727,6 +727,107 @@ the emulator (request → match → accept → status stepper → propose price
   incidentally resolve this too — worth checking before assuming the
   base64-inline workaround is still needed long-term.
 
+## Active-job & pricing flow redesign (2026-09-08) — decided, not built
+
+Came out of a full Simulator test pass on 2026-09-07/08 (registered a
+customer and a worker from scratch through both apps, ran happy path +
+low rating + price confirmation end-to-end; Claude drove the counterpart
+role via REST). Conclusion: **the worker's accept→completion flow is too
+heavy for informal-sector workers**, and pricing is in the wrong place.
+
+**Agreed redesign** (full detail in CLAUDE.md's "Active-job & pricing
+flow redesign (2026-09-08 design session)" section — that's the source
+of truth):
+- Price moves to an **on-site evaluate step before work starts**: worker
+  arrives → assesses → **Accept** (enter quote) or **Decline** (reason →
+  job closes, terminal `declined`, customer can re-request).
+- Customer **confirms the quote in-app**; "Start work" is gated on that.
+- **"On my way" dropped**; **no post-work pricing step** — "Complete" is
+  the finish line.
+- No re-quoting for scope creep — "Pricing disagreement" report stays as
+  the escape hatch.
+- New status chain: `matched → accepted → arrived → quote_pending →
+  quote_accepted → in_progress → completed` + terminal `declined`
+  (was `… → accepted → on_my_way → arrived → in_progress →
+  awaiting_price_confirmation → completed`).
+
+**PRD + tickets** (`docs/prds/active-job-flow-v2.md`,
+`docs/tickets/active-job-flow-v2.md` — T1–T10). Hi-fi produced
+(`docs/design/prism-hifi-v2.dc.html`).
+
+**T1–T9 implemented** on branch `active-job-flow-v2` (not merged):
+- T1–T3 backend: `JobRequest.Status` now `… → accepted → arrived →
+  quote_pending → quote_accepted → in_progress → completed` + terminal
+  `declined`; `quoted_at`/`quote_accepted_at` fields (dropped
+  `on_my_way_at`); `CancellationLog.kind`; new `/quote/`, `/decline/`,
+  `/confirm-quote/`, `/reject-quote/` endpoints; `/complete/` bodyless;
+  `/dispute-price/` retargeted to `completed`; `decline_reason` on the
+  job serializer; 5 push triggers; migration `0008` (remaps old in-flight
+  rows). `OnMyWayView` removed.
+- T4 `packages/api`: `submitQuote`/`declineJob`/`rejectQuote`/
+  `confirmQuote` added, `markOnMyWay` gone, `completeJob` bodyless,
+  `JobStatus` union + `JobRequest` type updated.
+- T5–T6 apps/worker: `ActiveJobScreen` rebuilt (4 status-driven phases),
+  new `EvaluateScreen` folded into it, `ProposePriceScreen` →
+  `SendQuoteScreen`, new `DeclineJobScreen` + shared `ReasonPicker`,
+  `WaitingForConfirmationScreen` repurposed to pre-work quote wait,
+  `JobCompleteScreen` copy, Jobs-tab status labels.
+- T7–T9 apps/customer: `JobStatusScreen` 6-step timeline + extracted
+  `request/jobStatusSteps.ts`, `PriceAgreementScreen` →
+  `ConfirmQuoteScreen` (Confirm/Reject), new `WorkerDeclinedScreen` +
+  "Request again" prefill on `RequestSubmissionScreen`,
+  `ReportProblemScreen` routes pricing_disagreement → `disputePrice`,
+  Jobs-tab labels.
+
+- **T10 (live two-app Simulator pass)** — done 2026-09-08/10. Verified on
+  the "Prizm Test" simulator (Claude driving one side via REST):
+  - full worker onboarding → OTP → PIN → profile → ID upload → admin
+    approve → go online
+  - incoming-offer screen with the customer photo + full details
+  - worker happy path: accept → I've arrived → evaluate → send quote →
+    (customer confirms) → start work → complete
+  - customer happy path: request → 6-step timeline → ConfirmQuote →
+    confirm → rating
+  - reject path: customer rejects the quote → worker "Quote not accepted"
+  - decline path: worker declines on site → job `declined` +
+    `CancellationLog(kind=on_site_decline)` → customer's `WorkerDeclined`
+    screen with the reason → "Request again" opens a pre-filled request
+
+- Two **follow-ups raised during T10 and done on the same branch**:
+  1. `IncomingOfferScreen` now renders the customer's photo + full
+     details before Accept (the data was already in the offer payload).
+  2. Navigation audit of the v2 flow — added a back affordance to
+     `SendQuoteScreen`, "Back to Jobs" / "Decline" escapes on the worker
+     wait screen, a `‹`→Jobs header on `ActiveJobScreen`, and made the
+     evaluate "Decline this job" an outlined button. See the tickets doc.
+
+- One follow-up **still open — customer completion confirmation** (the
+  customer should also confirm the job is done). Needs its own mini-PRD +
+  tickets (v2.1). See `docs/tickets/active-job-flow-v2.md` bottom.
+
+Tests all green: **backend 176, worker 61, customer 63, api 30**; both
+apps typecheck clean. Committed on branch `active-job-flow-v2` (not yet
+merged to `main`).
+
+**Scope of the build** (from the PRD):
+- Backend: `JobRequest.Status` enum + migration; move `agreed_price` /
+  `worker_note` writes from `CompleteJobView` to a new evaluate/quote
+  endpoint; new customer quote-confirm + quote-reject endpoints; new
+  `declined` terminal state with a reason (log it like `CancellationLog`);
+  drop `on_my_way` + its `on_my_way_at` timestamp; update
+  `_WorkerJobTransitionView` chain; `jobs/tests/*` rewrite.
+- apps/worker: replace the on-my-way/arrived/start/complete/propose-price
+  sequence with arrived → EvaluateScreen (quote + Accept/Decline) →
+  wait-for-quote-confirm → Start work → Complete. Reuse ProposePrice UI
+  for the quote entry. `WaitingForConfirmationScreen` repurposed to
+  pre-work. Logic tests (`useJobStatusPolling` etc.) updated.
+- apps/customer: `JobStatusScreen` timeline reworked (6 steps, no "on my
+  way"); PriceAgreement screen moves to *before* work and becomes
+  Confirm/Reject (no dispute button there — dispute is post-agreement
+  only); Matched auto-advance unchanged.
+- Supersedes `docs/prds/worker-active-job-flow.md` and the shipped
+  customer price-agreement screen.
+
 ## Immediate next steps, in order
 
 0. ✅ **Done (2026-08-27)** — the worker ID-upload bug-fix cycle (crop/
@@ -825,6 +926,15 @@ the emulator (request → match → accept → status stepper → propose price
    accounts only ever have 2–3 completed jobs, so infinite scroll has
    never actually fired live. Worth seeding a batch of dummy completed
    jobs and scrolling through it once, next time either app is open.
+7. **Active-job & pricing flow redesign (2026-09-08)** — decided, PRD +
+   tickets drafted (`docs/prds/active-job-flow-v2.md`,
+   `docs/tickets/active-job-flow-v2.md`). This is the next real feature.
+   Sequence: (a) run the Claude Design brief
+   (`docs/design/active-job-flow-v2-brief.md`) to update the hi-fi,
+   (b) review PRD + tickets against the hi-fi, confirm the §9 open
+   questions (tickets currently assume the PRD defaults),
+   (c) implement T1–T10 in order. T1–T4 (backend + `packages/api`) can
+   start now — they don't depend on the hi-fi.
 
 **Dev environment was fully stopped at the end of the 2026-09-05
 session** (both Metro/Expo dev servers, the iOS Simulator, and the whole

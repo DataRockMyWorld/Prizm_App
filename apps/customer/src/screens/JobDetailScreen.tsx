@@ -17,7 +17,7 @@ const TONE_COLORS: Record<StatusTone, string> = {
 
 /** Read-only summary of a past job, reached from the Jobs tab. No action
  * buttons here by design — status-changing actions live on the live
- * tracking screens (JobStatus/PriceAgreement), not here, so this can
+ * tracking screens (JobStatus/ConfirmQuote), not here, so this can
  * never double-submit a transition. */
 export function JobDetailScreen() {
   const { accessToken } = useAuth();

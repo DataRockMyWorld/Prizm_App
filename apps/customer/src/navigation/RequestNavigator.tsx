@@ -13,14 +13,15 @@ import { JobDetailScreen } from "../screens/JobDetailScreen";
 import { SafetyTipsScreen } from "../screens/SafetyTipsScreen";
 import { TermsLiabilityScreen } from "../screens/TermsLiabilityScreen";
 import { ChatScreen } from "../screens/request/ChatScreen";
+import { ConfirmQuoteScreen } from "../screens/request/ConfirmQuoteScreen";
 import { JobStatusScreen } from "../screens/request/JobStatusScreen";
 import { MatchedScreen } from "../screens/request/MatchedScreen";
-import { PriceAgreementScreen } from "../screens/request/PriceAgreementScreen";
 import { RatingScreen } from "../screens/request/RatingScreen";
 import { ReportChatScreen } from "../screens/request/ReportChatScreen";
 import { ReportProblemScreen } from "../screens/request/ReportProblemScreen";
 import { RequestSubmissionScreen } from "../screens/request/RequestSubmissionScreen";
 import { SearchingScreen } from "../screens/request/SearchingScreen";
+import { WorkerDeclinedScreen } from "../screens/request/WorkerDeclinedScreen";
 import { RootTabs } from "./RootTabs";
 import type { RequestStackParamList } from "./types";
 
@@ -51,7 +52,12 @@ export function RequestNavigator() {
         component={ReportChatScreen}
         options={{ presentation: "modal" }}
       />
-      <Stack.Screen name="PriceAgreement" component={PriceAgreementScreen} />
+      <Stack.Screen name="ConfirmQuote" component={ConfirmQuoteScreen} />
+      <Stack.Screen
+        name="WorkerDeclined"
+        component={WorkerDeclinedScreen}
+        options={{ gestureEnabled: false }}
+      />
       <Stack.Screen name="Rating" component={RatingScreen} />
       <Stack.Screen name="JobDetail" component={JobDetailScreen} />
       <Stack.Screen

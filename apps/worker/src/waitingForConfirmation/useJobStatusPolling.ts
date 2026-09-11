@@ -3,16 +3,17 @@ import { useEffect, useRef, useState } from "react";
 
 export const DEFAULT_POLL_INTERVAL_MS = 3000;
 
-export type JobStatusBranch = "completed" | "disputed" | "other";
+/** Where a job goes once it leaves `quote_pending`:
+ *  - "quote_accepted" — customer confirmed; the worker can start
+ *  - "rejected"       — customer rejected the quote (job → cancelled)
+ *  - "other"          — any other unexpected move (admin action, etc.)
+ * null while still waiting on the customer. */
+export type JobStatusBranch = "quote_accepted" | "rejected" | "other";
 
-/** Which terminal branch a status falls into once the job moves off
- * awaiting_price_confirmation — null while still waiting. "other" is the
- * defensive fallback for anything unexpected (e.g. an admin-forced
- * cancelled), not just completed/disputed. */
 export function getStatusBranch(status: JobStatus): JobStatusBranch | null {
-  if (status === "awaiting_price_confirmation") return null;
-  if (status === "completed") return "completed";
-  if (status === "disputed") return "disputed";
+  if (status === "quote_pending") return null;
+  if (status === "quote_accepted") return "quote_accepted";
+  if (status === "cancelled") return "rejected";
   return "other";
 }
 
@@ -22,8 +23,8 @@ export interface UseJobStatusPollingParams {
   intervalMs?: number;
 }
 
-/** Polls a job while it's awaiting price confirmation, stopping as soon as
- * it reaches a terminal branch (mirrors the customer app's JobStatusScreen
+/** Polls a job while it's `quote_pending`, stopping as soon as the customer
+ * confirms or rejects the quote (mirrors the customer app's JobStatusScreen
  * polling pattern). */
 export function useJobStatusPolling({
   accessToken,

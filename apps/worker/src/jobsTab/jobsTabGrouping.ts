@@ -2,15 +2,15 @@ import type { JobRequest, JobStatus } from "@prizm/api";
 
 /** Which Jobs-tab bucket a status belongs in — "active" is everything
  * still in flight for the worker, including waiting on the customer to
- * confirm a proposed price; "completed" is everything no longer
- * actionable (completed, disputed). */
+ * confirm the quote; "completed" is everything no longer actionable
+ * (completed, cancelled, declined, disputed). */
 export function isActiveJobStatus(status: JobStatus): boolean {
   return (
     status === "accepted" ||
-    status === "on_my_way" ||
     status === "arrived" ||
-    status === "in_progress" ||
-    status === "awaiting_price_confirmation"
+    status === "quote_pending" ||
+    status === "quote_accepted" ||
+    status === "in_progress"
   );
 }
 

@@ -19,11 +19,13 @@ function makeJob(overrides: Partial<JobRequest> & { id: number; created_at: stri
     worker: null,
     current_offer_responds_by: null,
     accepted_at: null,
-    on_my_way_at: null,
     arrived_at: null,
+    quoted_at: null,
+    quote_accepted_at: null,
     started_at: null,
     rating: null,
     last_message: null,
+    decline_reason: null,
     updated_at: overrides.created_at,
     ...overrides,
   };
@@ -34,12 +36,13 @@ test("isActiveJobStatus treats every non-terminal status as active, including pr
   expect(isActiveJobStatus("searching")).toBe(true);
   expect(isActiveJobStatus("matched")).toBe(true);
   expect(isActiveJobStatus("accepted")).toBe(true);
-  expect(isActiveJobStatus("on_my_way")).toBe(true);
   expect(isActiveJobStatus("arrived")).toBe(true);
+  expect(isActiveJobStatus("quote_pending")).toBe(true);
+  expect(isActiveJobStatus("quote_accepted")).toBe(true);
   expect(isActiveJobStatus("in_progress")).toBe(true);
-  expect(isActiveJobStatus("awaiting_price_confirmation")).toBe(true);
   expect(isActiveJobStatus("completed")).toBe(false);
   expect(isActiveJobStatus("cancelled")).toBe(false);
+  expect(isActiveJobStatus("declined")).toBe(false);
   expect(isActiveJobStatus("disputed")).toBe(false);
 });
 

@@ -80,6 +80,7 @@ class JobRequestSerializer(serializers.ModelSerializer):
     current_offer_responds_by = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
+    decline_reason = serializers.SerializerMethodField()
 
     class Meta:
         model = JobRequest
@@ -100,11 +101,13 @@ class JobRequestSerializer(serializers.ModelSerializer):
             "worker",
             "current_offer_responds_by",
             "accepted_at",
-            "on_my_way_at",
             "arrived_at",
+            "quoted_at",
+            "quote_accepted_at",
             "started_at",
             "rating",
             "last_message",
+            "decline_reason",
             "created_at",
             "updated_at",
         ]
@@ -135,6 +138,18 @@ class JobRequestSerializer(serializers.ModelSerializer):
             "created_at": message.created_at,
             "sender_id": message.sender_id,
         }
+
+    def get_decline_reason(self, obj):
+        """Human-readable reason for a worker's on-site decline — null unless
+        the job is `declined` (powers the customer's WorkerDeclined screen)."""
+        if obj.status != JobRequest.Status.DECLINED:
+            return None
+        log = (
+            obj.cancellation_logs.filter(kind=CancellationLog.Kind.ON_SITE_DECLINE)
+            .order_by("-created_at")
+            .first()
+        )
+        return log.get_reason_display() if log else None
 
 
 class JobRequestCreateSerializer(serializers.Serializer):
@@ -179,9 +194,11 @@ class JobOfferSerializer(serializers.ModelSerializer):
         fields = ["id", "job", "offered_at", "responds_by"]
 
 
-class CompleteJobSerializer(serializers.Serializer):
+class QuoteSerializer(serializers.Serializer):
+    """The worker's on-site quote (amount + optional 'what's included' note)."""
+
     agreed_price = serializers.DecimalField(
-        max_digits=8, decimal_places=2, min_value=Decimal("0")
+        max_digits=8, decimal_places=2, min_value=Decimal("0.01")
     )
     note = serializers.CharField(required=False, allow_blank=True, default="")
 

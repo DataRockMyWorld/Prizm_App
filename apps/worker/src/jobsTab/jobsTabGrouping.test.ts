@@ -24,11 +24,13 @@ function makeJob(overrides: Partial<JobRequest> & { id: number; created_at: stri
     worker: null,
     current_offer_responds_by: null,
     accepted_at: null,
-    on_my_way_at: null,
     arrived_at: null,
+    quoted_at: null,
+    quote_accepted_at: null,
     started_at: null,
     rating: null,
     last_message: null,
+    decline_reason: null,
     updated_at: overrides.created_at,
     ...overrides,
   };
@@ -36,11 +38,12 @@ function makeJob(overrides: Partial<JobRequest> & { id: number; created_at: stri
 
 test("isActiveJobStatus classifies each status correctly", () => {
   expect(isActiveJobStatus("accepted")).toBe(true);
-  expect(isActiveJobStatus("on_my_way")).toBe(true);
   expect(isActiveJobStatus("arrived")).toBe(true);
+  expect(isActiveJobStatus("quote_pending")).toBe(true);
+  expect(isActiveJobStatus("quote_accepted")).toBe(true);
   expect(isActiveJobStatus("in_progress")).toBe(true);
-  expect(isActiveJobStatus("awaiting_price_confirmation")).toBe(true);
   expect(isActiveJobStatus("completed")).toBe(false);
+  expect(isActiveJobStatus("declined")).toBe(false);
   expect(isActiveJobStatus("disputed")).toBe(false);
   expect(isActiveJobStatus("cancelled")).toBe(false);
 });
@@ -67,7 +70,7 @@ test("computeAgreedTotalThisMonth sums only completed jobs in the current month"
     makeJob({
       id: 4,
       created_at: "2026-08-05T12:00:00.000Z",
-      status: "awaiting_price_confirmation",
+      status: "quote_accepted",
       agreed_price: "999",
     }),
   ];

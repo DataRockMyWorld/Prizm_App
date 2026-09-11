@@ -1,4 +1,4 @@
-import { ReportCategory, reportJob, useAuth } from "@prizm/api";
+import { ReportCategory, disputePrice, reportJob, useAuth } from "@prizm/api";
 import { Button, Screen, TextField, ThemedText, colors, spacing } from "@prizm/ui";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
@@ -28,10 +28,22 @@ export function ReportProblemScreen({ navigation, route }: Props) {
     setIsSubmitting(true);
     setError(null);
     try {
-      await reportJob(accessToken, jobId, selected, details.trim());
-      navigation.goBack();
+      if (selected === "pricing_disagreement") {
+        // Pricing disputes flip the job to `disputed` for admin review —
+        // only valid once the job is completed (the price is agreed
+        // up-front now, so a mid-job pricing dispute isn't a thing).
+        await disputePrice(accessToken, jobId, details.trim());
+        navigation.popToTop();
+      } else {
+        await reportJob(accessToken, jobId, selected, details.trim());
+        navigation.goBack();
+      }
     } catch {
-      setError("Couldn't submit your report. Please try again.");
+      setError(
+        selected === "pricing_disagreement"
+          ? "You can only dispute the price once the job is complete."
+          : "Couldn't submit your report. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }

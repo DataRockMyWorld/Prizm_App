@@ -1,4 +1,4 @@
-import { JobRequest, JobStatus, getJob, useAuth } from "@prizm/api";
+import { JobRequest, getJob, useAuth } from "@prizm/api";
 import {
   Avatar,
   Card,
@@ -15,84 +15,23 @@ import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { formatJobStatusLabel } from "../../jobsTab/formatJobStatus";
-import { formatClockTime } from "../../request/formatClockTime";
 import type { RequestStackParamList } from "../../navigation/types";
+import {
+  STEP_LABELS,
+  headlineForStatus,
+  timelineState,
+  timestampForStep,
+} from "../../request/jobStatusSteps";
 
 type Props = NativeStackScreenProps<RequestStackParamList, "JobStatus">;
 
-// Each real backend status (see CLAUDE.md's job lifecycle) gets its own
-// row now, instead of on_my_way/arrived/in_progress collapsing into a
-// single "In progress" row whose subtext silently changed underneath it —
-// a customer glancing at the screen mid-job couldn't tell how far along
-// things actually were without re-reading the caption every time.
-const STEP_LABELS = ["Requested", "Accepted", "On my way", "Arrived", "Job started", "Complete"];
-
-// How long the "awaiting_price_confirmation" beat holds on this screen,
-// showing every row (including "Complete") ticked, before handing off to
-// PriceAgreement — previously that redirect fired in the same poll tick
-// that discovered the status change, so the customer never actually saw
-// "Complete" reached at all.
+// How long the "completed" beat holds — every row (including "Complete")
+// ticked — before handing off to Rating, so the customer actually sees the
+// timeline finish rather than being yanked straight to the star picker.
 const COMPLETE_PAUSE_MS = 1800;
-
-// Index of the MOST RECENTLY REACHED step — every step up to and
-// including this one is ticked done, later ones are pending. This one
-// also gets the accent-color "current" treatment, to draw the eye to
-// what just happened.
-//
-// Deliberately NOT "the next step we're waiting on" (an earlier version
-// of this did that, e.g. showing "On my way" lit up while the worker was
-// still just sitting on "accepted") — that reads fine for a vague label
-// like the old "In progress" bucket, but for concrete action labels like
-// "On my way"/"Arrived" it makes a false claim about something that
-// hasn't happened yet. A step only lights up once its own status is
-// actually true.
-function reachedStepIndex(status: JobStatus): number {
-  switch (status) {
-    case "accepted":
-      return 1;
-    case "on_my_way":
-      return 2;
-    case "arrived":
-      return 3;
-    case "in_progress":
-      return 4;
-    case "awaiting_price_confirmation":
-    case "completed":
-      return STEP_LABELS.length - 1; // "Complete" — every row ticked
-    default: // requested, searching, matched — nothing beyond the request itself yet
-      return 0;
-  }
-}
-
-// The ISO timestamp backing each step, in the same order as STEP_LABELS —
-// "Complete" has no dedicated field (the transient pause is too brief to
-// need one) so it's always null.
-function timestampForStep(index: number, job: JobRequest): string | null {
-  const isoByIndex = [job.created_at, job.accepted_at, job.on_my_way_at, job.arrived_at, job.started_at, null];
-  const iso = isoByIndex[index];
-  return iso ? formatClockTime(iso) : null;
-}
 
 function firstName(fullName: string | null | undefined): string {
   return (fullName || "Your worker").split(" ")[0];
-}
-
-function headlineForStatus(status: JobStatus, name: string): string {
-  switch (status) {
-    case "accepted":
-      return `${name} accepted your request`;
-    case "on_my_way":
-      return `${name} is on the way`;
-    case "arrived":
-      return `${name} has arrived`;
-    case "in_progress":
-      return `${name} started the job`;
-    case "awaiting_price_confirmation":
-    case "completed":
-      return `${name} completed the job`;
-    default:
-      return `Waiting for ${name} to accept`;
-  }
 }
 
 export function JobStatusScreen({ navigation, route }: Props) {
@@ -109,11 +48,14 @@ export function JobStatusScreen({ navigation, route }: Props) {
         const data = await getJob(accessToken, jobId);
         setJob(data);
         if (navigatedRef.current) return;
-        if (data.status === "awaiting_price_confirmation") {
+        if (data.status === "completed") {
           navigatedRef.current = true;
           completeTimerRef.current = setTimeout(() => {
-            navigation.replace("PriceAgreement", { jobId });
+            navigation.replace("Rating", { jobId });
           }, COMPLETE_PAUSE_MS);
+        } else if (data.status === "declined") {
+          navigatedRef.current = true;
+          navigation.replace("WorkerDeclined", { jobId });
         } else if (data.status === "cancelled" || data.status === "disputed") {
           navigatedRef.current = true;
           navigation.popToTop();
@@ -138,10 +80,14 @@ export function JobStatusScreen({ navigation, route }: Props) {
     );
   }
 
-  const reachedIndex = reachedStepIndex(job.status);
+  const { lastDone, current } = timelineState(job.status);
   const workerName = firstName(job.worker?.full_name);
   const ratingPart = job.worker?.rating_average != null ? ` · ${job.worker.rating_average} ★` : "";
   const jobsPart = job.worker?.jobs_completed ? ` · ${job.worker.jobs_completed} jobs` : "";
+  const awaitingQuote = job.status === "quote_pending";
+  const hasQuote = job.agreed_price != null;
+
+  const goToConfirmQuote = () => navigation.navigate("ConfirmQuote", { jobId });
 
   return (
     <Screen style={styles.screen}>
@@ -171,15 +117,22 @@ export function JobStatusScreen({ navigation, route }: Props) {
               <View style={styles.statusPill}>
                 <View style={styles.statusPillDot} />
                 <ThemedText style={styles.statusPillText}>
-                  {formatJobStatusLabel(job.status).toUpperCase()}
+                  {(awaitingQuote ? "Quote ready" : formatJobStatusLabel(job.status)).toUpperCase()}
                 </ThemedText>
               </View>
-              <ThemedText variant="title" style={styles.heroHeadline}>
-                {headlineForStatus(job.status, workerName)}
-              </ThemedText>
+              <Pressable onPress={awaitingQuote ? goToConfirmQuote : undefined} disabled={!awaitingQuote}>
+                <ThemedText variant="title" style={styles.heroHeadline}>
+                  {headlineForStatus(job.status, workerName)}
+                </ThemedText>
+              </Pressable>
+              {awaitingQuote && (
+                <ThemedText style={styles.heroSubline}>
+                  N${job.agreed_price} quoted · tap to review
+                </ThemedText>
+              )}
             </View>
             <View style={styles.stepCountCircle}>
-              <ThemedText style={styles.stepCountNumber}>{reachedIndex + 1}</ThemedText>
+              <ThemedText style={styles.stepCountNumber}>{current + 1}</ThemedText>
               <ThemedText style={styles.stepCountLabel}>OF {STEP_LABELS.length}</ThemedText>
             </View>
           </View>
@@ -212,32 +165,36 @@ export function JobStatusScreen({ navigation, route }: Props) {
               PROGRESS
             </ThemedText>
             {STEP_LABELS.map((label, index) => {
-              const isReached = index <= reachedIndex;
-              const isLatest = index === reachedIndex;
+              const isDone = index <= lastDone;
+              const isCurrent = index === current;
               const timestamp = timestampForStep(index, job);
+              const subtext =
+                isCurrent && awaitingQuote && index === current
+                  ? `Waiting for you to confirm N$${job.agreed_price}`
+                  : null;
               return (
                 <View key={label} style={styles.timelineRow}>
                   <View style={styles.timelineDotColumn}>
                     <View
                       style={[
                         styles.timelineDot,
-                        isReached && styles.timelineDotDone,
-                        isLatest && styles.timelineDotLatest,
+                        isDone && styles.timelineDotDone,
+                        isCurrent && styles.timelineDotLatest,
                       ]}
                     >
-                      {isReached && <ThemedText style={styles.timelineCheck}>✓</ThemedText>}
+                      {isDone && <ThemedText style={styles.timelineCheck}>✓</ThemedText>}
                     </View>
                     {index < STEP_LABELS.length - 1 && (
-                      <View style={[styles.timelineLine, index < reachedIndex && styles.timelineLineDone]} />
+                      <View style={[styles.timelineLine, index < lastDone && styles.timelineLineDone]} />
                     )}
                   </View>
                   <View style={styles.timelineTextColumn}>
                     <ThemedText
                       variant="body"
                       style={
-                        isLatest
+                        isCurrent
                           ? styles.timelineLabelLatest
-                          : !isReached
+                          : !isDone
                             ? styles.timelineLabelPending
                             : undefined
                       }
@@ -249,6 +206,11 @@ export function JobStatusScreen({ navigation, route }: Props) {
                         {timestamp}
                       </ThemedText>
                     )}
+                    {subtext && (
+                      <ThemedText variant="caption" style={styles.timelineTimestamp}>
+                        {subtext}
+                      </ThemedText>
+                    )}
                   </View>
                 </View>
               );
@@ -258,10 +220,10 @@ export function JobStatusScreen({ navigation, route }: Props) {
           <Card style={styles.detailCard}>
             <View style={styles.detailRow}>
               <ThemedText variant="caption" style={styles.detailLabel}>
-                ESTIMATE
+                {hasQuote ? "QUOTED" : "ESTIMATE"}
               </ThemedText>
               <ThemedText variant="subtitle">
-                N${job.price_range_min}–{job.price_range_max}
+                {hasQuote ? `N$${job.agreed_price}` : `N$${job.price_range_min}–${job.price_range_max}`}
               </ThemedText>
             </View>
             <View style={styles.detailDivider} />
@@ -273,10 +235,16 @@ export function JobStatusScreen({ navigation, route }: Props) {
             </View>
           </Card>
 
-          {job.status === "awaiting_price_confirmation" && (
+          {awaitingQuote && (
+            <Pressable onPress={goToConfirmQuote} style={styles.reviewButton}>
+              <ThemedText style={styles.reviewButtonText}>Review the quote</ThemedText>
+            </Pressable>
+          )}
+
+          {job.status === "completed" && (
             <View style={styles.continuingRow}>
               <ActivityIndicator color={colors.textSecondary} size="small" />
-              <ThemedText variant="caption">Job complete — getting the price ready…</ThemedText>
+              <ThemedText variant="caption">Job complete — wrapping up…</ThemedText>
             </View>
           )}
 
@@ -369,6 +337,12 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     marginTop: spacing.sm,
   },
+  heroSubline: {
+    color: "rgba(255, 255, 255, 0.9)",
+    fontFamily: fontFamily.bold,
+    fontSize: 12,
+    marginTop: spacing.xs,
+  },
   stepCountCircle: {
     width: 52,
     height: 52,
@@ -394,10 +368,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.md,
   },
-  // Pulls the worker card up to overlap the gradient hero's rounded
-  // bottom edge (approved hi-fi) — the negative margin needs to be less
-  // than the hero's own paddingBottom so the card doesn't creep onto the
-  // gradient text above it.
   floatingCard: {
     marginTop: -spacing.xl,
   },
@@ -440,9 +410,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    // colors.border (#ECE7E2) against pageBackground (#F1ECE7) is nearly
-    // indistinguishable — same contrast bug already fixed for PinDots and
-    // the rating stars this session.
     borderColor: colors.textSecondary,
     alignItems: "center",
     justifyContent: "center",
@@ -451,11 +418,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  // Extra ring on top of the normal filled/ticked dot — marks which
-  // reached step is the *freshest* one, so a customer glancing back at
-  // this screen mid-job can immediately spot what just happened instead
-  // of having to compare every row's fill state.
   timelineDotLatest: {
+    borderColor: colors.primary,
     shadowColor: colors.primary,
     shadowOpacity: 0.5,
     shadowRadius: 5,
@@ -478,6 +442,7 @@ const styles = StyleSheet.create({
   },
   timelineTextColumn: {
     paddingBottom: spacing.md,
+    flex: 1,
   },
   timelineLabelLatest: {
     color: colors.primary,
@@ -504,6 +469,16 @@ const styles = StyleSheet.create({
   detailDivider: {
     height: 1,
     backgroundColor: colors.border,
+  },
+  reviewButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  reviewButtonText: {
+    color: colors.textInverse,
+    fontFamily: fontFamily.extraBold,
   },
   continuingRow: {
     flexDirection: "row",

@@ -2,7 +2,7 @@ import { acceptOffer, ApiError, declineOffer, useAuth } from "@prizm/api";
 import { Button, colors, fontFamily, radii, spacing, ThemedText } from "@prizm/ui";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, View } from "react-native";
 
 import { useOfferPolling } from "../offers/OfferPollingProvider";
 import { computeRemainingSeconds, formatCountdown } from "../offers/offerTiming";
@@ -87,27 +87,46 @@ export function IncomingOfferScreen() {
         </ThemedText>
       </View>
 
-      <View style={styles.summaryCard}>
-        <View style={styles.categoryRow}>
-          <View style={styles.categoryIcon} />
-          <ThemedText variant="subtitle" style={styles.categoryName}>
-            {job.category.name}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.summaryCard}>
+          <View style={styles.categoryRow}>
+            <View style={styles.categoryIcon} />
+            <ThemedText variant="subtitle" style={styles.categoryName}>
+              {job.category.name}
+            </ThemedText>
+          </View>
+          {!!job.description && (
+            <ThemedText variant="body" style={styles.description}>
+              {job.description}
+            </ThemedText>
+          )}
+          {!!job.address && (
+            <ThemedText variant="caption" style={styles.addressLabel}>
+              📍 {job.address}
+            </ThemedText>
+          )}
+        </View>
+
+        {job.photo ? (
+          <View style={styles.photoBlock}>
+            <ThemedText variant="caption" style={styles.photoLabel}>
+              PHOTO FROM THE CUSTOMER
+            </ThemedText>
+            <Image source={{ uri: job.photo }} style={styles.photo} resizeMode="cover" />
+          </View>
+        ) : null}
+
+        <View style={styles.estimateBanner}>
+          <ThemedText style={styles.estimateText}>
+            Est. N${job.price_range_min}–{job.price_range_max} · you'll agree the final price with
+            the customer on site
           </ThemedText>
         </View>
-        {!!job.description && (
-          <ThemedText variant="body" style={styles.description}>
-            {job.description}
-          </ThemedText>
-        )}
-        {!!job.address && <ThemedText variant="caption">{job.address}</ThemedText>}
-      </View>
-
-      <View style={styles.estimateBanner}>
-        <ThemedText style={styles.estimateText}>
-          Est. N${job.price_range_min}–{job.price_range_max} · final price is agreed with the
-          customer
-        </ThemedText>
-      </View>
+      </ScrollView>
 
       <View style={styles.actions}>
         <Button
@@ -150,11 +169,35 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontFamily: fontFamily.extraBold,
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    gap: spacing.md,
+    paddingBottom: spacing.md,
+  },
   summaryCard: {
     backgroundColor: colors.surfaceMuted,
     borderRadius: radii.md,
     padding: spacing.md,
     gap: spacing.xs,
+  },
+  addressLabel: {
+    marginTop: spacing.xs,
+  },
+  photoBlock: {
+    gap: spacing.xs,
+  },
+  photoLabel: {
+    fontFamily: fontFamily.bold,
+    letterSpacing: 1,
+    color: colors.textSecondary,
+  },
+  photo: {
+    width: "100%",
+    height: 200,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceMuted,
   },
   categoryRow: {
     flexDirection: "row",

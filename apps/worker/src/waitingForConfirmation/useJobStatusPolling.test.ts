@@ -6,10 +6,6 @@ import { getStatusBranch, useJobStatusPolling } from "./useJobStatusPolling";
 jest.mock("@prizm/api", () => ({ getJob: jest.fn() }));
 
 const mockGetJob = getJob as jest.Mock;
-// Real timers with a short interval — same reasoning as T3's polling hook
-// tests (renderHook/act/unmount are all async in this RN Testing Library
-// version, and real intervals are simpler to get right than fake-timer
-// advancement + microtask flushing).
 const INTERVAL_MS = 20;
 
 function makeJob(status: JobRequest["status"]): JobRequest {
@@ -30,11 +26,13 @@ function makeJob(status: JobRequest["status"]): JobRequest {
     worker: null,
     current_offer_responds_by: null,
     accepted_at: null,
-    on_my_way_at: null,
     arrived_at: null,
+    quoted_at: null,
+    quote_accepted_at: null,
     started_at: null,
     rating: null,
     last_message: null,
+    decline_reason: null,
     created_at: "",
     updated_at: "",
   };
@@ -45,15 +43,15 @@ beforeEach(() => {
 });
 
 test("getStatusBranch classifies each status correctly", () => {
-  expect(getStatusBranch("awaiting_price_confirmation")).toBeNull();
-  expect(getStatusBranch("completed")).toBe("completed");
-  expect(getStatusBranch("disputed")).toBe("disputed");
-  expect(getStatusBranch("cancelled")).toBe("other");
-  expect(getStatusBranch("accepted")).toBe("other");
+  expect(getStatusBranch("quote_pending")).toBeNull();
+  expect(getStatusBranch("quote_accepted")).toBe("quote_accepted");
+  expect(getStatusBranch("cancelled")).toBe("rejected");
+  expect(getStatusBranch("declined")).toBe("other");
+  expect(getStatusBranch("in_progress")).toBe("other");
 });
 
-test("stops polling once a terminal branch is reached, on unmount", async () => {
-  mockGetJob.mockResolvedValue(makeJob("awaiting_price_confirmation"));
+test("stops polling once a branch is reached, on unmount", async () => {
+  mockGetJob.mockResolvedValue(makeJob("quote_pending"));
   const { unmount } = await renderHook(() =>
     useJobStatusPolling({ accessToken: "tok", jobId: 1, intervalMs: INTERVAL_MS })
   );
@@ -66,35 +64,33 @@ test("stops polling once a terminal branch is reached, on unmount", async () => 
   expect(mockGetJob.mock.calls.length).toBe(callsAtUnmount);
 });
 
-test("reaching completed stops polling and sets the branch exactly once", async () => {
-  mockGetJob.mockResolvedValue(makeJob("completed"));
+test("reaching quote_accepted stops polling and sets the branch exactly once", async () => {
+  mockGetJob.mockResolvedValue(makeJob("quote_accepted"));
   const { result, unmount } = await renderHook(() =>
     useJobStatusPolling({ accessToken: "tok", jobId: 1, intervalMs: INTERVAL_MS })
   );
 
-  await waitFor(() => expect(result.current.branch).toBe("completed"));
+  await waitFor(() => expect(result.current.branch).toBe("quote_accepted"));
   const callsAtBranch = mockGetJob.mock.calls.length;
 
-  // A stray poll response after the branch is reached shouldn't re-trigger
-  // anything or keep polling.
   await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS * 3));
   expect(mockGetJob.mock.calls.length).toBe(callsAtBranch);
-  expect(result.current.branch).toBe("completed");
+  expect(result.current.branch).toBe("quote_accepted");
   await unmount();
 });
 
-test("reaching disputed sets the disputed branch, not completed", async () => {
-  mockGetJob.mockResolvedValue(makeJob("disputed"));
+test("a rejected quote (cancelled) surfaces the 'rejected' branch, not 'other'", async () => {
+  mockGetJob.mockResolvedValue(makeJob("cancelled"));
   const { result, unmount } = await renderHook(() =>
     useJobStatusPolling({ accessToken: "tok", jobId: 1, intervalMs: INTERVAL_MS })
   );
 
-  await waitFor(() => expect(result.current.branch).toBe("disputed"));
+  await waitFor(() => expect(result.current.branch).toBe("rejected"));
   await unmount();
 });
 
 test("an unexpected status falls back to the 'other' branch instead of looping", async () => {
-  mockGetJob.mockResolvedValue(makeJob("cancelled"));
+  mockGetJob.mockResolvedValue(makeJob("disputed"));
   const { result, unmount } = await renderHook(() =>
     useJobStatusPolling({ accessToken: "tok", jobId: 1, intervalMs: INTERVAL_MS })
   );

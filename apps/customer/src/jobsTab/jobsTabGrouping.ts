@@ -8,7 +8,12 @@ import type { JobRequest, JobStatus } from "@prizm/api";
  * the pre-match statuses (requested/searching/matched) — the customer
  * is tracking the job from submission, not from acceptance. */
 export function isActiveJobStatus(status: JobStatus): boolean {
-  return status !== "completed" && status !== "cancelled" && status !== "disputed";
+  return (
+    status !== "completed" &&
+    status !== "cancelled" &&
+    status !== "declined" &&
+    status !== "disputed"
+  );
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;

@@ -1,21 +1,20 @@
-import { getNextValidStatus, isCancelWindowOpen } from "./statusTransitions";
+import { activeJobPhase, isCancelWindowOpen } from "./statusTransitions";
 
-test("getNextValidStatus returns the next step for each stepper status", () => {
-  expect(getNextValidStatus("accepted")).toBe("on_my_way");
-  expect(getNextValidStatus("on_my_way")).toBe("arrived");
-  expect(getNextValidStatus("arrived")).toBe("in_progress");
+test("activeJobPhase maps each in-flight status to its screen phase", () => {
+  expect(activeJobPhase("accepted")).toBe("heading_there");
+  expect(activeJobPhase("arrived")).toBe("evaluate");
+  expect(activeJobPhase("quote_accepted")).toBe("ready_to_start");
+  expect(activeJobPhase("in_progress")).toBe("in_progress");
 });
 
-test("getNextValidStatus returns null once at the end of the stepper", () => {
-  expect(getNextValidStatus("in_progress")).toBeNull();
-});
-
-test("getNextValidStatus returns null for statuses outside the stepper", () => {
-  expect(getNextValidStatus("searching")).toBeNull();
-  expect(getNextValidStatus("awaiting_price_confirmation")).toBeNull();
-  expect(getNextValidStatus("completed")).toBeNull();
-  expect(getNextValidStatus("cancelled")).toBeNull();
-  expect(getNextValidStatus("disputed")).toBeNull();
+test("activeJobPhase returns null for statuses ActiveJobScreen doesn't render", () => {
+  expect(activeJobPhase("searching")).toBeNull();
+  expect(activeJobPhase("matched")).toBeNull();
+  expect(activeJobPhase("quote_pending")).toBeNull(); // → WaitingForConfirmation
+  expect(activeJobPhase("completed")).toBeNull();
+  expect(activeJobPhase("declined")).toBeNull();
+  expect(activeJobPhase("cancelled")).toBeNull();
+  expect(activeJobPhase("disputed")).toBeNull();
 });
 
 test("isCancelWindowOpen is true just under 10 minutes", () => {
