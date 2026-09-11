@@ -33,7 +33,11 @@ export function DeleteAccountWarningScreen() {
         </Pressable>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         <ThemedText variant="title">Delete your account</ThemedText>
         <ThemedText variant="body" style={styles.subtitle}>
           Please read what this means before you continue. Deletion is permanent.
@@ -98,6 +102,13 @@ export function DeleteAccountWarningScreen() {
 const styles = StyleSheet.create({
   header: {
     marginTop: spacing.md,
+  },
+  // Without an explicit flex here, RN sizes the ScrollView to its content
+  // instead of clipping it to the screen, so long content just overflows
+  // past the bottom with no way to scroll to it (found on JobStatusScreen,
+  // swept across every other screen with the same gap).
+  scroll: {
+    flex: 1,
   },
   content: {
     flexGrow: 1,

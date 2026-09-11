@@ -41,7 +41,7 @@ export function TermsLiabilityScreen() {
         />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <Card>
           <ThemedText variant="body">{TERMS_TEXT}</ThemedText>
         </Card>
@@ -51,6 +51,12 @@ export function TermsLiabilityScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Without an explicit flex here, RN sizes the ScrollView to its content
+  // instead of clipping it to the screen, so long content just overflows
+  // past the bottom with no way to scroll to it.
+  scroll: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",

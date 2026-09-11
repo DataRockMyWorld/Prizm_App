@@ -39,7 +39,7 @@ export function SafetyTipsScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {TIPS.map((tip) => (
           <Card key={tip.title} style={styles.card}>
             <ThemedText variant="subtitle">{tip.title}</ThemedText>
@@ -52,6 +52,12 @@ export function SafetyTipsScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Without an explicit flex here, RN sizes the ScrollView to its content
+  // instead of clipping it to the screen, so long content just overflows
+  // past the bottom with no way to scroll to it.
+  scroll: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",

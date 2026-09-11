@@ -91,7 +91,11 @@ export function JobStatusScreen({ navigation, route }: Props) {
 
   return (
     <Screen style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <GradientBackground style={styles.hero}>
           <View style={styles.heroTopRow}>
             <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
@@ -262,6 +266,14 @@ export function JobStatusScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   screen: {
     paddingHorizontal: 0,
+  },
+  scroll: {
+    // Without an explicit flex here, RN sizes the ScrollView to its
+    // content instead of clipping it to the screen — the content then
+    // just overflows past the bottom with no way to scroll to it. Latent
+    // bug (was present pre-v2 too) that only started mattering once the
+    // timeline grew to 6 steps plus the quote-review button.
+    flex: 1,
   },
   scrollContent: {
     paddingBottom: spacing.lg,

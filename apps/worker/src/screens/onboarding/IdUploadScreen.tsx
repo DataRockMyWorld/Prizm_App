@@ -84,6 +84,7 @@ export function IdUploadScreen({ navigation }: Props) {
   return (
     <Screen>
       <ScrollView
+        style={styles.scroll}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -142,6 +143,12 @@ export function IdUploadScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Without an explicit flex here, RN sizes the ScrollView to its content
+  // instead of clipping it to the screen, so long content just overflows
+  // past the bottom with no way to scroll to it.
+  scroll: {
+    flex: 1,
+  },
   content: {
     flexGrow: 1,
     paddingTop: spacing.md,

@@ -1,8 +1,30 @@
 # Prism — Progress & Resume Notes
 
-Last updated: 2026-09-08. See `CLAUDE.md` for full project context, brand,
+Last updated: 2026-09-11. See `CLAUDE.md` for full project context, brand,
 and business rules — this file just tracks build status and how to pick
 the work back up.
+
+**Systemic bug found + swept (2026-09-11): a `ScrollView` with no
+explicit `style` prop doesn't actually scroll inside this project's
+`Screen` wrapper** — `Screen`'s content `Pressable` is `flex: 1` with no
+bounded height of its own, so a child `ScrollView` sized only by
+`contentContainerStyle` (no `style`) collapses to its *content* height
+instead of the viewport's, and anything past the visible screen just
+overflows with no way to reach it. First caught live on the redesigned
+customer `JobStatusScreen` (couldn't reach "Review the quote" once the
+6-step timeline + quote card pushed it below the fold) — a real, working
+`ScrollView` for years, since every screen before now happened to fit
+one viewport. Fix is always the same: add `style={{ flex: 1 }}` (a
+`scroll` style) alongside `contentContainerStyle`. Swept across every
+other screen with the identical gap: both apps' `ProfileScreen`,
+`JobDetailScreen`, `TermsLiabilityScreen`, `SafetyTipsScreen`,
+`DeleteAccountWarningScreen`, and worker's `IdVerificationInfoScreen` /
+`IdUploadScreen` / `CertificationsInfoScreen` / `CertificationsScreen`
+(15 screens total, including `JobStatusScreen`) — both apps' `ChatScreen`
+already had it (`style={styles.messages}`), so those were a false
+positive in the initial grep, not fixed twice. Worth grepping
+`<ScrollView` for a missing `style=` prop again if this pattern
+resurfaces on any new screen.
 
 ## Where things stand vs. the CLAUDE.md build order
 

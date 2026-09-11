@@ -172,7 +172,11 @@ export function ProfileScreen() {
 
   return (
     <Screen edges={["top", "bottom"]} style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <ProfileHero
           variant="worker"
           photo={profile?.photo ?? null}
@@ -316,6 +320,12 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     paddingHorizontal: 0,
+  },
+  // Without an explicit flex here, RN sizes the ScrollView to its content
+  // instead of clipping it to the screen, so long content just overflows
+  // past the bottom with no way to scroll to it.
+  scroll: {
+    flex: 1,
   },
   scrollContent: {
     paddingBottom: spacing.lg,

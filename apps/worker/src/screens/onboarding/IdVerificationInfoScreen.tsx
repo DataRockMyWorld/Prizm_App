@@ -20,7 +20,11 @@ const TIPS = [
 export function IdVerificationInfoScreen({ navigation }: Props) {
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         <ThemedText variant="caption" style={styles.step}>
           STEP 1 OF 2
         </ThemedText>
@@ -84,6 +88,12 @@ export function IdVerificationInfoScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Without an explicit flex here, RN sizes the ScrollView to its content
+  // instead of clipping it to the screen, so long content just overflows
+  // past the bottom with no way to scroll to it.
+  scroll: {
+    flex: 1,
+  },
   content: {
     flexGrow: 1,
     paddingBottom: spacing.lg,

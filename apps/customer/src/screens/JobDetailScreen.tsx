@@ -56,7 +56,7 @@ export function JobDetailScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.identity}>
           <Avatar uri={job.worker?.photo} size={72} />
           <ThemedText variant="title" style={styles.centered}>
@@ -159,6 +159,12 @@ function Row({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   loading: {
     marginTop: spacing.xl,
+  },
+  // Without an explicit flex here, RN sizes the ScrollView to its content
+  // instead of clipping it to the screen, so long content just overflows
+  // past the bottom with no way to scroll to it.
+  scroll: {
+    flex: 1,
   },
   headerRow: {
     flexDirection: "row",

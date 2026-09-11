@@ -88,6 +88,7 @@ export function CertificationsScreen({ navigation, route }: Props) {
   return (
     <Screen>
       <ScrollView
+        style={styles.scroll}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -171,6 +172,13 @@ export function CertificationsScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Without an explicit flex here, RN sizes the (outer, vertical)
+  // ScrollView to its content instead of clipping it to the screen, so
+  // long content just overflows past the bottom with no way to scroll to
+  // it. Doesn't apply to the horizontal pillRow ScrollView below.
+  scroll: {
+    flex: 1,
+  },
   content: {
     flexGrow: 1,
     paddingTop: spacing.md,
