@@ -1,8 +1,9 @@
 # Tickets: Active-Job Flow v2.1 — Customer Completion Confirmation
 
 PRD: `docs/prds/active-job-flow-v2.1-completion-confirmation.md`
-Depends on: the `active-job-flow-v2` branch being merged to `main` first
-(this builds directly on the v2 status model and screens).
+Depends on: `active-job-flow-v2` merged to `main` (done, 2026-09-11,
+`cdb4abb`) — this builds directly on its status model and screens.
+Unblocked; not yet started.
 
 Implement in order — each ticket its own commit, reviewed before the
 next. **Every ticket's "Tests" subsection must exist and pass before it's

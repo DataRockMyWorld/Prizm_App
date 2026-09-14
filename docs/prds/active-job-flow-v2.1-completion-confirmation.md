@@ -3,7 +3,7 @@
 Status: Draft — tickets drafted (`docs/tickets/active-job-flow-v2.1-completion-confirmation.md`)
 Owner: Jewel Bansah
 Created: 2026-09-10
-Extends: `docs/prds/active-job-flow-v2.md` (v2 must be merged first)
+Extends: `docs/prds/active-job-flow-v2.md` (merged to `main` 2026-09-11 — unblocked)
 Raised: during the v2 live-test pass (T10) — "I want the customer to
 confirm job completion as well so we know both parties are in agreement."
 

@@ -1,9 +1,10 @@
 # PRD: Active-Job & Pricing Flow v2
 
-Status: Implemented — T1–T10 done on branch `active-job-flow-v2`
-(2026-09-08/10), live-tested on the Simulator. Not yet merged to `main`.
-One v2.1 follow-up open (customer completion confirmation — see the
-tickets doc). Hi-fi: `docs/design/prism-hifi-v2.dc.html`.
+Status: Shipped — T1–T10 done, live-tested on the Simulator across
+several rounds (2026-09-08/11), merged to `main` (`cdb4abb`) and pushed.
+One v2.1 follow-up open (customer completion confirmation — scoped, not
+built; see `docs/prds/active-job-flow-v2.1-completion-confirmation.md`).
+Hi-fi: `docs/design/prism-hifi-v2.dc.html`.
 Owner: Jewel Bansah
 Created: 2026-09-08
 Supersedes: `docs/prds/worker-active-job-flow.md` (the on-site-status /

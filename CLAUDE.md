@@ -317,13 +317,19 @@ usable for informal-sector workers.
   quote_accepted → in_progress → completed`, terminal `declined` added.
   See "Job lifecycle" above.
 
-**Not yet built.** This supersedes the shipped worker-active-job flow
+**Built and shipped** (2026-09-08 through 2026-09-11) — merged to `main`,
+superseding the original worker-active-job flow
 (`docs/prds/worker-active-job-flow.md` / build-order step 8) and the
-customer price-agreement screen. PRD drafted:
-`docs/prds/active-job-flow-v2.md` (pending the updated hi-fi — brief at
-`docs/design/active-job-flow-v2-brief.md` — then review, then tickets).
-Covers: backend status enum + migration + view/serializer changes (quote
-set at evaluate not complete; customer quote-confirm/reject endpoints;
-`declined` terminal state + reason logged like a cancellation), both
-apps' active-job / status-tracking screens rebuilt, and the `jobs` +
-both mobile test suites updated. `PROGRESS.md` tracks status.
+customer price-agreement screen. PRD: `docs/prds/active-job-flow-v2.md`,
+tickets (`docs/tickets/active-job-flow-v2.md`, T1–T10) all done and
+live-tested on the Simulator. `PROGRESS.md` has the full detail.
+
+**Follow-up in progress — v2.1, customer completion confirmation**
+(scoped 2026-09-10, not yet built): the customer will also confirm a job
+is actually done before it's `completed` — a new
+`awaiting_completion_confirmation` status between `in_progress` and
+`completed`, a "send it back to the worker" path if it isn't done, and a
+24h lazy auto-confirm if the customer never responds. Until this lands,
+"Complete" (above) remains the actual finish line. See
+`docs/prds/active-job-flow-v2.1-completion-confirmation.md` +
+`docs/tickets/active-job-flow-v2.1-completion-confirmation.md`.
